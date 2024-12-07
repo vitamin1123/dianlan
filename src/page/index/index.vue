@@ -33,7 +33,7 @@
         @click="handleGridClick(index)"
       />
     </van-grid>
-
+  <div class="card-container">
     <van-card
         v-for="item in show_list"
         :num="item.num"
@@ -52,7 +52,7 @@
             <van-button size="small">加入工单</van-button>
         </template>
     </van-card>
-
+    </div>  
 
     <van-submit-bar :price="30500" button-text="提交工单" @submit="onSubmit" style="margin-bottom: 1.33rem;">
         <template #tip>
@@ -72,7 +72,7 @@
   
   const list = ref([]);
   const show_list = ref([
-    { title: 'SED2-3', desc: '标题1' ,num:3, price:3.15,tag:'N1398'},
+    { title: 'SED2-3', desc: '标题1' ,num:1, price:3.15,tag:'N1398'},
     { title: 'SED2-4', desc: '标题2' ,num:3, price:3.15,tag:'N1453'},
     { title: 'SED2-5', desc: '标题3' ,num:3, price:3.15,tag:'N1452'},
     { title: 'SED2-6', desc: '标题4' ,num:3, price:3.15,tag:'N1452'},
@@ -80,7 +80,7 @@
     { title: 'SED2-8', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
     { title: 'SED2-9', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
     { title: 'SED2-0', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'SED2-11', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
+    { title: 'SED2-11',desc:'标题6'  ,num:3, price:3.15,tag:'N1452'},
     { title: 'RCS232', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
     { title: 'RCS233', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
     { title: 'RCS234', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
@@ -96,7 +96,7 @@
     { title: 'RCS232', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
     { title: 'RCS232', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
     { title: 'RCS232', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'RCS232', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
+    { title: 'RCS244', desc: '标题7' ,num:7, price:3.15,tag:'N2452'},
   ]);
   
   // Grid 项数据
@@ -187,5 +187,10 @@
   
   <style scoped>
   /* 样式根据需要自定义 */
+  .card-container {
+    margin-bottom: 3.5rem; /* 给内容容器添加底部外边距，避免被 submit-bar 遮挡 */
+    overflow-y: auto; /* 保证内容可以滚动 */
+    max-height: calc(100vh - 100px); /* 动态调整高度 */
+  }
   </style>
   

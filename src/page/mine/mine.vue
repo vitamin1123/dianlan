@@ -45,6 +45,7 @@
   
   <script setup>
   import { ref, onMounted } from 'vue';
+  import http  from '@/api/request';
   
   const text = ref('喜'); // 存储输入的汉字
   const imageSrc = ref(''); // 存储生成的图片 URL
@@ -74,9 +75,24 @@
     imageSrc.value = canvas.toDataURL('image/png');
   };
 
+  const fetchData = async () => {
+    try {
+        const response = await http.post('/public/api/gaga_post', { gaga: '我爱顾莉' });
+        console.log('Response:', response);
+    } catch (error) {
+        console.error('Error:', error);
+    }
+};
 
-  onMounted(() => {
+
+  onMounted(async (res) => {
     generateImage()
+    await fetchData()
+    let result = await http.get('/public/api/gaga').catch((err)=>{
+      console.log(err)
+    });
+    console.log(result)
+ 
   })
 
 </script>
