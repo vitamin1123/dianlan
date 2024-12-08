@@ -179,6 +179,28 @@ router.post('/public/api/gaga_post', async (ctx, next) => {
     "data": res
   }
 });
+// 搜索参数
+router.post('/public/api/search_company', async (ctx, next) => {
+  const { sw,company,proj,daihao,model,spec,facilities } = ctx.request.body;
+  console.log(sw,company,proj,daihao,model,spec,facilities)
+  const res = await Dianlan.searchCompany(sw,company,proj,daihao,model,spec,facilities)
+  console.log('searchCompany', res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
+//搜索具体电缆
+router.post('/public/api/search_dl', async (ctx, next) => {
+  const { company,proj,daihao,model,spec,facilities } = ctx.request.body;
+  console.log(company,proj,daihao,model,spec,facilities)
+  const res = await Dianlan.searchDl(company,proj,daihao,model,spec,facilities)
+  console.log('searchDl', res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
 
 router.post('/api/search-user-list', async (ctx, next) => {
   const { sw } = ctx.request.body;

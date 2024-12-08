@@ -26,13 +26,13 @@
             <van-tag type="danger">5待审核</van-tag>
         </template>
     </van-cell>
-    <van-cell title="我的待办"  size="large" label="审批" is-link to="mytodo"> 
+    <van-cell v-if="['管理员','组长'].includes(rolename)" title="我的待办"  size="large" label="审批" is-link to="mytodo"> 
         <template #value>
             
             <van-tag type="danger">10待办</van-tag>
         </template>
     </van-cell>
-    <van-cell title="统计"  size="large"  is-link to="myana"> 
+    <van-cell v-if="'管理员'==(rolename)" title="统计"  size="large"  is-link to="myana"> 
         
     </van-cell>
       <!-- 显示生成的图片 -->

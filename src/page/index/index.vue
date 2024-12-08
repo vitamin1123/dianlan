@@ -38,15 +38,15 @@
         v-for="item in show_list"
         :num="item.num"
         :price="item.price"
-        :desc="item.desc"
-        :tag="item.tag"
-        :title="item.title"
+        :desc="item.specification"
+        :tag="item.proj.substr(-4)"
+        :title="item.daihao"
         :thumb="dianlanImage"
         style="--van-card-font-size: 0.4rem;"
         >
         <template #tags>
-            <van-tag plain type="primary" style="margin-right: 0.1rem;">电器1</van-tag>
-            <van-tag plain type="primary">标签</van-tag>
+            <van-tag v-if="item.model" plain type="primary" style="margin-right: 0.1rem;">{{ item.model }}</van-tag>
+            <van-tag v-if="item.facilities" plain type="primary">{{ item.facilities }}</van-tag>
         </template>
         <template #footer>
             <van-button size="small">加入工单</van-button>
@@ -65,6 +65,7 @@
   import { ref } from 'vue';
   import { showToast } from 'vant'
   import dianlanImage from '@/assets/xianlan.jpg';
+  import http from '@/api/request';
   const show1 = ref(true);
   const showTop = ref(false);
   const sw = ref(''); // 当前选中的类型
@@ -124,7 +125,7 @@
     console.log('提交工单');
   };
   // 选择搜索结果
-  const select = (title) => {
+  const select = async (title) => {
     console.log('Selected:', title);
     const index = gridItems.value.findIndex((item) => item.key === sw.value);
     console.log('index: ',index);   
@@ -132,36 +133,24 @@
       gridItems.value[index].text = title; // 更新 grid 文本
       selected.value[index] = true; // 标记为选中
     }
-    list.value = [];
+    var url = '/public/api/search_dl';
+    const sd = {
+      'company': searchWords.value['公司'],
+      'proj': searchWords.value['船号'],
+      'daihao': searchWords.value['代号'],
+      'model': searchWords.value['型号'],
+      'spec': searchWords.value['规格'],
+      'facilities': searchWords.value['设备'],
+    };
+    const response = await http.post(url, sd);
+    console.log('返回电缆值：',response.data)
+    show_list.value = response.data;
     searchWords.value[sw.value] = title; // 保存搜索词
     showTop.value = false; // 关闭弹窗
   };
-  
-  // 搜索函数
-  const search = () => {
-    console.log('search');
-    console.log(search_word.value);
-    const tmp = [];
-    for (let i = 0; i < 10; i++) {
-      tmp.push({ key: i, title: search_word.value + i });
-    }
-    list.value = tmp;
-    //console.log(list.value);
-  };
-  
-  // 点击 Grid 事件
-  const handleGridClick = (index) => {
-    const selectedItem = gridItems.value[index];
-    sw.value = selectedItem.key; // 设置当前类型
-    console.log('点击grid： ',sw.value);
-    // 如果已经选中过，恢复之前的搜索词；否则清空搜索词
-    search_word.value = searchWords.value[selectedItem.key] || '';
-    console.log('search_word.value: ',searchWords.value);
-    showTop.value = true; // 显示搜索弹窗
-  };
-  
-  // 监听搜索框关闭时，保存当前搜索词
-  const handlePopupClose = () => {
+
+// 监听搜索框关闭时，保存当前搜索词
+const handlePopupClose = () => {
     //console.log('Popup closed');
     // showToast('搜索框关闭了'+search_word.value)
     if (search_word.value.length == 0) {
@@ -180,9 +169,68 @@
     // if (currentKey) {
     //   searchWords.value[currentKey] = search_word.value;
     // }
+};
+  
+  // 搜索函数
+    // '公司': '',
+    // '船号': '',
+    // '代号': '',
+    // '型号': '',
+    // '规格': '',
+    // '设备': '',
+  const search = async () => {
+    console.log('search',search_word.value,sw.value);
+    search_word.value = search_word.value.trim().toUpperCase(); // 去除首尾空格
+    const sd = {
+      'sw': sw.value,
+      'company': sw.value=='公司'?search_word.value:searchWords.value['公司'],
+      'proj': sw.value=='船号'?search_word.value:searchWords.value['船号'],
+      'daihao': sw.value=='代号'?search_word.value:searchWords.value['代号'],
+      'model': sw.value=='型号'?search_word.value:searchWords.value['型号'],
+      'spec': sw.value=='规格'?search_word.value:searchWords.value['规格'],
+      'facilities': sw.value=='设备'?search_word.value:searchWords.value['设备'],
+    };
+    var url = '/public/api/search_company';
+   
+    const response = await http.post(url, sd);
+    console.log('返回值：',response.data)
+    const tmp = [];
+    for (let i = 0; i < response.data.length; i++) {
+      if (sw.value=='公司'){
+        tmp.push({ key: i, title: response.data[i]['company'] });
+        // 需要去重
+
+      }else if (sw.value=='船号'){
+        tmp.push({ key: i, title: response.data[i]['proj'] });
+      }
+      else if (sw.value=='代号'){
+        tmp.push({ key: i, title: response.data[i]['daihao'] });
+      }else if (sw.value=='型号'){
+        tmp.push({ key: i, title: response.data[i]['model'] });
+      }else if (sw.value=='规格'){
+        tmp.push({ key: i, title: response.data[i]['specification'] });
+      }else if (sw.value=='设备'){
+        tmp.push({ key: i, title: response.data[i]['facilities'] });
+      }
+    }
+    list.value = tmp;
+    //console.log(list.value);
   };
   
-  showTop.value = false;
+  // 点击 Grid 事件
+  const handleGridClick = (index) => {
+    const selectedItem = gridItems.value[index];
+    sw.value = selectedItem.key; // 设置当前类型
+    console.log('点击grid： ',sw.value);
+    // 如果已经选中过，恢复之前的搜索词；否则清空搜索词
+    search_word.value = searchWords.value[selectedItem.key] || '';
+    console.log('search_word.value: ',searchWords.value);
+    showTop.value = true; // 显示搜索弹窗
+  };
+  
+
+  
+  // showTop.value = false;
   </script>
   
   <style scoped>
