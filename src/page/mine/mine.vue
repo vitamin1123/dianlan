@@ -14,8 +14,8 @@
                     :src="imageSrc"
                 />
                 <div class="text-content">
-                    <p class="name">喜羊羊</p>
-                    <p class="role">管理员</p>
+                    <p class="name">{{ username }}</p>
+                    <p class="role">{{ rolename }}</p>
                 </div>
             </div>
         </template>
@@ -47,8 +47,10 @@
   import { ref, onMounted } from 'vue';
   import http  from '@/api/request';
   
-  const text = ref('喜'); // 存储输入的汉字
+  const text = ref(''); // 存储输入的汉字
   const imageSrc = ref(''); // 存储生成的图片 URL
+  const username = ref('');
+  const rolename = ref('');
   
   const generateImage = () => {
     const canvas = document.createElement('canvas'); // 或使用 refs 获取 canvas
@@ -77,8 +79,11 @@
 
   const fetchData = async () => {
     try {
-        const response = await http.post('/public/api/gaga_post', { gaga: '我爱顾莉' });
-        console.log('Response:', response);
+        const response = await http.post('/public/api/gaga_post', { gaga: '10030203' });
+        console.log('Response:', response.data);
+        text.value = response.data[0]['username'][0]
+        username.value = response.data[0]['username']
+        rolename.value = response.data[0]['rolename']
     } catch (error) {
         console.error('Error:', error);
     }
@@ -86,8 +91,9 @@
 
 
   onMounted(async (res) => {
-    generateImage()
+    
     await fetchData()
+    generateImage()
     let result = await http.get('/public/api/gaga').catch((err)=>{
       console.log(err)
     });

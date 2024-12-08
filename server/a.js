@@ -19,7 +19,7 @@ const axios = require('axios');
 const util1 = require('./util/pinyin');
 const router = new Router();
 
-const User = require('./controller/Dianlan') ;
+const Dianlan = require('./controller/Dianlan') ;
 
 
 
@@ -172,35 +172,11 @@ router.get('/public/api/gaga', async (ctx, next) => {
 
 router.post('/public/api/gaga_post', async (ctx, next) => {
   const { gaga } = ctx.request.body;
+  const res = await Dianlan.getUser(gaga)
+  console.log('getUser', gaga, res)
   ctx.body = {
     "code": 0,
-    "data": gaga
-  }
-});
-
-
-
-
-router.post('/api/del_share_id', async (ctx, next) => {
-  const { id } = ctx.request.body;
-  const { ope } = ctx.request.body;
-  var haha = await Restuser.delShareById(id,ope);
-  console.log('del_share_id', haha)
-  ctx.body = {
-      "code": 0,
-      "data": haha
-  }
-});
-
-router.post('/api/get-share-list', async (ctx, next) => {
-  const { id, type } = ctx.request.body;
-  var dept = await User.getUserDept(id);
-  console.log('rank——shares1：', id, type,dept[0].deptcode)
-  var haha = await Restuser.getRankShares(id,type,dept[0].deptcode);
-  console.log('rank——shares2：', id, type,dept[0].deptcode,haha)
-  ctx.body = {
-      "code": 0,
-      "data": {"list": haha}
+    "data": res
   }
 });
 
@@ -209,9 +185,7 @@ router.post('/api/search-user-list', async (ctx, next) => {
   var cnt_tp = 1
   const res =  await Restuser.searchUser();
   var haha = []
-  // for (var cnt in res) {
-  //   be_vis[res[cnt]['number']] = res[cnt]['number'], res[cnt]['emp_name'] + '_' + res[cnt]['org_name'] + '_' + res[cnt]['phone']
-  // }
+
   for (var i in res) {
       if (cnt_tp < 10) {
         var m = util1.match(res[i]['number']+res[i]['name'], sw);
@@ -235,13 +209,10 @@ router.post('/api/search-user-list', async (ctx, next) => {
 });
 
 router.get('/api/get-org-list', async (context, next) => {
-  //var query_num = context.request.body.emp_code
-  //console.log('query_num',query_num)
+
   
   let orglist = await User.getOrgList_v2()
-  //console.log('www',orglist.list[0].org_num)
-  
-  //console.log('orglist',orglist)
+
   
   context.body = {
     "code":0,
