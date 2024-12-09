@@ -33,7 +33,14 @@
         @click="handleGridClick(index)"
       />
     </van-grid>
-  <div class="card-container">
+<div class="card-container">
+  <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
+    <van-list
+      v-model:loading="loading"
+      :finished="finished"
+      finished-text="没有更多了"
+      @load="onLoad"
+    >
     <van-card
         v-for="item in show_list"
         :num="item.num"
@@ -46,18 +53,22 @@
         >
         <template #tags>
             <van-tag v-if="item.model" plain type="primary" style="margin-right: 0.1rem;">{{ item.model }}</van-tag>
-            <van-tag v-if="item.facilities" plain type="primary">{{ item.facilities }}</van-tag>
+            <van-tag v-if="item.facilities_loca" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
+            <van-tag v-if="item.facilities_name" plain type="primary">{{ item.facilities_name }}</van-tag>
         </template>
         <template #footer>
+            <van-button size="small">完成拉线</van-button>  
             <van-button size="small">加入工单</van-button>
         </template>
-    </van-card>
-    </div>  
+      </van-card>
+    </van-list>
+  </van-pull-refresh>
+</div>  
 
     <van-submit-bar :price="30500" button-text="提交工单" @submit="onSubmit" style="margin-bottom: 1.33rem;">
-        <template #tip>
+        <!-- <template #tip>
             你的工作清单里有未全部完成的设备接线，待全部完成后结算 <span @click="onClickLink"></span>
-        </template>
+        </template> -->
         </van-submit-bar>
   </template>
   
@@ -72,33 +83,12 @@
   const search_word = ref(''); // 当前输入的搜索词
   
   const list = ref([]);
-  const show_list = ref([
-    { title: 'SED2-3', desc: '标题1' ,num:1, price:3.15,tag:'N1398'},
-    { title: 'SED2-4', desc: '标题2' ,num:3, price:3.15,tag:'N1453'},
-    { title: 'SED2-5', desc: '标题3' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'SED2-6', desc: '标题4' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'SED2-7', desc: '标题5' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'SED2-8', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'SED2-9', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'SED2-0', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'SED2-11',desc:'标题6'  ,num:3, price:3.15,tag:'N1452'},
-    { title: 'RCS232', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'RCS233', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'RCS234', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'RCS235', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'RCS236', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'RCS237', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'RCS238', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'RCS239', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'RCS230', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'RCS232', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'RCS232', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'RCS232', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'RCS232', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'RCS232', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'RCS232', desc: '标题6' ,num:3, price:3.15,tag:'N1452'},
-    { title: 'RCS244', desc: '标题7' ,num:7, price:3.15,tag:'N2452'},
-  ]);
+  const show_list = ref([]);
+  const loading = ref(false);
+  const finished = ref(false);
+  const refreshing = ref(false);
+  const page = ref(0);
+
   
   // Grid 项数据
   const gridItems = ref([
@@ -124,6 +114,64 @@
   const onSubmit = () => {
     console.log('提交工单');
   };
+
+  const onLoad = async () => {
+        
+        page.value++; // 增加页码
+        
+        if (refreshing.value) {
+          page.value = 0
+          show_list.value = [];
+          refreshing.value = false;
+        }
+        
+        const responseData = await fetchData();
+        console.log('返回电缆值：', responseData.totalCount,responseData.data);
+        for (let i = 0; i < responseData.data.length; i++) {
+          show_list.value.push(responseData.data[i]);
+        }
+        loading.value = false;
+
+        if (show_list.value.length >= responseData.totalCount) {
+          finished.value = true;
+        }
+      
+    };
+
+  const onRefresh = () => {
+      // 清空列表数据
+      finished.value = false;
+      page.value = 0; // 重置页码
+      // 清空列表数据
+      show_list.value = [];
+      // 重新加载数据
+      // 将 loading 设置为 true，表示处于加载状态
+      loading.value = true;
+      onLoad();
+  };
+
+  const fetchData = async () => {
+    // 在 fetchData 中构造 sd 数据
+    const url = '/public/api/search_dl';
+    const data = {
+      company: searchWords.value['公司'],
+      proj: searchWords.value['船号'],
+      daihao: searchWords.value['代号'],
+      model: searchWords.value['型号'],
+      spec: searchWords.value['规格'],
+      facilities: searchWords.value['设备'],
+      page: page.value*10,
+    };
+
+    try {
+      const response = await http.post(url, data);
+      return { data:response.data,totalCount:response.totalCount};
+    } catch (error) {
+      console.error('请求失败:', error);
+      throw error;
+    }
+  };
+
   // 选择搜索结果
   const select = async (title) => {
     console.log('Selected:', title);
@@ -133,26 +181,24 @@
       gridItems.value[index].text = title; // 更新 grid 文本
       selected.value[index] = true; // 标记为选中
     }
-    var url = '/public/api/search_dl';
-    const sd = {
-      'company': searchWords.value['公司'],
-      'proj': searchWords.value['船号'],
-      'daihao': searchWords.value['代号'],
-      'model': searchWords.value['型号'],
-      'spec': searchWords.value['规格'],
-      'facilities': searchWords.value['设备'],
-    };
-    const response = await http.post(url, sd);
-    console.log('返回电缆值：',response.data)
-    show_list.value = response.data;
-    searchWords.value[sw.value] = title; // 保存搜索词
-    showTop.value = false; // 关闭弹窗
+    try {
+      
+      list.value = [];
+      searchWords.value[sw.value] = title; // 保存搜索词
+      const responseData = await fetchData();
+      console.log('返回电缆值：', responseData.totalCount,responseData.data);
+      show_list.value = responseData.data;
+      showTop.value = false; // 关闭弹窗
+    } catch (error) {
+      console.error('处理请求时出错:', error);
+    }
   };
 
 // 监听搜索框关闭时，保存当前搜索词
 const handlePopupClose = () => {
     //console.log('Popup closed');
     // showToast('搜索框关闭了'+search_word.value)
+    list.value = [];
     if (search_word.value.length == 0) {
       const currentKey = gridItems.value.find((item) => item.key === sw.value)?.key;
       console.log('搜索框关闭时候index: ',currentKey);
@@ -160,6 +206,8 @@ const handlePopupClose = () => {
         searchWords.value[currentKey] = search_word.value;
         const index = gridItems.value.findIndex((item) => item.key === currentKey);
         if (index !== -1) {
+            refreshing.value = true;
+            onLoad();
             gridItems.value[index].text = currentKey; // 恢复默认的 key 作为 text
             selected.value[index] = false; // 取消选中状态
         }
@@ -219,9 +267,15 @@ const handlePopupClose = () => {
   
   // 点击 Grid 事件
   const handleGridClick = (index) => {
+    
     const selectedItem = gridItems.value[index];
+
     sw.value = selectedItem.key; // 设置当前类型
     console.log('点击grid： ',sw.value);
+    if (!['公司','船号'].includes(sw.value) && (searchWords.value['公司'] == '' || searchWords.value['船号'] == '')) {
+      showToast('请先选择公司和船号');
+      return;
+    }
     // 如果已经选中过，恢复之前的搜索词；否则清空搜索词
     search_word.value = searchWords.value[selectedItem.key] || '';
     console.log('search_word.value: ',searchWords.value);

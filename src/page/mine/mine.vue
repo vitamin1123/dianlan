@@ -20,19 +20,22 @@
             </div>
         </template>
     </van-cell>
-    <van-cell title="我的工单"  size="large"  is-link to="mywp"> 
+    <van-cell v-if="[1,2,3,4].includes(roleid)" title="我的工单"  size="large"  is-link to="mywp"> 
         <template #value>
             
             <van-tag type="danger">5待审核</van-tag>
         </template>
     </van-cell>
-    <van-cell v-if="['管理员','组长'].includes(rolename)" title="我的待办"  size="large" label="审批" is-link to="mytodo"> 
+    <van-cell v-if="[1,2,3].includes(roleid)" title="我的拉线"  size="large" is-link to="mytodo"> 
+       
+    </van-cell>
+    <van-cell v-if="[1,2,3].includes(roleid)" title="我的待办"  size="large" label="审批" is-link to="mytodo"> 
         <template #value>
             
             <van-tag type="danger">10待办</van-tag>
         </template>
     </van-cell>
-    <van-cell v-if="'管理员'==(rolename)" title="统计"  size="large"  is-link to="myana"> 
+    <van-cell v-if="[1,2].includes(roleid)" title="统计"  size="large"  is-link to="myana"> 
         
     </van-cell>
       <!-- 显示生成的图片 -->
@@ -51,6 +54,7 @@
   const imageSrc = ref(''); // 存储生成的图片 URL
   const username = ref('');
   const rolename = ref('');
+  const roleid = ref(-1);
   
   const generateImage = () => {
     const canvas = document.createElement('canvas'); // 或使用 refs 获取 canvas
@@ -84,6 +88,7 @@
         text.value = response.data[0]['username'][0]
         username.value = response.data[0]['username']
         rolename.value = response.data[0]['rolename']
+        roleid.value = response.data[0]['roleid']
     } catch (error) {
         console.error('Error:', error);
     }

@@ -182,7 +182,7 @@ router.post('/public/api/gaga_post', async (ctx, next) => {
 // 搜索参数
 router.post('/public/api/search_company', async (ctx, next) => {
   const { sw,company,proj,daihao,model,spec,facilities } = ctx.request.body;
-  console.log(sw,company,proj,daihao,model,spec,facilities)
+  console.log('search_company',sw,company,proj,daihao,model,spec,facilities)
   const res = await Dianlan.searchCompany(sw,company,proj,daihao,model,spec,facilities)
   console.log('searchCompany', res)
   ctx.body = {
@@ -192,13 +192,14 @@ router.post('/public/api/search_company', async (ctx, next) => {
 });
 //搜索具体电缆
 router.post('/public/api/search_dl', async (ctx, next) => {
-  const { company,proj,daihao,model,spec,facilities } = ctx.request.body;
-  console.log(company,proj,daihao,model,spec,facilities)
-  const res = await Dianlan.searchDl(company,proj,daihao,model,spec,facilities)
-  console.log('searchDl', res)
+  const { company,proj,daihao,model,spec,facilities,page } = ctx.request.body;
+  console.log('search_dl',company,proj,daihao,model,spec,facilities,page)
+  const res = await Dianlan.searchDl(company,proj,daihao,model,spec,facilities,page)
+  console.log('searchDl',res.totalCount)
   ctx.body = {
     "code": 0,
-    "data": res
+    "totalCount"  : res.totalCount,
+    "data": res.data
   }
 });
 

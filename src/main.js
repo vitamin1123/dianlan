@@ -3,7 +3,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router/index.js'
 import 'amfe-flexible'
-import { Button,Field, Cell, CellGroup, Tabbar, TabbarItem, Tag, Grid, GridItem, Popup, Search, List, Toast, SubmitBar, Card } from 'vant'
+import { Button,Field, Cell, CellGroup, Tabbar, TabbarItem, Tag, Grid, GridItem, Popup, Search, List, Toast, SubmitBar, Card, PullRefresh } from 'vant'
 import { Image as VanImage } from 'vant';
 import 'vant/lib/index.css'
 
@@ -25,5 +25,6 @@ app.use(Card)
 app.use(TabbarItem)
 app.use(Cell)
 app.use(Toast)
+app.use(PullRefresh)
 app.use(CellGroup)
 app.mount('#app')
