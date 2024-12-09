@@ -45,14 +45,14 @@
         v-for="item in show_list"
         :num="item.num"
         :price="item.price"
-        :desc="item.specification"
+        :desc="item.model+'  '+ item.specification"
         :tag="item.proj.substr(-4)"
         :title="item.daihao"
         :thumb="dianlanImage"
         style="--van-card-font-size: 0.4rem;"
         >
         <template #tags>
-            <van-tag v-if="item.model" plain type="primary" style="margin-right: 0.1rem;">{{ item.model }}</van-tag>
+            <van-tag v-if="item.facilities" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities }}</van-tag>
             <van-tag v-if="item.facilities_loca" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
             <van-tag v-if="item.facilities_name" plain type="primary">{{ item.facilities_name }}</van-tag>
         </template>
@@ -89,7 +89,8 @@
   const refreshing = ref(false);
   const page = ref(0);
 
-  
+  let lastRequestTime = 0;
+  const throttleDelay = 1000; 
   // Grid 项数据
   const gridItems = ref([
     { text: '公司', key: '公司' },
@@ -126,6 +127,10 @@
         }
         
         const responseData = await fetchData();
+        if (!responseData) {
+          loading.value = false; // 确保加载状态被重置
+          return;
+        }
         console.log('返回电缆值：', responseData.totalCount,responseData.data);
         for (let i = 0; i < responseData.data.length; i++) {
           show_list.value.push(responseData.data[i]);
@@ -151,6 +156,13 @@
   };
 
   const fetchData = async () => {
+    const now = Date.now();
+    if (now - lastRequestTime < throttleDelay) {
+      // loading.value = false;
+      showToast('请求过于频繁，请稍后再试。');
+      return null; // 如果在节流时间内，不执行函数
+    }
+    lastRequestTime = now;
     // 在 fetchData 中构造 sd 数据
     const url = '/public/api/search_dl';
     const data = {
@@ -236,7 +248,7 @@ const handlePopupClose = () => {
       'daihao': sw.value=='代号'?search_word.value:searchWords.value['代号'],
       'model': sw.value=='型号'?search_word.value:searchWords.value['型号'],
       'spec': sw.value=='规格'?search_word.value:searchWords.value['规格'],
-      'facilities': sw.value=='设备'?search_word.value:searchWords.value['设备'],
+      'facilities_name': sw.value=='设备'?search_word.value:searchWords.value['设备'],
     };
     var url = '/public/api/search_company';
    
@@ -258,7 +270,7 @@ const handlePopupClose = () => {
       }else if (sw.value=='规格'){
         tmp.push({ key: i, title: response.data[i]['specification'] });
       }else if (sw.value=='设备'){
-        tmp.push({ key: i, title: response.data[i]['facilities'] });
+        tmp.push({ key: i, title: response.data[i]['facilities_name'] });
       }
     }
     list.value = tmp;

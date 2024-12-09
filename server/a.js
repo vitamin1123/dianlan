@@ -181,9 +181,9 @@ router.post('/public/api/gaga_post', async (ctx, next) => {
 });
 // 搜索参数
 router.post('/public/api/search_company', async (ctx, next) => {
-  const { sw,company,proj,daihao,model,spec,facilities } = ctx.request.body;
-  console.log('search_company',sw,company,proj,daihao,model,spec,facilities)
-  const res = await Dianlan.searchCompany(sw,company,proj,daihao,model,spec,facilities)
+  const { sw,company,proj,daihao,model,spec,facilities_name } = ctx.request.body;
+  console.log('search_company',sw,company,proj,daihao,model,spec,facilities_name)
+  const res = await Dianlan.searchCompany(sw,company,proj,daihao,model,spec,facilities_name)
   console.log('searchCompany', res)
   ctx.body = {
     "code": 0,

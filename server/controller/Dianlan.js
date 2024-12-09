@@ -12,7 +12,7 @@ a.role = b.id where a.usercode = ? and a.state = 1`,[usercode],dbconfig)
         return res
     },
 
-    async searchDl(company, proj, daihao, model, spec, facilities, start) {
+    async searchDl(company, proj, daihao, model, spec, facilities_name, start) {
         let conditions = [];
         let values = [];
         // 拼接完整的 SQL 查询
@@ -40,9 +40,9 @@ a.role = b.id where a.usercode = ? and a.state = 1`,[usercode],dbconfig)
           conditions.push('specification = ?');
           values.push(spec);
         }
-        if (facilities !== undefined && facilities !== '') {
-          conditions.push('facilities = ?');
-          values.push(facilities);
+        if (facilities_name !== undefined && facilities_name !== '') {
+          conditions.push('facilities_name = ?');
+          values.push(facilities_name);
         }
       
         // 如果有条件，拼接 WHERE 子句
@@ -130,7 +130,7 @@ a.role = b.id where a.usercode = ? and a.state = 1`,[usercode],dbconfig)
             '代号':'distinct daihao',
             '型号':'distinct model',
             '规格':'distinct specification',
-            '设备':'distinct facilities'
+            '设备':'distinct facilities_name'
             
         }
         // 初始化 WHERE 条件数组
@@ -160,7 +160,7 @@ a.role = b.id where a.usercode = ? and a.state = 1`,[usercode],dbconfig)
             values.push(spec);
         }
         if (facilities !== undefined && facilities !== '') {
-            conditions.push('facilities = ?');
+            conditions.push('instr(facilities_name,?)>0');
             values.push(facilities);
         }
 
