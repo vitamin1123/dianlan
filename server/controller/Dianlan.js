@@ -148,7 +148,7 @@ a.role = b.id where a.usercode = ? and a.state = 1`,[usercode],dbconfig)
             values.push(proj);
         }
         if (daihao !== undefined && daihao !== '') {
-            conditions.push('daihao = ?');
+            conditions.push('instr(daihao,?)>0');
             values.push(daihao);
         }
         if (model !== undefined && model !== '') {

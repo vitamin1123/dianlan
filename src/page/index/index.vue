@@ -20,9 +20,16 @@
         </van-cell-group>
       </van-list>
     </van-popup>
-  
+    <van-popup v-model:show="showPicker" destroy-on-close round position="bottom">
+      <van-picker
+        :model-value="pickerValue"
+        :columns="columns"
+        @cancel="showPicker = false"
+        @confirm="onConfirm"
+      />
+    </van-popup>
     <van-grid direction="horizontal" :column-num="3" clickable 
-    style="z-index: 10; position: sticky; top: 0; background-color: #fff;">
+      style="z-index: 10; position: sticky; top: 0; background-color: #fff;">
       <van-grid-item
         v-for="(item, index) in gridItems"
         :key="index"
@@ -57,7 +64,7 @@
             <van-tag v-if="item.facilities_name" plain type="primary">{{ item.facilities_name }}</van-tag>
         </template>
         <template #footer>
-            <van-button size="small">完成拉线</van-button>  
+            <van-button v-if="userStore.userInfo.userRole < 4" :disabled="item.state != 0" size="small" @click="laxian(item)">完成拉线</van-button>
             <van-button size="small">加入工单</van-button>
         </template>
       </van-card>
@@ -73,21 +80,40 @@
   </template>
   
   <script setup>
-  import { ref } from 'vue';
+  import { ref, onMounted } from 'vue';
   import { showToast } from 'vant'
   import dianlanImage from '@/assets/xianlan.jpg';
   import http from '@/api/request';
+  import { useUserStore } from '@/store/userStore';
+  const userStore = useUserStore();
   const show1 = ref(true);
   const showTop = ref(false);
   const sw = ref(''); // 当前选中的类型
   const search_word = ref(''); // 当前输入的搜索词
-  
+
   const list = ref([]);
   const show_list = ref([]);
   const loading = ref(false);
   const finished = ref(false);
   const refreshing = ref(false);
   const page = ref(0);
+
+  const columns = ref([
+      { text: '杭州', value: 'Hangzhou' },
+      { text: '宁波', value: 'Ningbo' },
+      { text: '温州', value: 'Wenzhou' },
+      { text: '绍兴', value: 'Shaoxing' },
+      { text: '湖州', value: 'Huzhou' },
+  ])
+
+  const fieldValue = ref('');
+    const showPicker = ref(false);
+    const pickerValue = ref([]);
+    const onConfirm = ({ selectedValues, selectedOptions }) => {
+      showPicker.value = false;
+      pickerValue.value = selectedValues;
+      fieldValue.value = selectedOptions[0].text;
+    };
 
   let lastRequestTime = 0;
   const throttleDelay = 1000; 
@@ -100,6 +126,11 @@
     { text: '规格', key: '规格' },
     { text: '设备', key: '设备' },
   ]);
+
+  const laxian = (item) => {
+    console.log('完成拉线',item);
+    showPicker.value = true;
+  };
   
   // 选中的状态
   const selected = ref(Array(gridItems.value.length).fill(false));
@@ -293,6 +324,12 @@ const handlePopupClose = () => {
     console.log('search_word.value: ',searchWords.value);
     showTop.value = true; // 显示搜索弹窗
   };
+
+  onMounted( () => {
+    
+    console.log("首页加载啦; ",userStore.userInfo);
+ 
+  })
   
 
   

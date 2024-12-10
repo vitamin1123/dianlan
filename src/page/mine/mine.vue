@@ -49,6 +49,8 @@
   <script setup>
   import { ref, onMounted } from 'vue';
   import http  from '@/api/request';
+  import { useUserStore } from '@/store/userStore';
+  const userStore = useUserStore();
   
   const text = ref(''); // 存储输入的汉字
   const imageSrc = ref(''); // 存储生成的图片 URL
@@ -89,6 +91,8 @@
         username.value = response.data[0]['username']
         rolename.value = response.data[0]['rolename']
         roleid.value = response.data[0]['roleid']
+        userStore.userInfo.userName = response.data[0]['username']
+        userStore.userInfo.userRole = response.data[0]['roleid']
     } catch (error) {
         console.error('Error:', error);
     }
