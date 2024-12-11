@@ -5,18 +5,33 @@ module.exports = {
     
     async getUser (usercode) {
         //console.log('emp_code: ',emp_code)
-        let res = await db.query(`select a.username,b.rolename as rolename,a.role as roleid  
+        let res = await db.query(`select a.username,a.usercode,b.rolename as rolename,a.role as roleid  
 from dev.user a left join dev.role b on 
 a.role = b.id where a.usercode = ? and a.state = 1`,[usercode],dbconfig)
         //console.log('contro_res:  ',res)
         return res
     },
+    async searchLoca (proj, ope) {
+      //console.log('emp_code: ',emp_code)
+      let res = await db.query(`select a.username,c.proj,c.itemname from dev.user a 
+left join dev.loca b on a.loca = b.id left join dev.loca_item c 
+on b.id = c.locaid where c.proj = ? and a.usercode = ?`,[proj, ope],dbconfig)
+      //console.log('contro_res:  ',res)
+      return res
+  },
+
+  async addLaxian (xian_id,proj,ope) {
+    //console.log('emp_code: ',emp_code)
+    let res = await db.query(`update dev.dianlan set last_fangxian = ?,last_fangxian_time=now()  where id = ?`,[ope, xian_id],dbconfig)
+    //console.log('contro_res:  ',res)
+    return res
+},
 
     async searchDl(company, proj, daihao, model, spec, facilities_name, start) {
         let conditions = [];
         let values = [];
         // 拼接完整的 SQL 查询
-        let sql = `SELECT * from dev.dianlan `;
+        let sql = `SELECT a.*,b.username as fangxianren,c.username as last_operator  from dev.dianlan a `;
         let countSql = `SELECT COUNT(*) as totalCount from dev.dianlan `;
       
         // 根据各个字段的值拼接 WHERE 条件
@@ -44,7 +59,7 @@ a.role = b.id where a.usercode = ? and a.state = 1`,[usercode],dbconfig)
           conditions.push('facilities_name = ?');
           values.push(facilities_name);
         }
-      
+        sql += ` left join dev.user b on a.last_fangxian = b.usercode left join dev.user c on a.last_ope = c.usercode `;
         // 如果有条件，拼接 WHERE 子句
         if (conditions.length > 0) {
           const conditionString = conditions.join(' AND ');
@@ -55,6 +70,7 @@ a.role = b.id where a.usercode = ? and a.state = 1`,[usercode],dbconfig)
         // 添加分页支持，LIMIT 10，OFFSET start
         const limit = 10;
         const offset = start || 0;
+        
         sql += ` LIMIT ${limit} OFFSET ${offset}`;
       
         console.log('sql: ', sql, values);

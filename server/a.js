@@ -170,6 +170,28 @@ router.get('/public/api/gaga', async (ctx, next) => {
   }
 });
 
+router.post('/public/api/laxian', async (ctx, next) => {
+  const { xian_id,proj,ope } = ctx.request.body;
+  console.log('laxian', xian_id, proj, ope)
+  const res = await Dianlan.addLaxian(xian_id, proj, ope)
+  
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
+
+router.post('/public/api/search_loca', async (ctx, next) => {
+  const { proj,ope } = ctx.request.body;
+  console.log('search_loca', proj, ope)
+  const res = await Dianlan.searchLoca(proj, ope)
+  
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
+
 router.post('/public/api/gaga_post', async (ctx, next) => {
   const { gaga } = ctx.request.body;
   const res = await Dianlan.getUser(gaga)

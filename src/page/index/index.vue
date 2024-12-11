@@ -64,7 +64,7 @@
             <van-tag v-if="item.facilities_name" plain type="primary">{{ item.facilities_name }}</van-tag>
         </template>
         <template #footer>
-            <van-button v-if="userStore.userInfo.userRole < 4" :disabled="item.state != 0" size="small" @click="laxian(item)">完成拉线</van-button>
+            <van-button v-if="userStore.userInfo.userRole < 4" :disabled="(item.last_fangxian && item.last_fangxian!=userStore.userInfo.userCode)" size="small" @click="laxian(item)">{{ item.fangxianren || '完成拉线' }}</van-button>
             <van-button size="small">加入工单</van-button>
         </template>
       </van-card>
@@ -72,7 +72,7 @@
   </van-pull-refresh>
 </div>  
 
-    <van-submit-bar :price="30500" button-text="提交工单" @submit="onSubmit" style="margin-bottom: 1.33rem;">
+    <van-submit-bar :price="totalPrice" button-text="提交工单" @submit="onSubmit" style="margin-bottom: 1.33rem;">
         <!-- <template #tip>
             你的工作清单里有未全部完成的设备接线，待全部完成后结算 <span @click="onClickLink"></span>
         </template> -->
@@ -97,23 +97,18 @@
   const finished = ref(false);
   const refreshing = ref(false);
   const page = ref(0);
+  const totalPrice = ref(0)
+  const clickItem = ref(null)
 
   const columns = ref([
-      { text: '杭州', value: 'Hangzhou' },
-      { text: '宁波', value: 'Ningbo' },
-      { text: '温州', value: 'Wenzhou' },
-      { text: '绍兴', value: 'Shaoxing' },
-      { text: '湖州', value: 'Huzhou' },
+      { text: '', value: '' },
   ])
 
   const fieldValue = ref('');
-    const showPicker = ref(false);
-    const pickerValue = ref([]);
-    const onConfirm = ({ selectedValues, selectedOptions }) => {
-      showPicker.value = false;
-      pickerValue.value = selectedValues;
-      fieldValue.value = selectedOptions[0].text;
-    };
+  const showPicker = ref(false);
+  const pickerValue = ref([]);
+
+  
 
   let lastRequestTime = 0;
   const throttleDelay = 1000; 
@@ -127,8 +122,33 @@
     { text: '设备', key: '设备' },
   ]);
 
-  const laxian = (item) => {
-    console.log('完成拉线',item);
+  const onConfirm = async({ selectedValues, selectedOptions }) => {
+    console.log('selectedValues:', selectedValues[0]);
+    const res = await http.post('/public/api/laxian', {
+      ope: userStore.userInfo.userCode,
+      proj: 'N'+clickItem.value.proj.slice(-4),
+      xian_id: clickItem.value.id
+    });
+    if (res.data.affectedRows > 0) {
+      showToast('拉线成功')
+    }
+    showPicker.value = false;
+    pickerValue.value = selectedValues;
+    fieldValue.value = selectedOptions[0].text;
+  };
+
+  const laxian = async(item) => {
+    console.log('完成拉线',item,searchWords.value['船号']);
+    clickItem.value = item;
+    const res = await http.post('/public/api/search_loca', {
+      ope: userStore.userInfo.userCode,
+      proj: 'N'+item.proj.slice(-4)
+    });
+    console.log('拉线： ', res.data);
+    columns.value = res.data.map(item => ({
+      text: item.itemname,  // 将 itemname 作为 text
+      value: item.itemname   // 将 itemname 作为 value
+    }));
     showPicker.value = true;
   };
   

@@ -85,7 +85,7 @@
 
   const fetchData = async () => {
     try {
-        const response = await http.post('/public/api/gaga_post', { gaga: '10030203' });
+        const response = await http.post('/public/api/gaga_post', { gaga: '10030204' });
         console.log('Response:', response.data);
         text.value = response.data[0]['username'][0]
         username.value = response.data[0]['username']
@@ -93,6 +93,7 @@
         roleid.value = response.data[0]['roleid']
         userStore.userInfo.userName = response.data[0]['username']
         userStore.userInfo.userRole = response.data[0]['roleid']
+        userStore.userInfo.userCode = response.data[0]['usercode']
     } catch (error) {
         console.error('Error:', error);
     }
