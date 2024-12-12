@@ -31,7 +31,7 @@ on b.id = c.locaid where c.proj = ? and a.usercode = ?`,[proj, ope],dbconfig)
         let conditions = [];
         let values = [];
         // 拼接完整的 SQL 查询
-        let sql = `SELECT a.*,b.username as fangxianren,c.username as last_operator  from dev.dianlan a `;
+        let sql = `SELECT a.*,b.username as fangxianren,c.username as last_operator,d.price as baseprice  from dev.dianlan a `;
         let countSql = `SELECT COUNT(*) as totalCount from dev.dianlan `;
       
         // 根据各个字段的值拼接 WHERE 条件
@@ -59,7 +59,7 @@ on b.id = c.locaid where c.proj = ? and a.usercode = ?`,[proj, ope],dbconfig)
           conditions.push('facilities_name = ?');
           values.push(facilities_name);
         }
-        sql += ` left join dev.user b on a.last_fangxian = b.usercode left join dev.user c on a.last_ope = c.usercode `;
+        sql += ` left join dev.baseprice d on a.specification = d.model left join dev.user b on a.last_fangxian = b.usercode left join dev.user c on a.last_ope = c.usercode `;
         // 如果有条件，拼接 WHERE 子句
         if (conditions.length > 0) {
           const conditionString = conditions.join(' AND ');

@@ -27,6 +27,33 @@
         @cancel="showPicker = false"
         @confirm="onConfirm"
       />
+      
+    </van-popup>
+    <van-popup v-model:show="showCartPopup" destroy-on-close round position="bottom" :style="{ height: '80%' }">
+      <van-swipe-cell v-for="(item,index) in cart">
+        
+        <van-card
+        
+        :num="item.num"
+        :price="item.price"
+        :desc="item.model+'  '+ item.specification"
+        :tag="item.proj.substr(-4)"
+        :title="item.daihao"
+        :thumb="dianlanImage"
+        style="--van-card-font-size: 0.4rem;"
+        >
+        <template #tags>
+            <van-tag v-if="item.facilities" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities }}</van-tag>
+            <van-tag v-if="item.facilities_loca" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
+            <van-tag v-if="item.facilities_name" plain type="primary">{{ item.facilities_name }}</van-tag>
+        </template>
+        
+      </van-card>
+        <template #right>
+          <van-button square type="danger" text="删除" @click="delCart(index)" class="delete-button"/>
+        </template>
+      </van-swipe-cell>
+      
     </van-popup>
     <van-grid direction="horizontal" :column-num="3" clickable 
       style="z-index: 10; position: sticky; top: 0; background-color: #fff;">
@@ -64,19 +91,46 @@
             <van-tag v-if="item.facilities_name" plain type="primary">{{ item.facilities_name }}</van-tag>
         </template>
         <template #footer>
-            <van-button v-if="userStore.userInfo.userRole < 4" :disabled="(item.last_fangxian && item.last_fangxian!=userStore.userInfo.userCode)" size="small" @click="laxian(item)">{{ item.fangxianren || '完成拉线' }}</van-button>
-            <van-button size="small">加入工单</van-button>
+            <!-- <van-button v-if="userStore.userInfo.userRole < 4" :disabled="(item.last_fangxian && item.last_fangxian!=userStore.userInfo.userCode)" size="small" @click="laxian(item)">{{ item.fangxianren || '完成拉线' }}
+
+            </van-button> -->
+            <van-button
+              v-if="userStore.userInfo.userRole < 4"
+              :disabled="item.last_fangxian && item.last_fangxian !== userStore.userInfo.userCode"
+              :type="(item.last_fangxian && item.last_fangxian !== userStore.userInfo.userCode) ? 'warning' : 'default'"
+              size="small"
+              @click="laxian(item)"
+            >{{ item.fangxianren || '完成拉线' }}</van-button>
+            <van-button size="small" @click="addCart(item)">加入工单</van-button>
         </template>
       </van-card>
     </van-list>
   </van-pull-refresh>
 </div>  
 
+
+
     <van-submit-bar :price="totalPrice" button-text="提交工单" @submit="onSubmit" style="margin-bottom: 1.33rem;">
+        <template #default>
+          <div style="display: flex; justify-content: flex-end; align-items: center;">
+            <van-action-bar-icon
+              icon="add-o"
+              text="全选"
+              @click="addAll2Cart()"
+            />
+            <van-action-bar-icon
+              icon="cart-o"
+              :badge="cart.length"
+              text="已选"
+              :class="{ 'scale-animation': isScaling }"
+              @click="showCartPopup=true"
+            />
+          </div>
+        </template>
         <!-- <template #tip>
             你的工作清单里有未全部完成的设备接线，待全部完成后结算 <span @click="onClickLink"></span>
-        </template> -->
-        </van-submit-bar>
+        </template>  -->
+    </van-submit-bar>
   </template>
   
   <script setup>
@@ -84,20 +138,21 @@
   import { showToast } from 'vant'
   import dianlanImage from '@/assets/xianlan.jpg';
   import http from '@/api/request';
+  import { showConfirmDialog  } from 'vant';
   import { useUserStore } from '@/store/userStore';
   const userStore = useUserStore();
-  const show1 = ref(true);
+  const cart = ref([]);
   const showTop = ref(false);
   const sw = ref(''); // 当前选中的类型
   const search_word = ref(''); // 当前输入的搜索词
-
+  const isScaling = ref(false);
   const list = ref([]);
   const show_list = ref([]);
   const loading = ref(false);
   const finished = ref(false);
   const refreshing = ref(false);
   const page = ref(0);
-  const totalPrice = ref(0)
+  const totalPrice = ref(0.00)
   const clickItem = ref(null)
 
   const columns = ref([
@@ -106,9 +161,8 @@
 
   const fieldValue = ref('');
   const showPicker = ref(false);
+  const showCartPopup = ref(false);
   const pickerValue = ref([]);
-
-  
 
   let lastRequestTime = 0;
   const throttleDelay = 1000; 
@@ -131,25 +185,120 @@
     });
     if (res.data.affectedRows > 0) {
       showToast('拉线成功')
+      const targetItem = show_list.value.find(item => item.id === clickItem.value.id);
+      if (targetItem) {
+        targetItem.fangxianren = userStore.userInfo.userName; // 更新放线人
+        targetItem.last_fangxian = userStore.userInfo.userCode; // 更新最后放线人
+      }
+
+      console.log('更新后的 show_list:', show_list.value);
+      
     }
     showPicker.value = false;
     pickerValue.value = selectedValues;
     fieldValue.value = selectedOptions[0].text;
   };
 
+  const delCart = (index) => {
+    cart.value.splice(index, 1);
+    totalPrice.value = cart.value.reduce((total, item) => total + item.baseprice*100, 0);
+    console.log('车内容：', cart.value);
+  };
+
+  const addAll2Cart = () => {
+    console.log('尝试添加所有到车：', show_list.value);
+
+    // 筛选出未在购物车中的商品
+    const newItems = show_list.value.filter(item => 
+      !cart.value.some(cartItem => cartItem.id === item.id)
+    );
+
+    if (newItems.length === 0) {
+      // 如果所有商品都已存在，显示提示
+      showToast('所有都已经加入');
+    } else {
+      // 将未在购物车中的商品加入购物车
+      cart.value.push(...newItems);
+      totalPrice.value += newItems.reduce((total, item) => total + item.baseprice*100, 0);
+      console.log('车内容：', cart.value);
+
+      // 触发放大缩小动画
+      isScaling.value = true;
+
+      // 在动画完成后移除类名
+      setTimeout(() => {
+        isScaling.value = false;
+      }, 300); // 与 CSS 动画时间一致
+    }
+  };
+
+  const addCart = (item) => {
+    console.log('尝试添加到车：', item);
+
+    // 检查 item.id 是否已经存在于 cart 中
+    const isInCart = cart.value.some(cartItem => cartItem.id === item.id);
+
+    if (isInCart) {
+      // 显示提示消息
+      showToast('已经加入');
+    } else {
+      // 添加到购物车
+      cart.value.push(item);
+      console.log('车内容：', cart.value);
+      totalPrice.value += item.baseprice*100;
+      // 触发放大缩小动画
+      isScaling.value = true;
+
+      // 在动画完成后移除类名
+      setTimeout(() => {
+        isScaling.value = false;
+      }, 300); // 与 CSS 动画时间一致
+    }
+  };
+
   const laxian = async(item) => {
-    console.log('完成拉线',item,searchWords.value['船号']);
-    clickItem.value = item;
-    const res = await http.post('/public/api/search_loca', {
-      ope: userStore.userInfo.userCode,
-      proj: 'N'+item.proj.slice(-4)
-    });
-    console.log('拉线： ', res.data);
-    columns.value = res.data.map(item => ({
-      text: item.itemname,  // 将 itemname 作为 text
-      value: item.itemname   // 将 itemname 作为 value
-    }));
-    showPicker.value = true;
+    console.log('拉线： ',item);
+    if (item.last_fangxian && item.last_fangxian==userStore.userInfo.userCode){
+      showConfirmDialog({
+        title: '取消拉线？',
+        message:
+          '',
+      })
+        .then(async() => {
+          // on confirm
+          const res = await http.post('/public/api/laxian', {
+            ope: null,
+            proj: 'N'+item.proj.slice(-4),
+            xian_id: item.id
+          })
+          if (res.data.affectedRows > 0) {
+            showToast('取消拉线成功！')
+            const targetItem = show_list.value.find(item1 => item1.id === item.id);
+            if (targetItem) {
+              targetItem.fangxianren = null; // 更新放线人
+              targetItem.last_fangxian = null; // 更新最后放线人
+            }
+            console.log(show_list.value);
+          }
+        })
+        .catch(() => {
+          // on cancel
+        });
+    }else{
+      console.log('完成拉线',item,searchWords.value['船号']);
+      clickItem.value = item;
+      const res = await http.post('/public/api/search_loca', {
+        ope: userStore.userInfo.userCode,
+        proj: 'N'+item.proj.slice(-4) 
+      });
+      console.log('拉线： ', res.data);
+      columns.value = res.data.map(item => ({
+        text: item.itemname,  // 将 itemname 作为 text
+        value: item.itemname   // 将 itemname 作为 value
+      }));
+      showPicker.value = true;
+    }
+   
   };
   
   // 选中的状态
@@ -248,6 +397,7 @@
       
       list.value = [];
       searchWords.value[sw.value] = title; // 保存搜索词
+      page.value = 0;
       const responseData = await fetchData();
       console.log('返回电缆值：', responseData.totalCount,responseData.data);
       show_list.value = responseData.data;
@@ -362,6 +512,26 @@ const handlePopupClose = () => {
     margin-bottom: 3.5rem; /* 给内容容器添加底部外边距，避免被 submit-bar 遮挡 */
     overflow-y: auto; /* 保证内容可以滚动 */
     max-height: calc(100vh - 100px); /* 动态调整高度 */
+  }
+
+  .scale-animation {
+    animation: scale-animation 0.3s ease-in-out;
+  }
+
+  @keyframes scale-animation {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.3);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .delete-button {
+    height: 100%;
   }
   </style>
   
