@@ -27,6 +27,28 @@ on b.id = c.locaid where c.proj = ? and a.usercode = ?`,[proj, ope],dbconfig)
     return res
 },
 
+//getUserList 
+async getUserList (page) {
+  console.log('看看page: ',page)
+  let res = await db.query(`select a.*,b.username as leadername,c.locaname from dev.user a left join dev.user b on a.dleader = b.usercode left join dev.loca c on a.loca = c.id LIMIT 10 OFFSET ? `,[page+''],dbconfig)
+  //console.log('contro_res:  ',res)
+  return res
+},
+
+// getUserList
+async getLeaderList () {
+
+  let res = await db.query(`select * from dev.user where role in (2,3)  `,[],dbconfig)
+  //console.log('contro_res:  ',res)
+  return res
+},
+
+async searchCode (code) {
+  let res = await db.query(`select * from dev.user where usercode = ? `,[code],dbconfig)
+  //console.log('contro_res:  ',res)
+  return res
+},
+
     async searchDl(company, proj, daihao, model, spec, facilities_name, start) {
         let conditions = [];
         let values = [];

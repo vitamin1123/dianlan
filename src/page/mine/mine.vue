@@ -38,6 +38,9 @@
     <van-cell v-if="[1,2].includes(roleid)" title="统计"  size="large"  is-link to="myana"> 
         
     </van-cell>
+    <van-cell v-if="[1,2].includes(roleid)" title="人员管理"  size="large"  is-link to="usermana"> 
+        
+      </van-cell>
       <!-- 显示生成的图片 -->
       
   
@@ -85,7 +88,7 @@
 
   const fetchData = async () => {
     try {
-        const response = await http.post('/public/api/gaga_post', { gaga: '10030204' });
+        const response = await http.post('/public/api/gaga_post', { gaga: '10030203' });
         console.log('Response:', response.data);
         text.value = response.data[0]['username'][0]
         username.value = response.data[0]['username']

@@ -4,7 +4,7 @@ import App from './App.vue'
 import { createPinia } from 'pinia'
 import router from './router/index.js'
 import 'amfe-flexible'
-import { Button,Field, Cell, CellGroup, Tabbar, TabbarItem, Tag, Grid, GridItem, Popup, Search, List, Toast, SubmitBar, Card, PullRefresh,Dialog, SwipeCell, ActionBar, ActionBarIcon, ActionBarButton  ,Picker  } from 'vant'
+import { Button,Field, Cell, CellGroup,Form, Tabbar, TabbarItem, Tag, Grid, GridItem, Popup, Search, List, Toast, SubmitBar, Card, PullRefresh,Dialog, SwipeCell, ActionBar, ActionBarIcon, ActionBarButton,FloatingBubble   ,Picker  } from 'vant'
 import { Image as VanImage } from 'vant';
 import 'vant/lib/index.css'
 
@@ -14,6 +14,7 @@ app.use(router)
 
 app.use(VanImage);
 app.use(Button)
+app.use(Form)
 app.use(Field)
 app.use(Tabbar)
 app.use(GridItem)
@@ -30,6 +31,7 @@ app.use(ActionBarIcon)
 app.use(SwipeCell)
 app.use(ActionBarButton)
 app.use(Cell)
+app.use(FloatingBubble)
 app.use(Dialog)
 app.use(Toast)
 app.use(Picker)

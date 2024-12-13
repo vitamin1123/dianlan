@@ -30,16 +30,20 @@
       
     </van-popup>
     <van-popup v-model:show="showCartPopup" destroy-on-close round position="bottom" :style="{ height: '80%' }">
+      
+        <van-button type="primary"  @click="rmCart" size="large">
+          移除全部
+          </van-button> 
       <van-swipe-cell v-for="(item,index) in cart">
         
         <van-card
         
         :num="item.num"
-        :price="item.price"
+        :price="item.baseprice"
         :desc="item.model+'  '+ item.specification"
         :tag="item.proj.substr(-4)"
         :title="item.daihao"
-        :thumb="dianlanImage"
+        
         style="--van-card-font-size: 0.4rem;"
         >
         <template #tags>
@@ -47,6 +51,9 @@
             <van-tag v-if="item.facilities_loca" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
             <van-tag v-if="item.facilities_name" plain type="primary">{{ item.facilities_name }}</van-tag>
         </template>
+        <!-- <template #footer>
+          <van-tag type="danger">{{ item.baseprice }}</van-tag>
+        </template> -->
         
       </van-card>
         <template #right>
@@ -78,7 +85,7 @@
     <van-card
         v-for="item in show_list"
         :num="item.num"
-        :price="item.price"
+        :price="item.baseprice"
         :desc="item.model+'  '+ item.specification"
         :tag="item.proj.substr(-4)"
         :title="item.daihao"
@@ -175,6 +182,12 @@
     { text: '规格', key: '规格' },
     { text: '设备', key: '设备' },
   ]);
+
+  const rmCart = () => {
+    cart.value = [];
+    totalPrice.value = 0.00;
+    showCartPopup.value = false;
+  };
 
   const onConfirm = async({ selectedValues, selectedOptions }) => {
     console.log('selectedValues:', selectedValues[0]);

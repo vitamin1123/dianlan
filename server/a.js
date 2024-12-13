@@ -201,6 +201,51 @@ router.post('/public/api/gaga_post', async (ctx, next) => {
     "data": res
   }
 });
+
+router.post('/public/api/get_user_list', async (ctx, next) => {
+  
+  const { page } = ctx.request.body;
+  console.log('getUserList',page)
+  const res = await Dianlan.getUserList(page)
+  console.log('getUserList',  res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
+
+router.post('/public/api/search_user_code', async (ctx, next) => {
+  const { code } = ctx.request.body;
+  console.log('search_user_code',code)
+  const res = await Dianlan.searchCode(code)
+  console.log('search_user_code',  res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
+
+router.post('/public/api/get_leader_list', async (ctx, next) => {
+  const { sw } = ctx.request.body; 
+  console.log('getLeaderList',sw)
+  const res = await Dianlan.getLeaderList()
+  var haha = []
+  for (var i in res) {
+    var m = util1.match(res[i]['username']+res[i]['usercode'], sw);
+    if (m) {
+      haha.push({
+          'username': res[i]['username'],
+          'usercode': res[i]['usercode']
+        })
+     }
+    
+}
+  console.log('getLeaderList',  res)
+  ctx.body = {
+    "code": 0,
+    "data": haha
+  }
+});
 // 搜索参数
 router.post('/public/api/search_company', async (ctx, next) => {
   const { sw,company,proj,daihao,model,spec,facilities_name } = ctx.request.body;

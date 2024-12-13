@@ -32,6 +32,12 @@ const routes = [
         name: 'myana',
         component: () => import("@/page/myana/myana.vue"),
 
+    },
+    {
+        path:"/usermana",
+        name: 'usermana',
+        component: () => import("@/page/usermana/usermana.vue"),
+
     }
 ];
 
