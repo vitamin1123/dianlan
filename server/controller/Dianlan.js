@@ -27,18 +27,103 @@ on b.id = c.locaid where c.proj = ? and a.usercode = ?`,[proj, ope],dbconfig)
     return res
 },
 
+async modUser (sw,type,user) {
+  let res;
+  if (type == '区域'){
+    res = await db.query(`update dev.user set loca =? where usercode =? `,[sw, user.usercode],dbconfig)
+  }else if (type == '上级'){
+    res = await db.query(`update dev.user set dleader =? where usercode =? `,[sw, user.usercode],dbconfig)
+  }
+  return res
+},
+
 //getUserList 
-async getUserList (page) {
-  console.log('看看page: ',page)
-  let res = await db.query(`select a.*,b.username as leadername,c.locaname from dev.user a left join dev.user b on a.dleader = b.usercode left join dev.loca c on a.loca = c.id LIMIT 10 OFFSET ? `,[page+''],dbconfig)
-  //console.log('contro_res:  ',res)
+async getUserList(sw, page) {
+  console.log('看看page: ', page);
+  
+  let res;
+  let countRes;
+
+  if (sw && sw.length > 0) {
+    // 查询用户列表
+    res = await db.query(`
+      SELECT a.*, b.username AS leadername, c.locaname
+      FROM dev.user a
+      LEFT JOIN dev.user b ON a.dleader = b.usercode
+      LEFT JOIN dev.loca c ON a.loca = c.id
+    `, [], dbconfig);
+
+    // 查询总数
+    countRes = await db.query(`
+      SELECT COUNT(*) AS totalCount
+      FROM dev.user a
+      LEFT JOIN dev.user b ON a.dleader = b.usercode
+      LEFT JOIN dev.loca c ON a.loca = c.id
+    `, [], dbconfig);
+
+  } else {
+    // 查询带分页的用户列表
+    res = await db.query(`
+      SELECT a.*, b.username AS leadername, c.locaname
+      FROM dev.user a
+      LEFT JOIN dev.user b ON a.dleader = b.usercode
+      LEFT JOIN dev.loca c ON a.loca = c.id
+      LIMIT 10 OFFSET ?
+    `, [page + ''], dbconfig);
+
+    // 查询总数
+    countRes = await db.query(`
+      SELECT COUNT(*) AS totalCount
+      FROM dev.user a
+      LEFT JOIN dev.user b ON a.dleader = b.usercode
+      LEFT JOIN dev.loca c ON a.loca = c.id
+    `, [], dbconfig);
+  }
+
+  return {
+    data: res,
+    totalCount: countRes[0].totalCount // 总数是查询结果的第一个字段
+  };
+},
+
+
+async addUser(username,usercode,role,shangji,quyu){
+  // 初始化字段和值
+  let columns = ['username', 'usercode', 'role', 'state'];
+  let values = ['?', '?', '?', '1'];
+  let params = [username, usercode, role];
+
+  // 动态拼接字段和参数
+  if (shangji) {
+    columns.push('dleader');
+    values.push('?');
+    params.push(shangji);
+  }
+
+  if (quyu) {
+    columns.push('loca');
+    values.push('?');
+    params.push(quyu);
+  }
+
+  // 构造 SQL 语句
+  let sql = `INSERT INTO dev.user (${columns.join(', ')}) VALUES (${values.join(', ')})`;
+
+  // 执行数据库查询
+  let res = await db.query(sql, params, dbconfig);
+
   return res
 },
 
 // getUserList
-async getLeaderList () {
-
-  let res = await db.query(`select * from dev.user where role in (2,3)  `,[],dbconfig)
+async getLeaderList (type) {
+  let res
+  if (type == '上级'){
+    res = await db.query(`select * from dev.user where role in (2,3)  `,[],dbconfig)
+  }else if (type == '区域'){
+    res = await db.query(`select id as usercode,locaname as username from dev.loca `,[],dbconfig)
+  }
+  
   //console.log('contro_res:  ',res)
   return res
 },

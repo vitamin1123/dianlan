@@ -204,13 +204,25 @@ router.post('/public/api/gaga_post', async (ctx, next) => {
 
 router.post('/public/api/get_user_list', async (ctx, next) => {
   
-  const { page } = ctx.request.body;
-  console.log('getUserList',page)
-  const res = await Dianlan.getUserList(page)
-  console.log('getUserList',  res)
+  const { sw,page } = ctx.request.body;
+  console.log('getUserList',sw,page)
+  const res = await Dianlan.getUserList(sw,page)
+  var haha = []
+  console.log('getUserListhhhhh',  res)
+  if(sw){
+    for (var i in res.data) {
+      var m = util1.match(res.data[i]['username']+res.data[i]['usercode'], sw);
+      if (m) {
+        haha.push(res.data[i])
+       }
+      
+    }
+  }
+  
   ctx.body = {
     "code": 0,
-    "data": res
+    "data": sw?haha:res.data,
+    "totalCount": sw?haha.length:res.totalCount
   }
 });
 
@@ -225,10 +237,32 @@ router.post('/public/api/search_user_code', async (ctx, next) => {
   }
 });
 
+router.post('/public/api/add_user', async (ctx, next) => {
+  const { username,usercode,role,shangji,quyu } = ctx.request.body;
+  console.log('add_user',username,usercode,role,shangji,quyu)
+  const res = await Dianlan.addUser(username,usercode,role,shangji,quyu)
+  console.log('add_user',res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
+
+router.post('/public/api/mod_user', async (ctx, next) => {
+  const { sw,type,user } = ctx.request.body;
+  console.log('mod_user',sw,type,user)
+  const res = await Dianlan.modUser(sw,type,user)
+  console.log('mod_user',res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
+
 router.post('/public/api/get_leader_list', async (ctx, next) => {
-  const { sw } = ctx.request.body; 
-  console.log('getLeaderList',sw)
-  const res = await Dianlan.getLeaderList()
+  const { sw,type } = ctx.request.body; 
+  console.log('getLeaderList',sw,type)
+  const res = await Dianlan.getLeaderList(type)
   var haha = []
   for (var i in res) {
     var m = util1.match(res[i]['username']+res[i]['usercode'], sw);
