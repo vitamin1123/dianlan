@@ -32,8 +32,8 @@
             <van-tag v-if="item.facilities_name" plain type="primary">{{ item.facilities_name }}</van-tag>
         </template>
         <template #footer>
-          <van-button v-if="item.role==3"  :plain="(item.locaname?true:false)" :color="(item.locaname?'#166ee3':'#e3168b')" size="small" @click="setLoca(index,item)">{{ item.locaname || '设定区域' }} </van-button>
-          <van-button  :plain="(item.leadername?true:false)" :color="(item.leadername?'#a2768a':'#166ee3')" size="small" @click="setDleader(index,item)">{{ item.leadername || '设定上级' }}</van-button>
+          <van-button  :plain="(item.role?true:false)" :color="(item.role?'#166ee3':'#e3168b')" size="small" @click="setLoca(index,item)">{{ '修改角色' }} </van-button>
+          <van-button  :color="(item.leadername?'#a2768a':'#166ee3')" size="small" @click="setDleader(index,item)">{{ item.leadername || '设定上级' }}</van-button>
         </template>
         
     </van-card>
@@ -76,7 +76,7 @@
                     label="上级"
                     @click="ssw('上级')"
                     placeholder="选择上级"
-                    :rules="['3','4'].includes(juese) ? [{ required: true, message: '请填写上级' }] : []"
+                    :rules="['4','5'].includes(juese) ? [{ required: true, message: '请填写上级' }] : []"
                 />
                 <van-field
                     v-if="juese=='3'"
@@ -150,14 +150,16 @@ const tmp1 = ref(null);
 const role_dic = ref({
     1: '超级管理员',
     2: '管理员',
-    3: '班组长',
-    4: '施工员',
+    3: '生产主管',
+    4: '班组长',
+    5: '施工员',
 })
 const tag_dic = ref({
     1: '#DC143C',
     2: '#7232dd',
-    3: '#4169E1',
-    4: 'warning',
+    3: '#006400',
+    4: '#4169E1',
+    5: 'warning',
 })
 const searchUserCode = async () => {
     console.log('搜索： ',usercode.value)
@@ -171,8 +173,9 @@ const searchUserCode = async () => {
 
 const columns = [
       { text: '管理员', value: '2' },
-      { text: '班组长', value: '3' },
-      { text: '施工员', value: '4' }
+      { text: '生产主管', value: '3' },
+      { text: '班组长', value: '4' },
+      { text: '施工员', value: '5' }
     ];
 const fieldValue = ref('');
 const juese = ref('');
@@ -181,11 +184,24 @@ const showPicker1 = ref(false);
 const pickerValue = ref([]);
 const showPicker2 = ref(false);
 const pickerValue2 = ref([]);
-const onConfirm = ({ selectedValues, selectedOptions }) => {
+const isSetloca = ref(false)
+const onConfirm = async({ selectedValues, selectedOptions }) => {
     showPicker.value = false;
-    pickerValue.value = selectedValues;
-    fieldValue.value = selectedOptions[0].text;
-    juese.value = selectedOptions[0].value;
+    if (isSetloca.value) {
+        console.log('设置角色： ',selectedOptions[0].value)
+        const res = await http.post('/public/api/mod_user', {'sw': selectedOptions[0].value, 'type': search_type.value, 'user':tmp1.value});
+        if (res.data.affectedRows == 1) {
+            showSuccessToast('修改成功！');
+            load()
+        } 
+        return;
+    }else{
+        
+        pickerValue.value = selectedValues;
+        fieldValue.value = selectedOptions[0].text;
+        juese.value = selectedOptions[0].value;
+    }
+    
 };
 const columns1 = ref([]);
 const fieldValue1 = ref('');
@@ -275,9 +291,10 @@ const onSubmit = async () => {
 }
 
 const setLoca = async (index,item) => {
-    console.log('设定区域： ',index,item)
-    search_type.value = '区域';
-    showPicker2.value = true;
+    console.log('设定角色： ',index,item)
+    search_type.value = '角色';
+    showPicker.value = true
+    isSetloca.value = true;
     tmp1.value = item;
 }
 

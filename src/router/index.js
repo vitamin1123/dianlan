@@ -38,6 +38,12 @@ const routes = [
         name: 'usermana',
         component: () => import("@/page/usermana/usermana.vue"),
 
+    },
+    {
+        path:"/work",
+        name: 'work',
+        component: () => import("@/page/work/work.vue"),
+
     }
 ];
 

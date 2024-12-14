@@ -11,11 +11,11 @@ a.role = b.id where a.usercode = ? and a.state = 1`,[usercode],dbconfig)
         //console.log('contro_res:  ',res)
         return res
     },
-    async searchLoca (proj, ope) {
+    async searchLoca ( ope) {
       //console.log('emp_code: ',emp_code)
-      let res = await db.query(`select a.username,c.proj,c.itemname from dev.user a 
+      let res = await db.query(`select a.username,c.itemname from dev.user a 
 left join dev.loca b on a.loca = b.id left join dev.loca_item c 
-on b.id = c.locaid where c.proj = ? and a.usercode = ?`,[proj, ope],dbconfig)
+on b.id = c.locaid where a.usercode = ?`,[ ope],dbconfig)
       //console.log('contro_res:  ',res)
       return res
   },
@@ -33,6 +33,8 @@ async modUser (sw,type,user) {
     res = await db.query(`update dev.user set loca =? where usercode =? `,[sw, user.usercode],dbconfig)
   }else if (type == '上级'){
     res = await db.query(`update dev.user set dleader =? where usercode =? `,[sw, user.usercode],dbconfig)
+  }else if (type == '角色'){
+    res = await db.query(`update dev.user set role =? where usercode =? `,[sw, user.usercode],dbconfig)
   }
   return res
 },
@@ -119,7 +121,7 @@ async addUser(username,usercode,role,shangji,quyu){
 async getLeaderList (type) {
   let res
   if (type == '上级'){
-    res = await db.query(`select * from dev.user where role in (2,3)  `,[],dbconfig)
+    res = await db.query(`select * from dev.user where role in (2,3,4)  `,[],dbconfig)
   }else if (type == '区域'){
     res = await db.query(`select id as usercode,locaname as username from dev.loca `,[],dbconfig)
   }

@@ -182,9 +182,9 @@ router.post('/public/api/laxian', async (ctx, next) => {
 });
 
 router.post('/public/api/search_loca', async (ctx, next) => {
-  const { proj,ope } = ctx.request.body;
+  const { ope } = ctx.request.body;
   console.log('search_loca', proj, ope)
-  const res = await Dianlan.searchLoca(proj, ope)
+  const res = await Dianlan.searchLoca( ope)
   
   ctx.body = {
     "code": 0,
