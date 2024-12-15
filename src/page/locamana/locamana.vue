@@ -25,29 +25,36 @@
   
         <!-- 底部列表部分 -->
         <van-col span="12" class="list-container">
-          <div class="list">
-            <p class="list-title">区域列表</p>
-            <van-list :finished="finished" finished-text="没有更多了" @load="loadMore">
-              <van-cell
-                v-for="item in leftList"
-                :key="item.id"
-                :title="item.name"
-                @click="leftClick(item)"
-              />
-            </van-list>
-          </div>
+            <div class="list">
+                <van-search v-model="sw_value1" placeholder="搜索区域列表" @search="loca_search"/>
+                <van-list :finished="finished" finished-text="" @load="loadMore">
+                <van-swipe-cell v-for="item in leftFilterList"
+                :key="item.id">
+                <van-cell
+                    :title="item.name"
+                    @click="leftClick(item)"
+                />
+                <template #right>
+                    <van-button square type="danger" text="删除" />
+                    <van-button square type="primary" text="修改" />
+                </template>
+                </van-swipe-cell>
+                </van-list>
+            </div>
         </van-col>
   
         <van-col span="12" class="list-container">
-          <div class="list">
-            <p class="list-title">明细列表</p>
-            <van-list :finished="finished" finished-text="没有更多了" @load="loadMore">
-              <van-cell
-                v-for="item in rightList"
-                :key="item.id"
-                :title="item.name"
-                
-              />
+       <div class="list">
+          <!-- <p class="list-title">明细列表</p> -->
+            <van-search v-model="sw_value2" placeholder="搜索明细列表" @search="loca_item_search"/>
+            <van-list :finished="finished" finished-text="" @load="loadMore">
+            <van-swipe-cell v-for="item in rightFilterList" :key="item.id">
+              <van-cell :title="item.name" />
+              <template #right>
+                <van-button square type="danger" text="删除" />
+                <van-button square type="primary" text="修改" />
+              </template>
+            </van-swipe-cell>
             </van-list>
           </div>
         </van-col>
@@ -56,21 +63,52 @@
   </template>
   
   <script setup>
-  import { ref,onMounted } from 'vue';
+  import { ref, onMounted } from 'vue';
   import { showToast } from 'vant';
   import http from '@/api/request';
+  import Pinyin from 'pinyin-match';
   const leftList = ref([
-    { id: 1, name: '选项 A' },
-    { id: 2, name: '选项 B' },
-    { id: 3, name: '选项 C' },
+    { id: 1, name: '网络不佳' },
   ]);
+  const leftFilterList = ref([])
   
+  const sw_value1 = ref('');
+  const sw_value2 = ref('');
   const selectedLoca = ref(null);
   const showTop = ref(false);
   const addType = ref(0)
-  const rightList = ref([
-    
-  ]);
+  const rightList = ref([]);
+  const rightFilterList = ref([]);
+  const loca_item_search = (value) => {
+    console.log('搜索',value);
+    if (value == '') {
+      rightFilterList.value = rightList.value;
+      return;
+    }
+    const matches = []
+    rightList.value.forEach(item => {
+      let metchRes = Pinyin.match(item.name, value);
+      if(metchRes)
+        matches.push(item)
+    });
+    console.log(matches);
+    rightFilterList.value = matches;
+  };
+  const loca_search = (value) => {
+    console.log('搜索',value);
+    if (value == '') {
+      leftFilterList.value = leftList.value;
+      return;
+    }
+    const matches = []
+    leftList.value.forEach(item => {
+      let metchRes = Pinyin.match(item.name, value);
+      if(metchRes)
+        matches.push(item)
+    });
+    console.log(matches);
+    leftFilterList.value = matches;
+  };
   const text = ref(''); 
   const finished = ref(false);
   const confirmAdd = async () => {
@@ -162,6 +200,7 @@
       id: item.id,
       name: item.itemname,
     }));
+    rightFilterList.value = rightList.value;
   } catch (error) {
     console.error('请求失败:', error);
   }
@@ -182,9 +221,10 @@
         id: item.id,
         name: item.locaname,
       }));
+      leftFilterList.value = leftList.value;
       // 处理返回的数据
-      if (!selectedLoca.value && leftList.value.length > 0) {
-        selectedLoca.value = leftList.value[0];
+      if (!selectedLoca.value && leftFilterList.value.length > 0) {
+        selectedLoca.value = leftFilterList.value[0];
         loadDetails(selectedLoca.value);
       }
     } catch (error) {

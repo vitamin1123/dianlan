@@ -63,10 +63,11 @@ async getUserList(sw, page) {
   if (sw && sw.length > 0) {
     // 查询用户列表
     res = await db.query(`
-      SELECT a.*, b.username AS leadername, c.locaname
+      SELECT a.id,a.usercode,a.username,a.role,case a.role when 1 then '超级管理员' when 2 then '管理员' when 3 then '生产主管'
+when 4 then '班组长' else '施工员'  end as rolename,a.state,a.dleader,
+   b.username AS leadername
       FROM dev.user a
       LEFT JOIN dev.user b ON a.dleader = b.usercode
-      LEFT JOIN dev.loca c ON a.loca = c.id
     `, [], dbconfig);
 
     // 查询总数
@@ -74,16 +75,16 @@ async getUserList(sw, page) {
       SELECT COUNT(*) AS totalCount
       FROM dev.user a
       LEFT JOIN dev.user b ON a.dleader = b.usercode
-      LEFT JOIN dev.loca c ON a.loca = c.id
     `, [], dbconfig);
 
   } else {
     // 查询带分页的用户列表
     res = await db.query(`
-      SELECT a.*, b.username AS leadername, c.locaname
+      SELECT a.id,a.usercode,a.username,a.role,case a.role when 1 then '超级管理员' when 2 then '管理员' when 3 then '生产主管'
+when 4 then '班组长' else '施工员'  end as rolename,a.state,a.dleader,
+   b.username AS leadername
       FROM dev.user a
       LEFT JOIN dev.user b ON a.dleader = b.usercode
-      LEFT JOIN dev.loca c ON a.loca = c.id
       LIMIT 10 OFFSET ?
     `, [page + ''], dbconfig);
 
@@ -92,7 +93,6 @@ async getUserList(sw, page) {
       SELECT COUNT(*) AS totalCount
       FROM dev.user a
       LEFT JOIN dev.user b ON a.dleader = b.usercode
-      LEFT JOIN dev.loca c ON a.loca = c.id
     `, [], dbconfig);
   }
 

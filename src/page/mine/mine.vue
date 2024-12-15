@@ -41,7 +41,7 @@
     <van-cell v-if="[1,2].includes(roleid)" title="人员管理"  size="large"  is-link to="usermana"> 
         
       </van-cell>
-    <van-cell v-if="[1,2].includes(roleid)" title="区域管理"  size="large"  is-link to="locamana"> 
+    <van-cell v-if="[1,2].includes(roleid)" title="区域设置"  size="large"  is-link to="locamana"> 
         
       </van-cell>
       <!-- 显示生成的图片 -->

@@ -211,7 +211,7 @@ router.post('/public/api/get_user_list', async (ctx, next) => {
   console.log('getUserListhhhhh',  res)
   if(sw){
     for (var i in res.data) {
-      var m = util1.match(res.data[i]['username']+res.data[i]['usercode'], sw);
+      var m = util1.match(res.data[i]['username']+res.data[i]['usercode']+res.data[i]['rolename'], sw);
       if (m) {
         haha.push(res.data[i])
        }
