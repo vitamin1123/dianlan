@@ -5,27 +5,41 @@ module.exports = {
     
     async getUser (usercode) {
         //console.log('emp_code: ',emp_code)
+        try{
         let res = await db.query(`select a.username,a.usercode,b.rolename as rolename,a.role as roleid  
 from dev.user a left join dev.role b on 
 a.role = b.id where a.usercode = ? and a.state = 1`,[usercode],dbconfig)
         //console.log('contro_res:  ',res)
         return res
+      } catch (error) {
+        console.error('查询出错:', error);
+        throw error;
+      }
     },
     async searchLoca ( ope) {
-      //console.log('emp_code: ',emp_code)
+      try {
       let res = await db.query(`select a.username,c.itemname from dev.user a 
 left join dev.loca b on a.loca = b.id left join dev.loca_item c 
 on b.id = c.locaid where a.usercode = ?`,[ ope],dbconfig)
       //console.log('contro_res:  ',res)
       return res
+    } catch (error) {
+      console.error('查询出错:', error);
+      throw error;
+    }
   },
 
   async addLaxian (xian_id,proj,ope) {
     //console.log('emp_code: ',emp_code)
-    let res = await db.query(`update dev.dianlan set last_fangxian = ?,last_fangxian_time=now()  where id = ?`,[ope, xian_id],dbconfig)
-    //console.log('contro_res:  ',res)
-    return res
-},
+    try {
+      let res = await db.query(`update dev.dianlan set last_fangxian = ?,last_fangxian_time=now()  where id = ?`,[ope, xian_id],dbconfig)
+      //console.log('contro_res:  ',res)
+      return res;
+    }catch (error) {
+      throw error;  // 如果有错误则抛出到路由处理
+    }
+  },
+
 
 async modUser (sw,type,user) {
   let res;
@@ -112,9 +126,13 @@ async addUser(username,usercode,role,shangji,quyu){
   let sql = `INSERT INTO dev.user (${columns.join(', ')}) VALUES (${values.join(', ')})`;
 
   // 执行数据库查询
-  let res = await db.query(sql, params, dbconfig);
-
-  return res
+  try {
+    let res = await db.query(sql, params, dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
+  
 },
 
 // getUserList
@@ -129,11 +147,51 @@ async getLeaderList (type) {
   //console.log('contro_res:  ',res)
   return res
 },
+async addArea(name){
+  try {
+    let res = await db.query(`insert into dev.loca (locaname) values (?)`, [name], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
+},
+async addAreaItem (id,name) {
+  try {
+    let res = await db.query(`insert into dev.loca_item (locaid,itemname) values (?,?) `,[id,name], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
+  
+},
+async areaItem (id) {
+  try {
+    let res = await db.query(`select * from dev.loca_item where locaid =? `,[id], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
+  
+},
+
+async areaList () {
+  try {
+    let res = await db.query(`select * from dev.loca `,[], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
+  
+},
 
 async searchCode (code) {
-  let res = await db.query(`select * from dev.user where usercode = ? `,[code],dbconfig)
-  //console.log('contro_res:  ',res)
-  return res
+  try {
+    let res = await db.query(`select * from dev.user where usercode = ? `,[code], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
+  
 },
 
     async searchDl(company, proj, daihao, model, spec, facilities_name, start) {
@@ -297,8 +355,14 @@ async searchCode (code) {
         }
         console.log('sql: ',sql,values)
         // 执行查询
-        let res = await db.query(sql, values, dbconfig);
-        return res;
+        try {
+            let res = await db.query(sql, values, dbconfig);
+            return res;
+        } catch (error) {
+            console.error('查询出错:', error);
+            throw error;
+        }
+        
     }
 }
 

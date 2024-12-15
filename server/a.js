@@ -236,6 +236,95 @@ router.post('/public/api/search_user_code', async (ctx, next) => {
     "data": res
   }
 });
+//area_add
+router.post('/public/api/area_add', async (ctx, next) => {
+  const { locaname } = ctx.request.body;
+  console.log('area_add', locaname);
+
+  try {
+    // 调用 addArea 方法
+    const res = await Dianlan.addArea(locaname);
+    console.log('area_add', res);
+
+    // 返回成功响应
+    ctx.body = {
+      "code": 0,
+      "data": res
+    };
+  } catch (error) {
+    // 检查是否是重复条目的错误
+    if (error.code === 'ER_DUP_ENTRY') {
+      ctx.status = 400; // 设置为400 Bad Request
+      ctx.body = {
+        code: 1,
+        message: `插入失败，'${locaname}' 已经存在。`
+      };
+    } else {
+      // 其他错误
+      ctx.status = 500; // 设置为500 Internal Server Error
+      ctx.body = {
+        code: 500,
+        message: '服务器内部错误，请稍后再试。'
+      };
+    }
+  }
+});
+router.post('/public/api/area_detail_add', async (ctx, next) => {
+  const { areaid, itemname } = ctx.request.body;
+  console.log('area_detail_add', itemname);
+
+  try {
+    // 调用 addAreaItem 方法
+    const res = await Dianlan.addAreaItem(areaid, itemname);
+    console.log('area_detail_add', res);
+
+    // 返回成功响应
+    ctx.body = {
+      code: 0,
+      data: res,
+    };
+  } catch (error) {
+    // 检查是否是重复条目错误
+    if (error.code === 'ER_DUP_ENTRY') {
+      ctx.status = 400; // 设置为 400 Bad Request
+      ctx.body = {
+        code: 1,
+        message: `插入失败，项目 '${itemname}' 已经存在于区域 ID '${areaid}'。`,
+      };
+    } else {
+      // 处理其他错误
+      console.error('area_detail_add 错误:', error); // 打印错误日志以便调试
+      ctx.status = 500; // 设置为 500 Internal Server Error
+      ctx.body = {
+        code: 500,
+        message: '服务器内部错误，请稍后再试。',
+      };
+    }
+  }
+});
+
+//area_detail_list
+router.post('/public/api/area_detail_list', async (ctx, next) => {
+  const { areaid } = ctx.request.body;
+  console.log('area_detail_list',areaid)
+  const res = await Dianlan.areaItem(areaid)
+  console.log('area_detail_list',  res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
+
+router.get('/public/api/area_list', async (ctx, next) => {
+  
+  
+  const res = await Dianlan.areaList()
+  console.log('area_list',  res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
 
 router.post('/public/api/add_user', async (ctx, next) => {
   const { username,usercode,role,shangji,quyu } = ctx.request.body;
