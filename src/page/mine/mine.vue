@@ -44,10 +44,10 @@
     <van-cell v-if="[1,2].includes(roleid)" title="区域设置"  size="large"  is-link to="locamana"> 
         
       </van-cell>
-      <!-- 显示生成的图片 -->
+    <van-cell v-if="[1,2].includes(roleid)" title="区域班组设置"  size="large"  is-link to="locauser"> 
+        
+      </van-cell>
       
-  
-      <!-- 隐藏的 Canvas，用于生成图片 -->
       <canvas ref="canvas" width="100" height="100" style="display: none;"></canvas>
     </div>
   </template>

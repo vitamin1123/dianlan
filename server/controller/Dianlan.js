@@ -148,6 +148,33 @@ async getLeaderList (type) {
   return res
 },
 
+async getlocaUser(id){
+  try {
+    let res = await db.query(`select a.*,b.username from dev.loca_user a left join dev.user b on a.user = b.usercode where loca =? `,[id], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
+},
+
+async getLocaUserList(){
+  try {
+    let res = await db.query(`select a.* from dev.user a where a.role < 5 `,[], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
+},
+//searchRela
+async searchRela(id){
+  try {
+    let res = await db.query(`select * from dev.loca_user where loca =? `,[id], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
+},
+
 async areaMod(name,id) {
   try {
     let res = await db.query(`update dev.loca set locaname =? where id =? `,[name,id], dbconfig);
