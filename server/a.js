@@ -180,6 +180,38 @@ router.post('/public/api/laxian', async (ctx, next) => {
     "data": res
   }
 });
+//area_detail_mod
+router.post('/public/api/area_detail_mod', async (ctx, next) => {
+  const { itemid, itemname } = ctx.request.body;
+  console.log('area_detail_mod', itemid, itemname)
+  const res = await Dianlan.areaItemMod(itemid, itemname)
+  console.log('area_detail_mod',  res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
+//area_detail_del
+router.post('/public/api/area_detail_del', async (ctx, next) => {
+  const { itemid } = ctx.request.body;
+  console.log('area_detail_del',  itemid)
+  const res = await Dianlan.areaItemDel(itemid)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
+//area_mod
+router.post('/public/api/area_mod', async (ctx, next) => {
+  const { locaname, areaid } = ctx.request.body;
+  console.log('area_mod', locaname, areaid)
+  const res = await Dianlan.areaMod(locaname, areaid)
+  console.log('area_mod',  res)
+  ctx.body = {  
+    "code": 0,
+    "data": res
+  }
+});
 
 router.post('/public/api/search_loca', async (ctx, next) => {
   const { ope } = ctx.request.body;
@@ -314,6 +346,17 @@ router.post('/public/api/area_detail_list', async (ctx, next) => {
     "data": res
   }
 });
+
+router.post('/public/api/area_del', async (ctx, next) => {
+  const { areaid } = ctx.request.body;
+  console.log('area_del',areaid)
+  const res = await Dianlan.areaDel(areaid)
+  console.log('area_del',  res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+})
 
 router.get('/public/api/area_list', async (ctx, next) => {
   

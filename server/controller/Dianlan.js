@@ -147,6 +147,32 @@ async getLeaderList (type) {
   //console.log('contro_res:  ',res)
   return res
 },
+
+async areaMod(name,id) {
+  try {
+    let res = await db.query(`update dev.loca set locaname =? where id =? `,[name,id], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
+},
+async areaItemMod(id,name) {
+  try {
+    let res = await db.query(`update dev.loca_item set itemname =? where id =? `,[name,id], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
+},
+
+async areaItemDel(id) {
+  try {
+    let res = await db.query(`update dev.loca_item set state = 0 where id =? `,[id], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
+},
 async addArea(name){
   try {
     let res = await db.query(`insert into dev.loca (locaname) values (?)`, [name], dbconfig);
@@ -157,7 +183,7 @@ async addArea(name){
 },
 async addAreaItem (id,name) {
   try {
-    let res = await db.query(`insert into dev.loca_item (locaid,itemname) values (?,?) `,[id,name], dbconfig);
+    let res = await db.query(`insert into dev.loca_item (locaid,itemname,state) values (?,?,1) `,[id,name], dbconfig);
     return res;
   } catch (error) {
     throw error;  // 如果有错误则抛出到路由处理
@@ -166,7 +192,7 @@ async addAreaItem (id,name) {
 },
 async areaItem (id) {
   try {
-    let res = await db.query(`select * from dev.loca_item where locaid =? `,[id], dbconfig);
+    let res = await db.query(`select * from dev.loca_item where locaid =? and state = 1 `,[id], dbconfig);
     return res;
   } catch (error) {
     throw error;  // 如果有错误则抛出到路由处理
@@ -176,12 +202,21 @@ async areaItem (id) {
 
 async areaList () {
   try {
-    let res = await db.query(`select * from dev.loca `,[], dbconfig);
+    let res = await db.query(`select * from dev.loca where state = 1 order by id `,[], dbconfig);
     return res;
   } catch (error) {
     throw error;  // 如果有错误则抛出到路由处理
   }
   
+},
+
+async areaDel(id) {
+  try {
+    let res = await db.query(`update dev.loca set state = 0 where id =? `,[id], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
 },
 
 async searchCode (code) {

@@ -35,8 +35,8 @@
                     @click="leftClick(item)"
                 />
                 <template #right>
-                    <van-button square type="danger" text="删除" />
-                    <van-button square type="primary" text="修改" />
+                    <van-button square type="danger" text="删除" @click="delLeft(item)"/>
+                    <van-button square type="primary" text="修改" @click="modLeft(item)"/>
                 </template>
                 </van-swipe-cell>
                 </van-list>
@@ -51,8 +51,8 @@
             <van-swipe-cell v-for="item in rightFilterList" :key="item.id">
               <van-cell :title="item.name" />
               <template #right>
-                <van-button square type="danger" text="删除" />
-                <van-button square type="primary" text="修改" />
+                <van-button square type="danger" text="删除" @click="delRight(item)"/>
+                <van-button square type="primary" text="修改" @click="modRight(item)" />
               </template>
             </van-swipe-cell>
             </van-list>
@@ -60,11 +60,14 @@
         </van-col>
       </van-row>
     </div>
+    <van-dialog v-model:show="modshow" title="修改名称" show-cancel-button :confirmButtonDisabled="modvalue.length>0?false:true" @confirm="confirmMod">
+      <van-field v-model="modvalue" :label="oriValue" placeholder="请输入名称" maxlength="45"/>
+    </van-dialog>
   </template>
   
   <script setup>
   import { ref, onMounted } from 'vue';
-  import { showToast } from 'vant';
+  import { showToast,showConfirmDialog  } from 'vant';
   import http from '@/api/request';
   import Pinyin from 'pinyin-match';
   const leftList = ref([
@@ -79,6 +82,131 @@
   const addType = ref(0)
   const rightList = ref([]);
   const rightFilterList = ref([]);
+  const modType = ref(0);
+  const modvalue = ref('');
+  const modshow = ref(false);
+  const oriValue = ref('');
+  const modRightItem = ref('')
+  const delLeft = async(item) => {
+    showConfirmDialog({
+      title: '确认删除',
+      message:
+        '如果删除区域，明细消息也一并删除。',
+    })
+      .then(async() => {
+        // on confirm
+        try {
+          const response = await http.post('/public/api/area_del', {
+            areaid: item.id,
+          });
+          console.log('请求成功:', response);
+          if (response.data.affectedRows > 0) {
+            // 刷新列表
+            load();
+          }
+          // 处理返回的数据
+        } catch (error) {
+          console.error('请求失败:', error);
+          // 处理错误
+        }
+      })
+      .catch(() => {
+        // on cancel
+      });
+    
+  };
+
+  const delRight = async(item) => {
+    console.log(item);
+    showConfirmDialog({
+      title: '确认删除',
+      message:
+        '确认删除区域明细。',
+    }).then(async() => {
+      // on confirm
+      try {
+        const response = await http.post('/public/api/area_detail_del', {
+          itemid: item.id,
+        });
+        console.log('请求成功:', response);
+        if (response.data.affectedRows > 0) {
+          // 刷新列表
+          loadDetails(selectedLoca.value);
+        }
+        // 处理返回的数据
+      } catch (error) {
+        console.error('请求失败:', error);
+        // 处理错误
+      }
+    }).catch(() => {
+      // on cancel
+    });
+   
+  };
+
+  const modRight = async(item) => {
+    oriValue.value = item.name;
+    modRightItem.value = item;
+    modType.value = 1;
+    modshow.value = true;
+    console.log(item,item.id);
+  };
+
+  const modLoca = async() => {
+    try {
+      const response = await http.post('/public/api/area_mod', {
+        areaid: selectedLoca.value.id,
+        locaname: modvalue.value,
+      });
+      console.log('请求成功:', response);
+      if (response.data.affectedRows > 0) {
+        // 刷新列表
+        load();
+      }
+      // 处理返回的数据
+    } catch (error) {
+      console.error('请求失败:', error);
+      // 处理错误
+    }
+  };
+
+  const modLocaItem = async() => {
+    try {
+      const response = await http.post('/public/api/area_detail_mod', {
+        itemid: modRightItem.id,
+        itemname: modvalue.value,
+      });
+      console.log('请求成功:', response);
+      if (response.data.affectedRows > 0) {
+        // 刷新列表
+        loadDetails(selectedLoca.value);
+      }
+      // 处理返回的数据
+    } catch (error) {
+      console.error('请求失败:', error);
+      // 处理错误
+    }
+  };
+
+  const confirmMod = async() => {
+    if (modType.value == 0) {
+        // 区域
+        await modLoca();
+      } else {
+        // 明细
+        await modLocaItem();
+      }
+    
+  };
+
+  const modLeft = async(item) => {
+    oriValue.value = item.name;
+    selectedLoca.value = item;
+    modType.value = 0;
+    modshow.value = true;
+    console.log(item,item.id);
+  };
+
   const loca_item_search = (value) => {
     console.log('搜索',value);
     if (value == '') {
