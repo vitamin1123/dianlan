@@ -18,9 +18,8 @@ a.role = b.id where a.usercode = ? and a.state = 1`,[usercode],dbconfig)
     },
     async searchLoca ( ope) {
       try {
-      let res = await db.query(`select a.username,c.itemname from dev.user a 
-left join dev.loca b on a.loca = b.id left join dev.loca_item c 
-on b.id = c.locaid where a.usercode = ?`,[ ope],dbconfig)
+      let res = await db.query(`select b.username,c.locaname from dev.loca_user a left join dev.user b on a.user = b.usercode left join dev.loca c on a.loca = c.id
+where a.user = ? and c.state = 1`,[ ope],dbconfig)
       //console.log('contro_res:  ',res)
       return res
     } catch (error) {
@@ -279,7 +278,7 @@ async searchCode (code) {
         let conditions = [];
         let values = [];
         // 拼接完整的 SQL 查询
-        let sql = `SELECT a.*,b.username as fangxianren,c.username as last_operator,d.price as baseprice  from dev.dianlan a `;
+        let sql = `SELECT a.*,b.username as fangxianren,c.username as last_operator,d.price as baseprice,e.price as fa_price  from dev.dianlan a `;
         let countSql = `SELECT COUNT(*) as totalCount from dev.dianlan `;
       
         // 根据各个字段的值拼接 WHERE 条件
@@ -307,7 +306,11 @@ async searchCode (code) {
           conditions.push('facilities_name = ?');
           values.push(facilities_name);
         }
-        sql += ` left join dev.baseprice d on a.specification = d.model left join dev.user b on a.last_fangxian = b.usercode left join dev.user c on a.last_ope = c.usercode `;
+        sql += ` left join dev.baseprice d on a.specification = d.model 
+        left join dev.user b on a.last_fangxian = b.usercode 
+        left join dev.user c on a.last_ope = c.usercode
+        left join dev.epprice e on a.facilities = e.ep
+        `;
         // 如果有条件，拼接 WHERE 子句
         if (conditions.length > 0) {
           const conditionString = conditions.join(' AND ');

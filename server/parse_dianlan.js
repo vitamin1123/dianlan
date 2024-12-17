@@ -51,7 +51,9 @@ function readExcel(filePath) {
         facilities: row[5],     // J列：facilities
         facilities_loca: row[6],
         proj: proj_tmp,
-        company: company_tmp
+        company: company_tmp,
+        total_length: row[13],
+        sysname: row[14]
       });
       data.push({
         daihao: row[1], // B列：daihao
@@ -61,7 +63,9 @@ function readExcel(filePath) {
         facilities: row[9],     // J列：facilities
         facilities_loca: row[10],
         proj: proj_tmp,
-        company: company_tmp
+        company: company_tmp,
+        total_length: row[13],
+        sysname: row[14]
       });
       
     }
@@ -80,9 +84,9 @@ async function insertData(data) {
   const params = [];
 
   // 构造 SQL 和参数
-  data.forEach(({ daihao, model, specification, facilities, proj, company,facilities_name,facilities_loca }) => {
-    sqls.push("INSERT INTO dianlan (daihao, model, specification, facilities, proj, company,facilities_name,facilities_loca) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    params.push([daihao, model, specification, facilities, proj, company,facilities_name,facilities_loca]);
+  data.forEach(({ daihao, model, specification, facilities, proj, company,facilities_name,facilities_loca,total_length,sysname }) => {
+    sqls.push("INSERT INTO dianlan (daihao, model, specification, facilities, proj, company,facilities_name,facilities_loca,total_length,sysname,state) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?,?,0)");
+    params.push([daihao, model, specification, facilities, proj, company,facilities_name,facilities_loca,total_length,sysname]);
   });
 
   // 调用事务函数
@@ -96,7 +100,7 @@ async function insertData(data) {
 
 // 主函数
 async function main() {
-  const filePath = `/Users/xyy/Desktop/副本1_N1454-4600TEU电缆清册.xlsx`; // 替换为实际的 Excel 文件路径
+  const filePath = `C:/Users/xyy/Desktop/1_N1454-4600TEU电缆清册.xlsx`; // 替换为实际的 Excel 文件路径
   try {
     const data = readExcel(filePath);
     console.log("读取到的数据：", data.slice(0,6));

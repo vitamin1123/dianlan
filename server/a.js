@@ -272,7 +272,7 @@ router.post('/public/api/area_mod', async (ctx, next) => {
 
 router.post('/public/api/search_loca', async (ctx, next) => {
   const { ope } = ctx.request.body;
-  console.log('search_loca', proj, ope)
+  console.log('search_loca', ope)
   const res = await Dianlan.searchLoca( ope)
   
   ctx.body = {

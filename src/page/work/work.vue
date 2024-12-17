@@ -85,21 +85,23 @@
     <van-card
         v-for="item in show_list"
         :num="item.num"
-        :price="item.baseprice"
+        :price="item.fa_price ? item.baseprice + ' + ' + (parseFloat(item.fa_price).toFixed(2)): item.baseprice.toString()"
         :desc="item.model+'  '+ item.specification"
-        :tag="item.proj.substr(-4)"
+       
         :title="item.daihao"
-        :thumb="dianlanImage"
+        
         style="--van-card-font-size: 0.4rem;"
         >
         <template #tags>
-            <van-tag v-if="item.facilities" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities }}</van-tag>
-            <van-tag v-if="item.facilities_loca" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
-            <van-tag v-if="item.facilities_name" plain type="primary">{{ item.facilities_name }}</van-tag>
+          <van-tag v-if="item.proj"  type="primary" style="margin-right: 0.1rem;">{{ 'N'+item.proj.substr(-4) }}</van-tag>
+            <van-tag v-if="item.facilities && item.facilities.trim() !== ''" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities }}</van-tag>
+            <van-tag v-if="item.facilities_loca && item.facilities_loca.trim() !== ''"  color="#ffe1e1" text-color="#ad0000" style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
+            <van-tag v-if="item.facilities_name && item.facilities_name.trim() !== ''" plain color="#7232dd" style="margin-right: 0.1rem;">{{ item.facilities_name }}</van-tag>
+            
         </template>
         <template #footer>
             <!-- <van-button v-if="userStore.userInfo.userRole < 4" :disabled="(item.last_fangxian && item.last_fangxian!=userStore.userInfo.userCode)" size="small" @click="laxian(item)">{{ item.fangxianren || '完成拉线' }}
-
+:thumb="dianlanImage"
             </van-button> -->
             <van-button
               v-if="userStore.userInfo.userRole < 4"
@@ -301,13 +303,12 @@
       console.log('完成拉线',item,searchWords.value['船号']);
       clickItem.value = item;
       const res = await http.post('/public/api/search_loca', {
-        ope: userStore.userInfo.userCode,
-        proj: 'N'+item.proj.slice(-4) 
+        ope: userStore.userInfo.userCode
       });
       console.log('拉线： ', res.data);
       columns.value = res.data.map(item => ({
-        text: item.itemname,  // 将 itemname 作为 text
-        value: item.itemname   // 将 itemname 作为 value
+        text: item.locaname,  // 将 itemname 作为 text
+        value: item.locaname   // 将 itemname 作为 value
       }));
       showPicker.value = true;
     }
