@@ -24,7 +24,8 @@
         <div class="list">
           <van-search v-model="sw_value2" placeholder="搜索人员列表" @search="loca_item_search" />
           <van-list :finished="finished" finished-text="">
-            <van-checkbox-group v-model="checkedValues" ref="checkboxGroup" class="custom-checkbox-group">
+            <van-checkbox-group v-model="checkedValues" ref="checkboxGroup" class="custom-checkbox-group" @change="checkChange"
+                >
               <van-checkbox
                 v-for="item in rightFilterList"
                 :key="item.code"
@@ -60,22 +61,75 @@
 
   const checkboxGroup = ref(null);
   const checkedValues = ref([]); 
+  const previousCheckedValues = ref([]);
 
+  let isLocaChanged = ref(false);
 
-  const delRight = async(item) => {
-    console.log(item);
-    showConfirmDialog({
-      title: '确认删除',
-      message:
-        '确认删除区域明细。',
-    }).then(async() => {
-      // on confirm
+  watch(selectedLoca, (newVal, oldVal) => {
+    if (newVal !== oldVal) {
+      isLocaChanged.value = true; // 标记 selectedLoca 发生了变化
+    }
+  });
+
+  const checkChange = async(newCheckedValues) => {
+  if (isLocaChanged.value) {
+    console.log('selectedLoca 变化了，跳过当前变化');
+    isLocaChanged.value = false; // 重置标志
+    previousCheckedValues.value = [...newCheckedValues];
+    return;
+  }
+  // 判断哪个复选框的状态发生变化，并判断是选中还是取消选中
+  const added = newCheckedValues.filter(value => !previousCheckedValues.value.includes(value)); // 新选中的值
+  const removed = previousCheckedValues.value.filter(value => !newCheckedValues.includes(value)); // 取消选中的值
+
+  if (added.length > 0) {
+    await addRight(added[0])
+    showToast(`选中了: ${added[0]}`);
+    console.log('选中了:', added);
+  }
+
+  if (removed.length > 0) {
+    await delRight(removed[0])
+    showToast(`取消选中: ${removed[0]}`);
+    console.log('取消选中:', removed);
+  }
+
+  // 更新 previousCheckedValues 为新的 checkedValues
+  previousCheckedValues.value = [...newCheckedValues];
+};
+
+const addRight = async(usercode) => {
+  console.log(usercode);  
+
+    try {
+      const response = await http.post('/public/api/loca_user_add', {
+        areaid: selectedLoca.value.id,
+        usercode: usercode,
+      });
+      console.log('请求成功:', response);
+      if (response.data.affectedRows == 0) {
+        // 刷新列表
+        loadRela(selectedLoca.value);
+      }
+      // 处理返回的数据
+    } catch (error) {
+      console.error('请求失败:', error);
+      // 处理错误
+    }
+ 
+}
+
+  const delRight = async(usercode) => {
+    console.log(usercode);
+    
+      
       try {
-        const response = await http.post('/public/api/area_detail_del', {
-          itemid: item.id,
+        const response = await http.post('/public/api/loca_user_del', {
+          areaid: selectedLoca.value.id,
+          usercode: usercode,
         });
         console.log('请求成功:', response);
-        if (response.data.affectedRows > 0) {
+        if (response.data.affectedRows == 0) {
           // 刷新列表
           loadRela(selectedLoca.value);
         }
@@ -84,9 +138,7 @@
         console.error('请求失败:', error);
         // 处理错误
       }
-    }).catch(() => {
-      // on cancel
-    });
+    
    
   };
 
@@ -128,9 +180,6 @@
   const finished = ref(false);
  
  
-  watch(checkedValues, (newVal) => {
-    console.log('选中的复选框值更新:', newVal);
-  });
 
 const loadRela = async (item) => {
   try {
@@ -213,7 +262,7 @@ const loadUser = async () => {
 }
 
 .list-container {
-  height: calc(90vh - 100px); /* 减去按钮区域的高度 */
+  height: calc(90vh); /* 减去按钮区域的高度 */
   display: flex;
   flex-direction: column;
 }
@@ -221,6 +270,7 @@ const loadUser = async () => {
 .list {
   flex: 1;
   border: 1px solid #dcdcdc;
+  margin-top: 0.5rem;
   border-radius: 10px;
   padding: 10px;
   overflow: auto;

@@ -203,6 +203,30 @@ router.get('/public/api/locauser_list', async (ctx, next) => {
   }
 });
 
+// loca_user_add
+router.post('/public/api/loca_user_add', async (ctx, next) => {
+  const { areaid, usercode } = ctx.request.body;
+  console.log('loca_user_add', areaid, usercode)
+  const res = await Dianlan.addLocaUser(areaid, usercode)
+  console.log('loca_user_add', res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
+
+// loca_user_del
+router.post('/public/api/loca_user_del', async (ctx, next) => {
+  const { areaid, usercode } = ctx.request.body;
+  console.log('loca_user_del', areaid, usercode)
+  const res = await Dianlan.delLocaUser(areaid, usercode)
+  console.log('loca_user_del', res)
+  ctx.body = {  
+    "code": 0,
+    "data": res
+  }
+});
+
 router.post('/public/api/laxian', async (ctx, next) => {
   const { xian_id,proj,ope } = ctx.request.body;
   console.log('laxian', xian_id, proj, ope)

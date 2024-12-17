@@ -165,6 +165,25 @@ async getLocaUserList(){
     throw error;  // 如果有错误则抛出到路由处理
   }
 },
+//addLocaUser
+async addLocaUser(loca,user){
+  try {
+    let res = await db.query(`insert into dev.loca_user (loca,user) values (?,?) `,[loca,user], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
+},
+//delLocaUser
+async delLocaUser(loca,user){
+  try {
+    let res = await db.query(`delete from dev.loca_user where loca=? and user=? `,[loca,user], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
+},
+
 //searchRela
 async searchRela(id){
   try {
