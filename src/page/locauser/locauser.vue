@@ -24,22 +24,16 @@
         <div class="list">
           <van-search v-model="sw_value2" placeholder="搜索人员列表" @search="loca_item_search" />
           <van-list :finished="finished" finished-text="">
-            <van-checkbox-group v-model="checked">
-              <van-cell-group inset>
-                <van-cell
-                  v-for="(item, index) in rightFilterList"
-                  :key="item"
-                  clickable
-                  :title="item.name"
-                  @click="toggle(index)"
-                >
-                  <template #right-icon>
-                    <van-checkbox :name="item" :ref="el => checkboxRefs[index] = el"
-                        @click.stop/>
-                  </template>
-                </van-cell>
-              </van-cell-group>
-            </van-checkbox-group>
+            <van-checkbox-group v-model="checkedValues" ref="checkboxGroup" class="custom-checkbox-group">
+              <van-checkbox
+                v-for="item in rightFilterList"
+                :key="item.code"
+                :name="item.code"
+                class="custom-checkbox"
+              >
+                {{ item.name }}
+              </van-checkbox>
+          </van-checkbox-group>
           </van-list>
         </div>
       </van-col>
@@ -49,7 +43,7 @@
   </template>
   
   <script setup>
-  import { ref, onMounted, onBeforeUpdate, watch  } from 'vue';
+  import { ref,reactive, onMounted, onBeforeUpdate, watch, nextTick   } from 'vue';
   import { showToast,showConfirmDialog  } from 'vant';
   import http from '@/api/request';
   import Pinyin from 'pinyin-match';
@@ -62,18 +56,11 @@
   const rightList = ref([]);
   const rightFilterList = ref([]);
 
-  const checked = ref([]);
-  const checkboxRefs = ref([]);
   const relations = ref([]);
-  const toggle = (index) => {
-    
-    checkboxRefs.value[index].toggle();
-  };
 
-  onBeforeUpdate(() => {
-    
-    checkboxRefs.value = [];
-  });
+  const checkboxGroup = ref(null);
+  const checkedValues = ref([]); 
+
 
   const delRight = async(item) => {
     console.log(item);
@@ -141,24 +128,29 @@
   const finished = ref(false);
  
  
-  watch(checked, (newVal) => {
-  console.log('Checked updated:', newVal);
-});
+  watch(checkedValues, (newVal) => {
+    console.log('选中的复选框值更新:', newVal);
+  });
 
-  const loadRela = async (item) => {
+const loadRela = async (item) => {
   try {
     const response = await http.post('/public/api/loca_user_rela', {
       areaid: item.id,
     });
-    console.log('请求成功loadRela:', response);
     relations.value = response.data;
+    await nextTick();
 
-    console.log('relations:', relations.value); // 查看数据结构
+    const matchedCodes = rightFilterList.value
+      .filter(item => relations.value.some(r => r.code === item.code.toString().trim()))
+      .map(item => item.code); // 获取所有匹配到的 code
 
-    // 直接获取每个relation对象的user字段
-    const selectedUserCodes = relations.value.map(relation => relation.user);
-    console.log('selectedUserCodes:', selectedUserCodes); // 查看选中的用户代码
-    checked.value = [...selectedUserCodes]; // 更新选中的复选框
+    checkedValues.value = matchedCodes; // 更新选中值
+    console.log('选中复选框的值:', checkedValues.value);
+      
+    
+      
+     
+   
   } catch (error) {
     console.error('请求失败loadRela:', error);
   }
@@ -171,6 +163,7 @@ const loadUser = async () => {
     rightList.value = response.data.map(item => ({
       id: item.id,
       name: item.username,
+      code: item.usercode,
     }));
     rightFilterList.value = rightList.value;
   } catch (error) {
@@ -231,11 +224,27 @@ const loadUser = async () => {
   border-radius: 10px;
   padding: 10px;
   overflow: auto;
-  font-size: 1rem; /* 统一文字大小 */
+  font-size: 0.4rem; /* 统一文字大小 */
 }
 
 .van-row {
   height: 100%;
+}
+
+.custom-checkbox-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.custom-checkbox {
+  margin-bottom: 12px; /* 每个复选框之间的间距 */
+  height: 0.8rem;
+  border-bottom: 1px solid #dcdcdc;
+}
+
+/* 去掉最后一个复选框的下边距 */
+.custom-checkbox:last-child {
+  margin-bottom: 0;
 }
 
 .van-col:first-child,

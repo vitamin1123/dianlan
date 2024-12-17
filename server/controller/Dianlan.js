@@ -168,7 +168,7 @@ async getLocaUserList(){
 //searchRela
 async searchRela(id){
   try {
-    let res = await db.query(`select * from dev.loca_user where loca =? `,[id], dbconfig);
+    let res = await db.query(`SELECT a.loca,a.user as code,b.id as userid,b.username as name FROM dev.loca_user a left join dev.user b on a.user = b.usercode where a.loca =? `,[id], dbconfig);
     return res;
   } catch (error) {
     throw error;  // 如果有错误则抛出到路由处理
