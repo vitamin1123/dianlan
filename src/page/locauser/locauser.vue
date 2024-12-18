@@ -13,6 +13,7 @@
                 <van-cell
                     :title="item.name"
                     @click="leftClick(item)"
+                    :style="{ color: item.id === selectedLoca.id ? 'red' : 'black' }"
                 />
                 
                 </van-swipe-cell>

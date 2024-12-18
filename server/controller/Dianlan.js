@@ -274,7 +274,7 @@ async searchCode (code) {
   
 },
 
-    async searchDl(company, proj, daihao, model, spec, facilities_name, start) {
+    async searchDl(company, proj, daihao, model, spec, facilities_name, facilities_loca,total_length,sysname ,start) {
         let conditions = [];
         let values = [];
         // 拼接完整的 SQL 查询
@@ -305,6 +305,18 @@ async searchCode (code) {
         if (facilities_name !== undefined && facilities_name !== '') {
           conditions.push('facilities_name = ?');
           values.push(facilities_name);
+        }
+        if (facilities_loca!== undefined && facilities_loca!== '') {
+          conditions.push('facilities_loca =?');
+          values.push(facilities_loca);
+        }
+        if (total_length!== undefined && total_length!== '') {
+          conditions.push('total_length =?');
+          values.push(total_length);
+        }
+        if (sysname!== undefined && sysname!== '') {
+          conditions.push('sysname =?');
+          values.push(sysname);
         }
         sql += ` left join dev.baseprice d on a.specification = d.model 
         left join dev.user b on a.last_fangxian = b.usercode 
@@ -389,16 +401,18 @@ async searchCode (code) {
     //     return res;
     // },
 
-    async searchCompany(sw,company, proj, daihao, model, spec, facilities) {
-        console.log('搜sql索参数: ',company, proj, daihao, model, spec, facilities)
+    async searchCompany(sw,company, proj, daihao, model, spec, facilities,facilities_loca,total_length,sysname) {
+        console.log('搜sql索参数: ',company, proj, daihao, model, spec, facilities,facilities_loca,total_length,sysname)
         const adic = {
             '公司':'distinct company',
             '船号':'distinct proj',
             '代号':'distinct daihao',
             '型号':'distinct model',
             '规格':'distinct specification',
-            '设备':'distinct facilities_name'
-            
+            '设备':'distinct facilities_name',
+            '设备地点':'distinct facilities_loca',
+            '总线长':'distinct total_length',
+            '系统名':'distinct sysname'
         }
         // 初始化 WHERE 条件数组
         let conditions = [];
@@ -429,6 +443,18 @@ async searchCode (code) {
         if (facilities !== undefined && facilities !== '') {
             conditions.push('instr(facilities_name,?)>0');
             values.push(facilities);
+        }
+        if (facilities_loca!== undefined && facilities_loca!== '') {
+            conditions.push('instr(facilities_loca,?)>0');
+            values.push(facilities_loca);
+        }
+        if (total_length!== undefined && total_length!== '') {
+            conditions.push('instr(total_length,?)>0');
+            values.push(total_length);
+        }
+        if (sysname!== undefined && sysname!== '') {
+            conditions.push('instr(sysname,?)>0');
+            values.push(sysname);
         }
 
         

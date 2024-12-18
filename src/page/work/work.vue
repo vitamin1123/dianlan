@@ -20,6 +20,8 @@
         </van-cell-group>
       </van-list>
     </van-popup>
+
+    <!-- 拉线 -->
     <van-popup v-model:show="showPicker" destroy-on-close round position="bottom">
       <van-picker
         :model-value="pickerValue"
@@ -143,7 +145,7 @@
   </template>
   
   <script setup>
-  import { ref, onMounted } from 'vue';
+  import { ref, onMounted, watch } from 'vue';
   import { showToast } from 'vant'
   import dianlanImage from '@/assets/xianlan.jpg';
   import http from '@/api/request';
@@ -183,6 +185,9 @@
     { text: '型号', key: '型号' },
     { text: '规格', key: '规格' },
     { text: '设备', key: '设备' },
+    { text: '设备地点', key: '设备地点' },
+    { text: '总线长', key: '总线长' },
+    { text: '系统名', key: '系统名' },
   ]);
 
   const rmCart = () => {
@@ -324,6 +329,9 @@
     '型号': '',
     '规格': '',
     '设备': '',
+    '设备地点': '',
+    '总线长':'',
+    '系统名':''
   }); // 存储每个 grid 的搜索词
   
   const onSubmit = () => {
@@ -386,6 +394,9 @@
       model: searchWords.value['型号'],
       spec: searchWords.value['规格'],
       facilities: searchWords.value['设备'],
+      facilities_loca: searchWords.value['设备地点'],
+      total_length: searchWords.value['总线长'],
+      sysname: searchWords.value['系统名'],
       page: page.value*10,
     };
 
@@ -411,20 +422,20 @@
       
       list.value = [];
       searchWords.value[sw.value] = title; // 保存搜索词
+      console.log('select------searchWords.value: ',searchWords.value);
       page.value = 0;
       const responseData = await fetchData();
       console.log('返回电缆值：', responseData.totalCount,responseData.data);
       show_list.value = responseData.data;
-      showTop.value = false; // 关闭弹窗
+      showTop.value = false; 
     } catch (error) {
       console.error('处理请求时出错:', error);
     }
   };
 
-// 监听搜索框关闭时，保存当前搜索词
+
 const handlePopupClose = () => {
-    //console.log('Popup closed');
-    // showToast('搜索框关闭了'+search_word.value)
+
     list.value = [];
     if (search_word.value.length == 0) {
       const currentKey = gridItems.value.find((item) => item.key === sw.value)?.key;
@@ -440,19 +451,9 @@ const handlePopupClose = () => {
         }
       }
     }
-    // const currentKey = gridItems.value.find((item) => item.text === sw.value)?.key;
-    // if (currentKey) {
-    //   searchWords.value[currentKey] = search_word.value;
-    // }
 };
   
-  // 搜索函数
-    // '公司': '',
-    // '船号': '',
-    // '代号': '',
-    // '型号': '',
-    // '规格': '',
-    // '设备': '',
+
   const search = async () => {
     console.log('search',search_word.value,sw.value);
     search_word.value = search_word.value.trim().toUpperCase(); // 去除首尾空格
@@ -464,6 +465,9 @@ const handlePopupClose = () => {
       'model': sw.value=='型号'?search_word.value:searchWords.value['型号'],
       'spec': sw.value=='规格'?search_word.value:searchWords.value['规格'],
       'facilities_name': sw.value=='设备'?search_word.value:searchWords.value['设备'],
+      'facilities_loca': sw.value=='设备地点'?search_word.value:searchWords.value['设备地点'],
+      'total_length': sw.value=='总线长'?search_word.value:searchWords.value['总线长'],
+      'sysname': sw.value=='系统名'?search_word.value:searchWords.value['系统名'],
     };
     var url = '/public/api/search_company';
    
@@ -486,6 +490,12 @@ const handlePopupClose = () => {
         tmp.push({ key: i, title: response.data[i]['specification'] });
       }else if (sw.value=='设备'){
         tmp.push({ key: i, title: response.data[i]['facilities_name'] });
+      }else if (sw.value=='设备地点'){
+        tmp.push({ key: i, title: response.data[i]['facilities_loca'] });
+      }else if (sw.value=='总线长'){
+        tmp.push({ key: i, title: response.data[i]['total_length'] });
+      }else if (sw.value=='系统名'){
+        tmp.push({ key: i, title: response.data[i]['sysname'] });
       }
     }
     list.value = tmp;
@@ -509,15 +519,46 @@ const handlePopupClose = () => {
     showTop.value = true; // 显示搜索弹窗
   };
 
-  onMounted( () => {
-    
+  const loadSearchWords = async() => {
+      const savedSearchWords = localStorage.getItem('searchWords');
+      
+      if (savedSearchWords) {
+        searchWords.value = JSON.parse(savedSearchWords);
+        gridItems.value = gridItems.value.map(item => {
+          return {
+            ...item,
+            text: searchWords.value[item.key] || item.text
+          };
+        });
+        selected.value = gridItems.value.map(item => {
+          return searchWords.value[item.key] ? true : false;
+        });
+        const responseData = await fetchData();
+        console.log('返回电缆值：', responseData.totalCount,responseData.data);
+        show_list.value = responseData.data;
+        console.log('parse---savedSearchWords: ',searchWords.value);
+      }
+    };
+
+  const saveSearchWords = () => {
+    localStorage.setItem('searchWords', JSON.stringify(searchWords.value));
+    console.log('searchWords saved: ',localStorage.getItem('searchWords'));
+  };
+
+  watch(searchWords, () => {
+    console.log('searchWords changed: ',searchWords.value);
+    saveSearchWords();
+  }, { deep: true });
+
+  onMounted( async() => {
+    await loadSearchWords();
     console.log("首页加载啦; ",userStore.userInfo);
  
   })
   
 
   
-  // showTop.value = false;
+
   </script>
   
   <style scoped>
