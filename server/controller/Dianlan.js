@@ -28,10 +28,10 @@ a.role = b.id where a.usercode = ? and a.state = 1`,[usercode],dbconfig)
     }
   },
 
-  async addLaxian (xian_id,proj,ope) {
+  async addLaxian (xian_id, locaitem, ope) {
     //console.log('emp_code: ',emp_code)
     try {
-      let res = await db.query(`update dev.dianlan set last_fangxian = ?,last_fangxian_time=now()  where id = ?`,[ope, xian_id],dbconfig)
+      let res = await db.query(`update dev.dianlan set last_fangxian = ?,last_fangxian_time=now(),last_fangxian_loca=?  where id = ?`,[ope, locaitem,xian_id],dbconfig)
       //console.log('contro_res:  ',res)
       return res;
     }catch (error) {

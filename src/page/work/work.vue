@@ -222,11 +222,14 @@
             targetItem.last_fangxian = userStore.userInfo.userCode; // 更新最后放线人
           }
         });
-        console.log('更新后的 show_list:', show_list.value);
+        cart_laxian.value = false;
+        console.log('更新后的 show_list1:', show_list.value);
+
       } else {
         showToast('部分或全部更新失败，请检查');
       }
     }else{
+      console.log('哪根线？ ',clickItem.value.id)
       const res = await http.post('/public/api/laxian', {
         ope: userStore.userInfo.userCode,
         locaitem: selectedValues[1],
@@ -239,7 +242,7 @@
           targetItem.fangxianren = userStore.userInfo.userName; // 更新放线人
           targetItem.last_fangxian = userStore.userInfo.userCode; // 更新最后放线人
         }
-        console.log('更新后的 show_list:', show_list.value);
+        console.log('更新后的 show_list2:', show_list.value);
       }
       
     }

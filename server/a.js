@@ -228,9 +228,9 @@ router.post('/public/api/loca_user_del', async (ctx, next) => {
 });
 
 router.post('/public/api/laxian', async (ctx, next) => {
-  const { xian_id,proj,ope } = ctx.request.body;
-  console.log('laxian', xian_id, proj, ope)
-  const res = await Dianlan.addLaxian(xian_id, proj, ope)
+  const { xian_id,locaitem,ope } = ctx.request.body;
+  console.log('laxian', xian_id, locaitem, ope)
+  const res = await Dianlan.addLaxian(xian_id, locaitem, ope)
   
   ctx.body = {
     "code": 0,
