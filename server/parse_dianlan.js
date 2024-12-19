@@ -17,7 +17,7 @@ function getRandomCompany() {
 // 处理 D 列中的数据
 function processSpecification(specification) {
   // 替换 'X' 为 '*' 和 '+E' 为 ''
-  return specification.replace(/X/g, '*').replace(/\+E/g, '');
+  return specification.replace(/X/g, '*').replace(/\+E/g, '').replace(/\s+/g, '');;
 }
 
 // 读取 Excel 并提取相关数据
@@ -44,28 +44,28 @@ function readExcel(filePath) {
       const proj_tmp = getRandomProj();
       const company_tmp = getRandomCompany();
       data.push({
-        daihao: row[1], // B列：daihao
-        model: row[2],   // C列：model
+        daihao: row[1].trim(), // B列：daihao
+        model: row[2].trim(),   // C列：model
         specification: processSpecification(row[3]),  // D列：specification，进行替换处理
-        facilities_name: row[4],
-        facilities: row[5],     // J列：facilities
-        facilities_loca: row[6],
+        facilities_name: row[4].trim(),
+        facilities: row[5].trim(),     // J列：facilities
+        facilities_loca: row[6].trim(),
         proj: proj_tmp,
         company: company_tmp,
-        total_length: row[13],
-        sysname: row[14]
+        total_length: row[13].trim(),
+        sysname: row[14].trim()
       });
       data.push({
-        daihao: row[1], // B列：daihao
-        model: row[2],   // C列：model
+        daihao: row[1].trim(), // B列：daihao
+        model: row[2].trim(),   // C列：model
         specification: processSpecification(row[3]),  // D列：specification，进行替换处理
-        facilities_name: row[8],
-        facilities: row[9],     // J列：facilities
-        facilities_loca: row[10],
+        facilities_name: row[8].trim(),
+        facilities: row[9].trim(),     // J列：facilities
+        facilities_loca: row[10].trim(),
         proj: proj_tmp,
         company: company_tmp,
-        total_length: row[13],
-        sysname: row[14]
+        total_length: row[13].trim(),
+        sysname: row[14].trim()
       });
       
     }

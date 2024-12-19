@@ -18,8 +18,8 @@ a.role = b.id where a.usercode = ? and a.state = 1`,[usercode],dbconfig)
     },
     async searchLoca ( ope) {
       try {
-      let res = await db.query(`select b.username,c.locaname from dev.loca_user a left join dev.user b on a.user = b.usercode left join dev.loca c on a.loca = c.id
-where a.user = ? and c.state = 1`,[ ope],dbconfig)
+      let res = await db.query(`select a.*,b.id as itemid,b.itemname from dev.loca a left join dev.loca_item b on a.id = b.locaid
+ where a.id in (select loca from dev.loca_user where user = ?) and a.state = 1 and b.state = 1`,[ ope],dbconfig)
       //console.log('contro_res:  ',res)
       return res
     } catch (error) {

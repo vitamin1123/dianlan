@@ -21,7 +21,7 @@
       </van-list>
     </van-popup>
 
-    <!-- 拉线 -->
+    <!-- 拉线区域选择 -->
     <van-popup v-model:show="showPicker" destroy-on-close round position="bottom">
       <van-picker
         :model-value="pickerValue"
@@ -41,7 +41,7 @@
         <van-card
         
         :num="item.num"
-        :price="item.baseprice"
+        :price="parseFloat(item.baseprice + item.fa_price).toFixed(2)"
         :desc="item.model+'  '+ item.specification"
         :tag="item.proj.substr(-4)"
         :title="item.daihao"
@@ -88,6 +88,7 @@
         v-for="item in show_list"
         :num="item.num"
         :price="item.fa_price ? item.baseprice + ' + ' + (parseFloat(item.fa_price).toFixed(2)): item.baseprice.toString()"
+        :origin-price="(parseFloat(item.baseprice)+parseFloat(item.fa_price)).toFixed(2)"
         :desc="item.model+'  '+ item.specification"
        
         :title="item.daihao"
@@ -112,7 +113,7 @@
               size="small"
               @click="laxian(item)"
             >{{ item.fangxianren || '完成拉线' }}</van-button>
-            <van-button size="small" @click="addCart(item)">派工</van-button>
+            <van-button size="small" @click="addCart(item)">选中</van-button>
         </template>
       </van-card>
     </van-list>
@@ -121,8 +122,12 @@
 
 
 
-    <van-submit-bar :price="totalPrice" button-text="提交派工单" @submit="onSubmit" style="margin-bottom: 1.33rem;">
-        <template #default>
+    <van-submit-bar :price="totalPrice" button-text="提交派工单" style="margin-bottom: 1.33rem;">
+      <template #button>
+        <van-action-bar-button type="warning" text="提交拉线" style="border-top-left-radius: 0.5rem; border-bottom-left-radius: 0.5rem;"/>
+        <van-action-bar-button type="danger" text="提交派工单" @click="onSubmit" style=" border-top-right-radius: 0.5rem;  border-bottom-right-radius: 0.5rem;"/>
+      </template>  
+      <template #default>
           <div style="display: flex; justify-content: flex-end; align-items: center;">
             <van-action-bar-icon
               icon="add-o"
@@ -197,26 +202,26 @@
   };
 
   const onConfirm = async({ selectedValues, selectedOptions }) => {
-    console.log('selectedValues:', selectedValues[0]);
-    const res = await http.post('/public/api/laxian', {
-      ope: userStore.userInfo.userCode,
-      proj: 'N'+clickItem.value.proj.slice(-4),
-      xian_id: clickItem.value.id
-    });
-    if (res.data.affectedRows > 0) {
-      showToast('拉线成功')
-      const targetItem = show_list.value.find(item => item.id === clickItem.value.id);
-      if (targetItem) {
-        targetItem.fangxianren = userStore.userInfo.userName; // 更新放线人
-        targetItem.last_fangxian = userStore.userInfo.userCode; // 更新最后放线人
-      }
+    console.log('selectedValues:', selectedValues,selectedOptions);
+    // const res = await http.post('/public/api/laxian', {
+    //   ope: userStore.userInfo.userCode,
+    //   proj: 'N'+clickItem.value.proj.slice(-4),
+    //   xian_id: clickItem.value.id
+    // });
+    // if (res.data.affectedRows > 0) {
+    //   showToast('拉线成功')
+    //   const targetItem = show_list.value.find(item => item.id === clickItem.value.id);
+    //   if (targetItem) {
+    //     targetItem.fangxianren = userStore.userInfo.userName; // 更新放线人
+    //     targetItem.last_fangxian = userStore.userInfo.userCode; // 更新最后放线人
+    //   }
 
-      console.log('更新后的 show_list:', show_list.value);
+    //   console.log('更新后的 show_list:', show_list.value);
       
-    }
-    showPicker.value = false;
-    pickerValue.value = selectedValues;
-    fieldValue.value = selectedOptions[0].text;
+    // }
+    // showPicker.value = false;
+    // pickerValue.value = selectedValues;
+    // fieldValue.value = selectedOptions[0].text;
   };
 
   const delCart = (index) => {
@@ -239,7 +244,7 @@
     } else {
       // 将未在购物车中的商品加入购物车
       cart.value.push(...newItems);
-      totalPrice.value += newItems.reduce((total, item) => total + item.baseprice*100, 0);
+      totalPrice.value += newItems.reduce((total, item) => total + item.baseprice*100 + item.fa_price*100, 0);
       console.log('车内容：', cart.value);
 
       // 触发放大缩小动画
@@ -265,7 +270,7 @@
       // 添加到购物车
       cart.value.push(item);
       console.log('车内容：', cart.value);
-      totalPrice.value += item.baseprice*100;
+      totalPrice.value += item.baseprice*100+item.fa_price*100;
       // 触发放大缩小动画
       isScaling.value = true;
 
@@ -311,14 +316,39 @@
         ope: userStore.userInfo.userCode
       });
       console.log('拉线： ', res.data);
-      columns.value = res.data.map(item => ({
-        text: item.locaname,  // 将 itemname 作为 text
-        value: item.locaname   // 将 itemname 作为 value
-      }));
+      console.log(convertToTree(res.data));
+      columns.value = convertToTree(res.data)
       showPicker.value = true;
     }
    
   };
+
+  // 转换成树
+  const convertToTree=(data)=> {
+    const tree = [];
+    const tempDict = {};
+
+    data.forEach(({ id, locaname, state, itemid, itemname }) => {
+        if (!tempDict[id]) {
+            // 添加新的父节点
+            const parentNode = {
+                text: locaname,
+                value: String(id),
+                children: []
+            };
+            tree.push(parentNode);
+            tempDict[id] = parentNode;
+        }
+
+        // 添加子节点
+        tempDict[id].children.push({
+            text: itemname,
+            value: String(itemid)
+        });
+    });
+
+    return tree;
+}
   
   // 选中的状态
   const selected = ref(Array(gridItems.value.length).fill(false));
