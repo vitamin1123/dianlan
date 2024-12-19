@@ -22,11 +22,12 @@
     </van-popup>
 
     <!-- 拉线区域选择 -->
-    <van-popup v-model:show="showPicker" destroy-on-close round position="bottom">
+    <van-popup v-model:show="showPicker" destroy-on-close round position="bottom" @click-overlay="showPicker = false,cart_laxian=false,console.log(cart_laxian)">
       <van-picker
         :model-value="pickerValue"
         :columns="columns"
-        @cancel="showPicker = false"
+        @cancel="showPicker = false,cart_laxian=false,console.log(cart_laxian)"
+        
         @confirm="onConfirm"
       />
       
@@ -124,7 +125,7 @@
 
     <van-submit-bar :price="totalPrice" button-text="提交派工单" style="margin-bottom: 1.33rem;">
       <template #button>
-        <van-action-bar-button type="warning" text="提交拉线" style="border-top-left-radius: 0.5rem; border-bottom-left-radius: 0.5rem;"/>
+        <van-action-bar-button type="warning" text="提交拉线" @click="onSubmit_laxian" style="border-top-left-radius: 0.5rem; border-bottom-left-radius: 0.5rem;"/>
         <van-action-bar-button type="danger" text="提交派工单" @click="onSubmit" style=" border-top-right-radius: 0.5rem;  border-bottom-right-radius: 0.5rem;"/>
       </template>  
       <template #default>
@@ -202,26 +203,49 @@
   };
 
   const onConfirm = async({ selectedValues, selectedOptions }) => {
-    console.log('selectedValues:', selectedValues,selectedOptions);
-    // const res = await http.post('/public/api/laxian', {
-    //   ope: userStore.userInfo.userCode,
-    //   proj: 'N'+clickItem.value.proj.slice(-4),
-    //   xian_id: clickItem.value.id
-    // });
-    // if (res.data.affectedRows > 0) {
-    //   showToast('拉线成功')
-    //   const targetItem = show_list.value.find(item => item.id === clickItem.value.id);
-    //   if (targetItem) {
-    //     targetItem.fangxianren = userStore.userInfo.userName; // 更新放线人
-    //     targetItem.last_fangxian = userStore.userInfo.userCode; // 更新最后放线人
-    //   }
-
-    //   console.log('更新后的 show_list:', show_list.value);
+    console.log('selectedValues:', selectedValues,selectedOptions,cart_laxian.value);
+    if (cart_laxian.value){
+      const res = await http.post('/public/api/batch_laxian', {
+        ope: userStore.userInfo.userCode,
+        locaitem: selectedValues[1],
+        xian_ids: cart.value.map(item => item.id)
+      });
+      console.log(res.data)
+      if (res.data.every(result => result.affectedRows > 0)) {
+        showToast('拉线成功');
+        // 更新目标项的信息
+        cart.value.forEach(cartItemId => {
+          console.log('cartItemId:', cartItemId.id);
+          const targetItem = show_list.value.find(item => item.id === cartItemId.id);
+          if (targetItem) {
+            targetItem.fangxianren = userStore.userInfo.userName; // 更新放线人
+            targetItem.last_fangxian = userStore.userInfo.userCode; // 更新最后放线人
+          }
+        });
+        console.log('更新后的 show_list:', show_list.value);
+      } else {
+        showToast('部分或全部更新失败，请检查');
+      }
+    }else{
+      const res = await http.post('/public/api/laxian', {
+        ope: userStore.userInfo.userCode,
+        locaitem: selectedValues[1],
+        xian_id: clickItem.value.id
+      });
+      if (res.data.affectedRows > 0) {
+        showToast('拉线成功')
+        const targetItem = show_list.value.find(item => item.id === clickItem.value.id);
+        if (targetItem) {
+          targetItem.fangxianren = userStore.userInfo.userName; // 更新放线人
+          targetItem.last_fangxian = userStore.userInfo.userCode; // 更新最后放线人
+        }
+        console.log('更新后的 show_list:', show_list.value);
+      }
       
-    // }
-    // showPicker.value = false;
-    // pickerValue.value = selectedValues;
-    // fieldValue.value = selectedOptions[0].text;
+    }
+    showPicker.value = false;
+    pickerValue.value = selectedValues; //picker 绑定的值
+    fieldValue.value = selectedOptions[1].text;
   };
 
   const delCart = (index) => {
@@ -280,6 +304,19 @@
       }, 300); // 与 CSS 动画时间一致
     }
   };
+  const cart_laxian = ref(false)
+  // 
+  const onSubmit_laxian = async() => {
+    console.log('提交拉线工单：', cart.value);
+    const res = await http.post('/public/api/search_loca', {
+        ope: userStore.userInfo.userCode
+      });
+      console.log('拉线： ', res.data);
+      console.log(convertToTree(res.data));
+      columns.value = convertToTree(res.data)
+      cart_laxian.value = true;
+      showPicker.value = true;
+  };
 
   const laxian = async(item) => {
     console.log('拉线： ',item);
@@ -293,7 +330,7 @@
           // on confirm
           const res = await http.post('/public/api/laxian', {
             ope: null,
-            proj: 'N'+item.proj.slice(-4),
+            locaitem: null,
             xian_id: item.id
           })
           if (res.data.affectedRows > 0) {

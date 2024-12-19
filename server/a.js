@@ -237,6 +237,50 @@ router.post('/public/api/laxian', async (ctx, next) => {
     "data": res
   }
 });
+// batch_laxian
+router.post('/public/api/batch_laxian', async (ctx, next) => {
+  const { xian_ids, locaitem, ope } = ctx.request.body; 
+  console.log('batch_laxian', xian_ids, locaitem, ope);
+
+  if (!Array.isArray(xian_ids) || xian_ids.length === 0) {
+    ctx.body = {
+      code: 1,
+      message: 'xian_ids 应该是一个非空数组',
+    };
+    return;
+  }
+
+  // 构造 SQL 语句和参数
+  const sqls = [];
+  const params = [];
+
+  xian_ids.forEach((id) => {
+    sqls.push(
+      `UPDATE dev.dianlan SET last_fangxian = ?, last_fangxian_time = NOW(), last_fangxian_loca = ? WHERE id = ?`
+    );
+    params.push([ope, locaitem, id]);
+  });
+
+  try {
+    // 批量执行事务
+    const res = await mysql_trans.transaction(sqls, params);
+    console.log('batch_laxian', res);
+
+    ctx.body = {
+      code: 0,
+      data: res,
+    };
+  } catch (error) {
+    console.error('事务执行失败', error);
+
+    ctx.body = {
+      code: 1,
+      message: '批量操作失败',
+      error: error.message || error,
+    };
+  }
+});
+
 //area_detail_mod
 router.post('/public/api/area_detail_mod', async (ctx, next) => {
   const { itemid, itemname } = ctx.request.body;
