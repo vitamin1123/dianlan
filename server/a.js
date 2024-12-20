@@ -1,13 +1,11 @@
 const Koa = require('koa');
 const app = new Koa();
 const Router = require('koa-router');
-// const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
-// const fontkit = require('@pdf-lib/fontkit'); // 加载字体支持
 const fs = require('fs');
 const path = require('path');
 const koaStatic = require('koa-static');
-// const historyFallback = require('connect-history-api-fallback');
-// const koaConnect = require('koa-connect'); // 使用 koa-connect 来包装 connect-history-api-fallback
+const historyFallback = require('connect-history-api-fallback');
+const koaConnect = require('koa-connect'); // 使用 koa-connect 来包装 connect-history-api-fallback
 const { koaBody } = require('koa-body');
 const jwt = require('koa-jwt');
 const jwt1 = require('jsonwebtoken');
@@ -27,10 +25,10 @@ const doc_path = '/home/dev/mp/docs/'
 const JWT_SECRET = 'e2657e6a-7038-45db-91d4-01dbaa47c9aa'
 
 // 使用 connect-history-api-fallback，通过 koa-connect 来包装
-// app.use(koaConnect(historyFallback()));
+app.use(koaConnect(historyFallback()));
 
 // 提供静态文件服务
-// app.use(koaStatic('/home/dev/mp/zsk/dist')); // 假设你的静态文件在该目录下
+app.use(koaStatic('C:/Users/xyy/Desktop/dianlan/dist')); // 假设你的静态文件在该目录下
 
 app.use(koaBody({  
   multipart: true,  
