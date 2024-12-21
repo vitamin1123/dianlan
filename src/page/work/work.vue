@@ -405,6 +405,10 @@
   }); // 存储每个 grid 的搜索词
   
   const onSubmit = () => {
+    console.log("cart:" ,cart.value)
+    if (cart.value.length === 0) {
+      showToast('请选择要派工的线缆');
+    }
     console.log('提交工单');
   };
 

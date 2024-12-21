@@ -14,6 +14,7 @@ const base64 = require('base-64')
 const crypto = require('crypto');
 const mysql_trans = require("./db/mysql_trans_110.js");
 const axios = require('axios');
+const { v4: uuidv4 } = require('uuid');
 const util1 = require('./util/pinyin');
 const router = new Router();
 
@@ -212,6 +213,20 @@ router.post('/public/api/loca_user_add', async (ctx, next) => {
     "data": res
   }
 });
+// add_work_pack
+// 先判断下是否已经存在
+router.post('/public/api/add_work_pack', async (ctx, next) => {
+  console.log(uuidv4())
+  // const { areaid, locaitem, ope } = ctx.request.body;
+  // console.log('add_work_pack', areaid, locaitem, ope)
+  // const res = await Dianlan.addWorkPack(areaid, locaitem, ope)
+  // console.log('add_work_pack', res)
+  ctx.body = {
+    "code": 0,
+    "data": 'res'
+  }
+});
+
 
 // loca_user_del
 router.post('/public/api/loca_user_del', async (ctx, next) => {
