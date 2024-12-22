@@ -2,7 +2,16 @@ const dbconfig = require('../db/myconfig_127.js')
 const db = require('../db/db_mysql.js');
 
 module.exports = {
-    
+    async getAllUser(){
+        try{
+          let res = await db.query(`select a.id,a.usercode,a.username from dev.user a`, [], dbconfig);
+          return res;
+        }catch (error) {
+          console.error('查询出错:', error);
+          throw error;
+        }
+          
+    },
     async getUser (usercode) {
         //console.log('emp_code: ',emp_code)
         try{

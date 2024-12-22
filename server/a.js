@@ -201,7 +201,16 @@ router.get('/public/api/locauser_list', async (ctx, next) => {
     "data": res
   }
 });
-
+// get_all_user
+router.get('/public/api/get_all_user', async (ctx, next) => {
+  console.log('get_all_user')
+  const res = await Dianlan.getAllUser()
+  console.log('get_all_user')
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
 // loca_user_add
 router.post('/public/api/loca_user_add', async (ctx, next) => {
   const { areaid, usercode } = ctx.request.body;
@@ -217,10 +226,6 @@ router.post('/public/api/loca_user_add', async (ctx, next) => {
 // 先判断下是否已经存在
 router.post('/public/api/add_work_pack', async (ctx, next) => {
   console.log(uuidv4())
-  // const { areaid, locaitem, ope } = ctx.request.body;
-  // console.log('add_work_pack', areaid, locaitem, ope)
-  // const res = await Dianlan.addWorkPack(areaid, locaitem, ope)
-  // console.log('add_work_pack', res)
   ctx.body = {
     "code": 0,
     "data": 'res'

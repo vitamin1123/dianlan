@@ -387,11 +387,9 @@ onMounted(() => {
 
 </script>
 <style scoped>
-
 .card-container {
     margin-bottom: 1.5rem; /* 给内容容器添加底部外边距，避免被 submit-bar 遮挡 */
     overflow-y: auto; /* 保证内容可以滚动 */
     max-height: calc(100vh - 100px); /* 动态调整高度 */
   }
 </style>
-  

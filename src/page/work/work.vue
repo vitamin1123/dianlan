@@ -20,7 +20,58 @@
         </van-cell-group>
       </van-list>
     </van-popup>
-
+    <van-popup>
+      <van-search />
+    </van-popup>
+    <!-- 派工单人员选择 -->
+    <van-popup
+    v-model:show="wp_user_picker"
+    destroy-on-close
+    round
+    :style="{ height: '80%' }"
+    position="bottom"
+    @click-overlay="wp_user_picker = false"
+  >
+    <!-- 搜索框 -->
+    <van-search
+      v-model="searchQuery"
+      placeholder="搜索用户"
+      @input="filterUsers"
+      @search="filterUsersChange"
+      style="position: sticky; top: 1px; z-index: 100;"
+    />
+    <div style="display: flex; height: calc(100% - 50px);">
+      <!-- 左侧列表 -->
+      <div style="flex: 1; padding: 10px; border-right: 1px solid #eee;">
+        <p style="font-size: 0.3rem;">可选用户</p>
+        <van-list>
+          <van-cell-group>
+            <van-cell
+              v-for="item in filteredLeftList"
+              :key="item.id"
+              :title="item.username"
+              @click="moveToRight(item)"
+            />
+          </van-cell-group>
+        </van-list>
+      </div>
+      
+      <!-- 右侧列表 -->
+      <div style="flex: 1; padding: 10px;">
+        <p style="font-size: 0.3rem;">已选用户</p>
+        <van-list>
+          <van-cell-group>
+            <van-cell
+              v-for="item in rightList"
+              :key="item.id"
+              :title="item.username"
+              @click="moveToLeft(item)"
+            />
+          </van-cell-group>
+        </van-list>
+      </div>
+    </div>
+  </van-popup>
     <!-- 拉线区域选择 -->
     <van-popup v-model:show="showPicker" destroy-on-close round position="bottom" @click-overlay="showPicker = false,cart_laxian=false,console.log(cart_laxian)">
       <van-picker
@@ -153,7 +204,7 @@
   <script setup>
   import { ref, onMounted, watch } from 'vue';
   import { showToast } from 'vant'
-  import dianlanImage from '@/assets/xianlan.jpg';
+  import Pinyin from 'pinyin-match';
   import http from '@/api/request';
   import { showConfirmDialog  } from 'vant';
   import { useUserStore } from '@/store/userStore';
@@ -171,16 +222,17 @@
   const page = ref(0);
   const totalPrice = ref(0.00)
   const clickItem = ref(null)
-
+  const wp_user_picker = ref(false)
   const columns = ref([
       { text: '', value: '' },
   ])
-
+  const filteredLeftList = ref([]);
+  const rightList = ref([]);
   const fieldValue = ref('');
   const showPicker = ref(false);
   const showCartPopup = ref(false);
   const pickerValue = ref([]);
-
+  const searchQuery = ref([]);
   let lastRequestTime = 0;
   const throttleDelay = 1000; 
   // Grid 项数据
@@ -200,6 +252,26 @@
     cart.value = [];
     totalPrice.value = 0.00;
     showCartPopup.value = false;
+  };
+  
+
+  const filterUsers = ref('');
+  const filterUsersChange = async(value) => {
+    console.log('filterUsersChange:', value);
+    // filteredLeftList.value = leftList.value.filter(item => {
+    //   const itemValue = item.name;
+    //   return itemValue.includes(value);
+    // });
+  };
+
+  const moveToRight = (item) => {
+    rightList.value.push(item);
+    filteredLeftList.value = filteredLeftList.value.filter(leftItem => leftItem.id !== item.id); 
+  };
+
+  const moveToLeft = (item) => {
+    filteredLeftList.value.push(item);
+    rightList.value = rightList.value.filter(rightItem => rightItem.id!== item.id);
   };
 
   const onConfirm = async({ selectedValues, selectedOptions }) => {
@@ -408,13 +480,16 @@
     console.log("cart:" ,cart.value)
     if (cart.value.length === 0) {
       showToast('请选择要派工的线缆');
+      return; 
     }
+    // 生成工单 workpack
+    wp_user_picker.value = true;
     console.log('提交工单');
   };
 
   const onLoad = async () => {
         
-        page.value++; // 增加页码
+        page.value++; // 增加页码 
         
         if (refreshing.value) {
           page.value = 0
@@ -614,6 +689,14 @@ const handlePopupClose = () => {
       }
     };
 
+  const loadAllUser = async() => {
+      const url = '/public/api/get_all_user';
+      const response = await http.get(url);
+      console.log('返回值：',response.data)
+      // all_user.value = response.data;
+      filteredLeftList.value = response.data;
+  };
+
   const saveSearchWords = () => {
     localStorage.setItem('searchWords', JSON.stringify(searchWords.value));
     console.log('searchWords saved: ',localStorage.getItem('searchWords'));
@@ -626,6 +709,7 @@ const handlePopupClose = () => {
 
   onMounted( async() => {
     await loadSearchWords();
+    await loadAllUser();
     console.log("首页加载啦; ",userStore.userInfo);
  
   })
