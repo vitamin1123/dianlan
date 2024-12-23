@@ -33,13 +33,23 @@
     @click-overlay="wp_user_picker = false"
   >
     <!-- 搜索框 -->
-    <van-search
-      v-model="searchQuery"
-      placeholder="搜索用户"
-      @input="filterUsers"
-      @search="filterUsersChange"
-      style="position: sticky; top: 1px; z-index: 100;"
-    />
+    <div style="position: sticky; top: 1px; z-index: 100; display: flex; align-items: center; gap: 1px;">
+      <van-search
+        v-model="searchQuery"
+        placeholder="搜索用户"
+        
+        @search="filterUsersChange"
+        style="flex: 4;"
+      />
+      <van-button
+        type="primary"
+        size="small"
+        @click="confirmSubWp"
+        style="flex: 1; max-width: 120px; margin-right: 0.5rem"
+      >
+        提交工单
+      </van-button>
+    </div>
     <div style="display: flex; height: calc(100% - 50px);">
       <!-- 左侧列表 -->
       <div style="flex: 1; padding: 10px; border-right: 1px solid #eee;">
@@ -51,7 +61,11 @@
               :key="item.id"
               :title="item.username"
               @click="moveToRight(item)"
-            />
+            >
+            <template #title>
+              <span v-html="item.username"></span>
+            </template>
+            </van-cell>
           </van-cell-group>
         </van-list>
       </div>
@@ -222,6 +236,7 @@
   const page = ref(0);
   const totalPrice = ref(0.00)
   const clickItem = ref(null)
+  const leftList = ref([])
   const wp_user_picker = ref(false)
   const columns = ref([
       { text: '', value: '' },
@@ -256,21 +271,52 @@
   
 
   const filterUsers = ref('');
+
+  const confirmSubWp = async() => {
+    
+    console.log('confirmSubWp:', rightList.value);
+    console.log('confirmSubWp:', cart.value);
+    const res = await http.post('/public/api/add_wp', {
+      ope: userStore.userInfo.userCode,
+      dianlan: cart.value.map(item => item.id),
+      user: rightList.value.map(item => item.usercode),
+    });
+    // console.log(res.data)
+    // if (res.data.every(result => result.affectedRows > 0)) {
+    //   showToast('拉线成功');
+    //   // 更新目标项的信息
+    //   wp_user_picker.value = true;
+    //   cart.value.forEach(cart => cart.last_fangxian = userStore.userInfo.userCode)
+    // }
+  };
+
   const filterUsersChange = async(value) => {
     console.log('filterUsersChange:', value);
-    // filteredLeftList.value = leftList.value.filter(item => {
-    //   const itemValue = item.name;
-    //   return itemValue.includes(value);
-    // });
+    if (value === '') {
+      filteredLeftList.value = leftList.value;
+      return;
+    }
+    // filteredLeftList rightList leftList
+    const matches = [];
+    leftList.value.forEach(item => {
+      let metchRes = Pinyin.match(item.username, value);
+      console.log(item)
+      if(metchRes)
+        matches.push(item)
+    });
+    filteredLeftList.value = matches;
+    
   };
 
   const moveToRight = (item) => {
     rightList.value.push(item);
     filteredLeftList.value = filteredLeftList.value.filter(leftItem => leftItem.id !== item.id); 
+    leftList.value = leftList.value.filter(leftItem => leftItem.id!== item.id);
   };
 
   const moveToLeft = (item) => {
     filteredLeftList.value.push(item);
+    leftList.value.push(item);
     rightList.value = rightList.value.filter(rightItem => rightItem.id!== item.id);
   };
 
@@ -685,6 +731,8 @@ const handlePopupClose = () => {
         const responseData = await fetchData();
         console.log('返回电缆值：', responseData.totalCount,responseData.data);
         show_list.value = responseData.data;
+
+
         console.log('parse---savedSearchWords: ',searchWords.value);
       }
     };
@@ -695,6 +743,7 @@ const handlePopupClose = () => {
       console.log('返回值：',response.data)
       // all_user.value = response.data;
       filteredLeftList.value = response.data;
+      leftList.value = response.data;
   };
 
   const saveSearchWords = () => {

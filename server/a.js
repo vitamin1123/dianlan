@@ -211,6 +211,48 @@ router.get('/public/api/get_all_user', async (ctx, next) => {
     "data": res
   }
 });
+// add_wp
+router.post('/public/api/add_wp', async (ctx, next) => {
+  const { ope, dianlan, user } = ctx.request.body;
+  console.log('add_wp', dianlan, user, ope)
+  const sqls = [];
+  const params = [];
+  const uid = uuidv4()
+  dianlan.forEach((id) => {
+    sqls.push(
+      `insert into dev.workpack (wpid,wpowner,state,dianlanid,dianlanstate) values(?,?,0,?,0)`
+    );
+    params.push([uid, ope, id]);
+  });
+  user.forEach((usercode) => {
+    sqls.push(
+      `insert into dev.wp_user (wp_id,user) values(?,?)`
+    );
+    params.push([uid, usercode]);
+  });
+  try {
+    // 批量执行事务
+    const res = await mysql_trans.transaction(sqls, params);
+    console.log('add_wp', res);
+    ctx.body = {
+      code: 0,
+      data: res,
+    };
+  } catch (error) {
+    console.error('事务执行失败', error);
+
+    ctx.body = {
+      code: 1,
+      message: '批量操作失败',
+      error: error.message || error,
+    };
+  }
+  // console.log('add_wp', res) 
+  // ctx.body = {
+  //   "code": 0,
+  //   "data": res
+  // }
+});
 // loca_user_add
 router.post('/public/api/loca_user_add', async (ctx, next) => {
   const { areaid, usercode } = ctx.request.body;
