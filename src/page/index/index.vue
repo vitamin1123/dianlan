@@ -9,9 +9,29 @@
       </div>
     </div>
     <van-checkbox-group v-model="checked" ref="checkboxGroup" shape="square">
-      <van-checkbox name="a" class="checkbox">复选框 a</van-checkbox>
-      <van-checkbox name="b" class="checkbox">复选框 b</van-checkbox>
-      <van-checkbox name="c" class="checkbox">复选框 c</van-checkbox>
+      <van-checkbox 
+        v-for ="item in list"
+        :key = "item.dianlanid"
+        :name="item.id" 
+        :disabled="item.state"
+        class="checkbox">
+      <van-card
+        :num="item.num"
+        
+        :desc="item.model+'  '+ item.specification"
+        :title="item.daihao"
+        style="--van-card-font-size: 0.4rem;"
+        >
+        <template #tags>
+          <van-tag v-if="item.proj"  type="primary" style="margin-right: 0.1rem;">{{ 'N'+item.proj.substr(-4) }}</van-tag>
+            <van-tag v-if="item.facilities && item.facilities.trim() !== ''" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities }}</van-tag>
+            <van-tag v-if="item.facilities_loca && item.facilities_loca.trim() !== ''"  color="#ffe1e1" text-color="#ad0000" style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
+            <van-tag v-if="item.facilities_name && item.facilities_name.trim() !== ''" plain color="#7232dd" style="margin-right: 0.1rem;">{{ item.facilities_name }}</van-tag>
+            <van-tag v-if="item.state" color="#008866" >{{ item.fin_user }}</van-tag>
+        </template>
+        
+      </van-card>
+    </van-checkbox>
     </van-checkbox-group>
   </div>
 </template>
@@ -19,7 +39,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useUserStore } from '@/store/userStore';
-
+import http  from '@/api/request';
 const userStore = useUserStore();
 const checked = ref([]);
 const list = ref([]);
@@ -54,6 +74,7 @@ const load = async () => {
 }
 
 onMounted(() => {
+  load()
   console.log("首页加载啦; ", userStore.userInfo);
 });
 </script>

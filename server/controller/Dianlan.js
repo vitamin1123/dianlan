@@ -5,7 +5,9 @@ module.exports = {
   // getMyWpList
   async getMyWpList(ope) {
     try {
-      let res = await db.query(`select a.*,b.itemname from dev.dianlan a left join dev.loca_item b on a.loca = b.id where a.state = 1 and b.state = 1 and a.loca in (select loca from dev.loca_user where user =?)`,[ope],dbconfig)
+      let res = await db.query(`select a.*,b.user,c.* from dev.workpack a left join dev.wp_user b on a.wpid = b.wp_id
+left join dev.dianlan c on a.dianlanid = c.id
+where b.user = ? and  to_days(wpdate) = to_days(now());`,[ope],dbconfig)
       //console.log('contro_res:  ',res)
       return res
     } catch (error) {
@@ -31,7 +33,7 @@ module.exports = {
         console.error('查询有效电缆ID出错:', error);
         throw error;
     }
-},
+ },
 
     async getAllUser(){
         try{
