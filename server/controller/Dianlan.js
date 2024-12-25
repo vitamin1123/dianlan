@@ -2,6 +2,37 @@ const dbconfig = require('../db/myconfig_127.js')
 const db = require('../db/db_mysql.js');
 
 module.exports = {
+  // getMyWpList
+  async getMyWpList(ope) {
+    try {
+      let res = await db.query(`select a.*,b.itemname from dev.dianlan a left join dev.loca_item b on a.loca = b.id where a.state = 1 and b.state = 1 and a.loca in (select loca from dev.loca_user where user =?)`,[ope],dbconfig)
+      //console.log('contro_res:  ',res)
+      return res
+    } catch (error) {
+      console.error('查询出错:', error);
+      throw error;
+    }
+  },
+  async getValidDianlanIds(dianlanIds) {
+    console.log('看看dianlanIds: ', dianlanIds);
+    try {
+        // 构造 SQL 查询
+        const placeholders = dianlanIds.map(() => '?').join(','); // 构造占位符 (?, ?, ...)
+        const sql = `SELECT id FROM dev.dianlan WHERE state = 0 AND id IN (${placeholders})`;
+
+        // 构造完整的调试 SQL
+        // const debugSql = sql.replace(/\?/g, (_, index) => `'${dianlanIds[index]}'`);
+        // console.log('看看执行的完整 SQL: ', debugSql);
+
+        // 执行查询
+        const res = await db.query(sql, dianlanIds, dbconfig);
+        return res.map(row => row.id); // 返回有效的 ID 数组
+    } catch (error) {
+        console.error('查询有效电缆ID出错:', error);
+        throw error;
+    }
+},
+
     async getAllUser(){
         try{
           let res = await db.query(`select a.id,a.usercode,a.username from dev.user a`, [], dbconfig);
@@ -287,7 +318,7 @@ async searchCode (code) {
         let conditions = [];
         let values = [];
         // 拼接完整的 SQL 查询
-        let sql = `SELECT a.*,b.username as fangxianren,c.username as last_operator,d.price as baseprice,e.price as fa_price  from dev.dianlan a `;
+        let sql = `SELECT a.*,b.username as fangxianren,c.username as last_operator,d.price as baseprice,e.price as fa_price,g.username as paip,g.usercode as paip_code  from dev.dianlan a `;
         let countSql = `SELECT COUNT(*) as totalCount from dev.dianlan `;
       
         // 根据各个字段的值拼接 WHERE 条件
@@ -331,6 +362,8 @@ async searchCode (code) {
         left join dev.user b on a.last_fangxian = b.usercode 
         left join dev.user c on a.last_ope = c.usercode
         left join dev.epprice e on a.facilities = e.ep
+        left join dev.workpack f on a.id = f.dianlanid 
+        left join dev.user g on f.wpowner = g.usercode
         `;
         // 如果有条件，拼接 WHERE 子句
         if (conditions.length > 0) {

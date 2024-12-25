@@ -214,32 +214,57 @@ router.get('/public/api/get_all_user', async (ctx, next) => {
 // add_wp
 router.post('/public/api/add_wp', async (ctx, next) => {
   const { ope, dianlan, user } = ctx.request.body;
-  console.log('add_wp', dianlan, user, ope)
+  console.log('add_wp', dianlan, user, ope);
+
   const sqls = [];
   const params = [];
-  const uid = uuidv4()
-  dianlan.forEach((id) => {
-    sqls.push(
-      `insert into dev.workpack (wpid,wpowner,state,dianlanid,dianlanstate) values(?,?,0,?,0)`
-    );
-    params.push([uid, ope, id]);
-  });
-  user.forEach((usercode) => {
-    sqls.push(
-      `insert into dev.wp_user (wp_id,user) values(?,?)`
-    );
-    params.push([uid, usercode]);
-  });
+  const uid = uuidv4();
+
   try {
-    // 批量执行事务
-    const res = await mysql_trans.transaction(sqls, params);
-    console.log('add_wp', res);
+    // 获取有效的电缆ID
+    const validDianlanIds = await Dianlan.getValidDianlanIds(dianlan);
+
+    if (validDianlanIds.length === 0) {
+      ctx.body = {
+        code: 1,
+        message: '没有符合条件的电缆记录',
+      };
+      return;
+    }
+
+    // 插入 workpack 数据
+    validDianlanIds.forEach((id) => {
+      sqls.push(
+        `insert into dev.workpack (wpid, wpowner, state, dianlanid, dianlanstate) values(?, ?, 0, ?, 0)`
+      );
+      params.push([uid, ope, id]);
+    });
+
+    // 更新 dianlan 表状态
+    validDianlanIds.forEach((id) => {
+      sqls.push(
+        `update dev.dianlan set state = 1 where id = ?`
+      );
+      params.push([id]);
+    });
+
+    // 插入 wp_user 数据
+    user.forEach((usercode) => {
+      sqls.push(
+        `insert into dev.wp_user (wp_id, user) values(?, ?)`
+      );
+      params.push([uid, usercode]);
+    });
+
+    // 执行事务
+    await mysql_trans.transaction(sqls, params);
+
     ctx.body = {
       code: 0,
-      data: res,
+      message: '操作成功',
     };
   } catch (error) {
-    console.error('事务执行失败', error);
+    console.error('事务执行失败:', error);
 
     ctx.body = {
       code: 1,
@@ -247,12 +272,51 @@ router.post('/public/api/add_wp', async (ctx, next) => {
       error: error.message || error,
     };
   }
-  // console.log('add_wp', res) 
-  // ctx.body = {
-  //   "code": 0,
-  //   "data": res
-  // }
 });
+
+// router.post('/public/api/add_wp', async (ctx, next) => {
+//   const { ope, dianlan, user } = ctx.request.body;
+//   console.log('add_wp', dianlan, user, ope)
+//   const sqls = [];
+//   const params = [];
+//   const uid = uuidv4()
+//   dianlan.forEach((id) => {
+//     sqls.push(
+//       `insert into dev.workpack (wpid,wpowner,state,dianlanid,dianlanstate) values(?,?,0,?,0)`
+//     );
+//     params.push([uid, ope, id]);
+//   });
+//   dianlan.forEach((id) => {
+//     sqls.push(
+//       `update dev.dianlan set state = 1 where id =?`
+//     );
+//     params.push([id]);
+//   });
+//   user.forEach((usercode) => {
+//     sqls.push(
+//       `insert into dev.wp_user (wp_id,user) values(?,?)`
+//     );
+//     params.push([uid, usercode]);
+//   });
+//   try {
+//     // 批量执行事务
+//     const res = await mysql_trans.transaction(sqls, params);
+//     console.log('add_wp', res);
+//     ctx.body = {
+//       code: 0,
+//       data: res,
+//     };
+//   } catch (error) {
+//     console.error('事务执行失败', error);
+
+//     ctx.body = {
+//       code: 1,
+//       message: '批量操作失败',
+//       error: error.message || error,
+//     };
+//   }
+// });
+
 // loca_user_add
 router.post('/public/api/loca_user_add', async (ctx, next) => {
   const { areaid, usercode } = ctx.request.body;
@@ -271,6 +335,17 @@ router.post('/public/api/add_work_pack', async (ctx, next) => {
   ctx.body = {
     "code": 0,
     "data": 'res'
+  }
+});
+// /public/api/get_my_wp_list
+router.post('/public/api/get_my_wp_list', async (ctx, next) => {
+  const { user } = ctx.request.body;
+  console.log('get_my_wp_list', user)
+  const res = await Dianlan.getMyWpList(user)
+  console.log('get_my_wp_list', res)
+  ctx.body = {
+    "code": 0,
+    "data": res
   }
 });
 
@@ -316,7 +391,7 @@ router.post('/public/api/batch_laxian', async (ctx, next) => {
 
   xian_ids.forEach((id) => {
     sqls.push(
-      `UPDATE dev.dianlan SET last_fangxian = ?, last_fangxian_time = NOW(), last_fangxian_loca = ? WHERE id = ?`
+      `UPDATE dev.dianlan SET last_fangxian = ?, last_fangxian_time = NOW(), last_fangxian_loca = ? WHERE id = ? and last_fangxian is null`
     );
     params.push([ope, locaitem, id]);
   });

@@ -37,7 +37,6 @@
       <van-search
         v-model="searchQuery"
         placeholder="搜索用户"
-        
         @search="filterUsersChange"
         style="flex: 4;"
       />
@@ -174,12 +173,12 @@
             </van-button> -->
             <van-button
               v-if="userStore.userInfo.userRole < 4"
-              :disabled="item.last_fangxian && item.last_fangxian !== userStore.userInfo.userCode"
+              :disabled="(item.last_fangxian && item.last_fangxian !== userStore.userInfo.userCode) || item.paip!= null"
               :type="(item.last_fangxian && item.last_fangxian !== userStore.userInfo.userCode) ? 'warning' : 'default'"
               size="small"
               @click="laxian(item)"
             >{{ item.fangxianren || '完成拉线' }}</van-button>
-            <van-button size="small" @click="addCart(item)">选中</van-button>
+            <van-button size="small" :disabled="item.paip != null" @click="addCart(item)">{{ item.paip || '选中' }}</van-button>
         </template>
       </van-card>
     </van-list>
@@ -281,13 +280,19 @@
       dianlan: cart.value.map(item => item.id),
       user: rightList.value.map(item => item.usercode),
     });
-    // console.log(res.data)
-    // if (res.data.every(result => result.affectedRows > 0)) {
-    //   showToast('拉线成功');
-    //   // 更新目标项的信息
-    //   wp_user_picker.value = true;
-    //   cart.value.forEach(cart => cart.last_fangxian = userStore.userInfo.userCode)
-    // }
+    console.log(res.data)
+    if (res.code === 0) {
+    showToast('拉线成功');
+    
+    // 更新目标项的信息
+    wp_user_picker.value = false;
+    
+    // 更新 cart 中的 last_fangxian 字段
+      cart.value.forEach(item => item.last_fangxian = userStore.userInfo.userCode);
+    } else {
+      // 处理失败的情况（例如可以显示错误提示）
+      showToast(res.message || '拉线失败，请重试');
+    }
   };
 
   const filterUsersChange = async(value) => {
@@ -380,7 +385,7 @@
 
     // 筛选出未在购物车中的商品
     const newItems = show_list.value.filter(item => 
-      !cart.value.some(cartItem => cartItem.id === item.id)
+      (!cart.value.some(cartItem => cartItem.id === item.id)) && !item.paip
     );
 
     if (newItems.length === 0) {
