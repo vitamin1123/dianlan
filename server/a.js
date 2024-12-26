@@ -339,9 +339,9 @@ router.post('/public/api/add_work_pack', async (ctx, next) => {
 });
 // /public/api/get_my_wp_list
 router.post('/public/api/get_my_wp_list', async (ctx, next) => {
-  const { userCode } = ctx.request.body;
-  console.log('get_my_wp_list', userCode)
-  const res = await Dianlan.getMyWpList(userCode)
+  const { userCode, qdate } = ctx.request.body;
+  console.log('get_my_wp_list', userCode, qdate)
+  const res = await Dianlan.getMyWpList(userCode, qdate)
   console.log('get_my_wp_list', res)
   ctx.body = {
     "code": 0,

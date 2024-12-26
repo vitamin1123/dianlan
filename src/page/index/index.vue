@@ -8,12 +8,12 @@
         <van-button type="primary" @click="toggleAll">反选</van-button>
       </div>
     </div>
-    <van-checkbox-group v-model="checked" ref="checkboxGroup" shape="square">
+    <van-checkbox-group v-model="checked" ref="checkboxGroup" shape="square" @change="checkChange">
       <van-checkbox 
         v-for ="item in list"
         :key = "item.dianlanid"
         :name="item.id" 
-        :disabled="item.state"
+        :disabled="item.fin_user != null || date != todayDate"
         class="checkbox">
       <van-card
         :num="item.num"
@@ -37,26 +37,57 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useUserStore } from '@/store/userStore';
+import { showToast,showConfirmDialog  } from 'vant';
 import http  from '@/api/request';
 const userStore = useUserStore();
 const checked = ref([]);
 const list = ref([]);
 const checkboxGroup = ref(null);
+const todayDate = new Date().toLocaleDateString('en-CA').replace(/-/g, '/');  // 替换 - 为 /
 
-const date = ref(new Date().toISOString().slice(0, 10));
+const date = ref(todayDate);
 const maxDate = ref(new Date());
 const minDate = ref(new Date());
 minDate.value.setDate(maxDate.value.getDate() - 30);
 const show = ref(false);
+const previousCheckedValues = ref([]);
+
+
+
+const checkChange = async(newCheckedValues) => {
+ 
+  // 判断哪个复选框的状态发生变化，并判断是选中还是取消选中
+  const added = newCheckedValues.filter(value => !previousCheckedValues.value.includes(value)); // 新选中的值
+  const removed = previousCheckedValues.value.filter(value => !newCheckedValues.includes(value)); // 取消选中的值
+
+  if (added.length > 0) {
+    
+    showToast(`选中了: ${added[0]}`);
+    const res = await http.post('/public/api/search_user_code', {'code': usercode.value});
+    console.log('选中了:', added);
+  }
+
+  if (removed.length > 0) {
+    
+    showToast(`取消选中: ${removed[0]}`);
+    console.log('取消选中:', removed);
+  }
+
+  // 更新 previousCheckedValues 为新的 checkedValues
+  previousCheckedValues.value = [...newCheckedValues];
+};
 
 const formatDate = (date) => {
   return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
 };
 const onConfirm = (value) => {
+ 
   show.value = false;
   date.value = formatDate(value);
+  console.log('选中日期:', date.value, todayDate );
+  load()
 };
 
 const checkAll = () => {
@@ -68,7 +99,7 @@ const toggleAll = () => {
 };
 
 const load = async () => {
-    const res = await http.post('/public/api/get_my_wp_list', { userCode: userStore.userInfo.userCode });
+    const res = await http.post('/public/api/get_my_wp_list', { userCode: userStore.userInfo.userCode, qdate: date.value });
     console.log('初次加载： ',res.data)
     list.value = res.data
 }

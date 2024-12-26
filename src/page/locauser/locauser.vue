@@ -11,7 +11,7 @@
                 <van-swipe-cell v-for="item in leftFilterList"
                 :key="item.id">
                 <van-cell
-                    :title="item.name"
+                    :title="item.name"          
                     @click="leftClick(item)"
                     :style="{ color: item.id === selectedLoca.id ? 'red' : 'black' }"
                 />
@@ -45,7 +45,7 @@
   </template>
   
   <script setup>
-  import { ref,reactive, onMounted, onBeforeUpdate, watch, nextTick   } from 'vue';
+  import { ref, reactive, onMounted, onBeforeUpdate, watch, nextTick   } from 'vue';
   import { showToast,showConfirmDialog  } from 'vant';
   import http from '@/api/request';
   import Pinyin from 'pinyin-match';
@@ -67,7 +67,7 @@
   let isLocaChanged = ref(false);
 
   watch(selectedLoca, (newVal, oldVal) => {
-    if (newVal !== oldVal) {
+    if (newVal !== oldVal) { 
       isLocaChanged.value = true; // 标记 selectedLoca 发生了变化
     }
   });

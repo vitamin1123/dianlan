@@ -3,11 +3,15 @@ const db = require('../db/db_mysql.js');
 
 module.exports = {
   // getMyWpList
-  async getMyWpList(ope) {
+  async getMyWpList(ope,qdate) {
     try {
       let res = await db.query(`select a.*,b.user,c.* from dev.workpack a left join dev.wp_user b on a.wpid = b.wp_id
 left join dev.dianlan c on a.dianlanid = c.id
-where b.user = ? and  to_days(wpdate) = to_days(now());`,[ope],dbconfig)
+where b.user = ? and  to_days(wpdate) = to_days(?)
+union (
+select a.*,b.user,c.* from dev.workpack a left join dev.wp_user b on a.wpid = b.wp_id
+left join dev.dianlan c on a.dianlanid = c.id
+where b.user = '10030203' and a.dianlanstate = 0);`,[ope,qdate],dbconfig)
       //console.log('contro_res:  ',res)
       return res
     } catch (error) {
