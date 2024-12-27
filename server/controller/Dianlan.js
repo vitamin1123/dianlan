@@ -3,6 +3,34 @@ const db = require('../db/db_mysql.js');
 
 module.exports = {
 
+  async getAllSubWorkpacks(leaderUsercode) {
+    try {
+      let res = await db.query(`
+WITH RECURSIVE subordinates AS (
+    SELECT usercode, dleader
+    FROM dev.user
+    WHERE dleader = ?
+    UNION
+    SELECT u.usercode, u.dleader
+    FROM user u
+    JOIN subordinates s ON u.dleader = s.usercode
+)
+SELECT 
+    wp.* 
+FROM 
+    dev.workpack wp
+JOIN 
+    dev.wp_user wpu ON wp.wpid = wpu.wp_id 
+LEFT JOIN 
+    subordinates s ON wpu.user = s.usercode;`, [leaderUsercode]);
+
+      return res;
+    } catch (error) {
+      console.error('查询出错:', error);
+      throw error;
+    }
+  },
+
   async getAllSub(usercode) {
     try {
       let res = await db.query(`

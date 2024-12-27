@@ -316,6 +316,17 @@ router.post('/public/api/add_wp', async (ctx, next) => {
 //     };
 //   }
 // });
+//get AllSubWp
+router.post('/public/api/getAllSubWp', async (ctx, next) => {
+  const { id } = ctx.request.body;
+  console.log('getAllSubWp', id)
+  const res = await Dianlan.getAllSubWorkpacks(id)
+  console.log('getAllSubWp', res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
 //getAllSub
 router.post('/public/api/getAllSub', async (ctx, next) => {
   const { id } = ctx.request.body;
