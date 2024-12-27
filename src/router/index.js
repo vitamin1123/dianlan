@@ -56,6 +56,30 @@ const routes = [
         name: 'locauser',
         component: () => import("@/page/locauser/locauser.vue"),
 
+    },
+    {
+        path:"/myana-fangxian",
+        name: 'myana-fangxian',
+        component: () => import("@/page/myana-fangxian/myana-fangxian.vue"),
+
+    },
+    {
+        path:"/myana-laxian",
+        name: 'myana-laxian',
+        component: () => import("@/page/myana-laxian/myana-laxian.vue"),
+
+    },
+    {
+        path:"/myana-peo",
+        name: 'myana-peo',
+        component: () => import("@/page/myana-peo/myana-peo.vue"),
+
+    },
+    {
+        path:"/myana-proj",
+        name: 'myana-proj',
+        component: () => import("@/page/myana-proj/myana-proj.vue"),
+
     }
 ];
 

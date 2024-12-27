@@ -316,6 +316,80 @@ router.post('/public/api/add_wp', async (ctx, next) => {
 //     };
 //   }
 // });
+//getAllSub
+router.post('/public/api/getAllSub', async (ctx, next) => {
+  const { id } = ctx.request.body;
+  console.log('getAllSub', id)
+  const res = await Dianlan.getAllSub(id)
+  console.log('getAllSub', res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
+
+// ana_laxian1
+router.post('/public/api/ana_laxian1', async (ctx, next) => {
+  const { id, locaitem } = ctx.request.body;
+  console.log('ana_laxian1', id, locaitem)
+  const res = await Dianlan.anaLaxian1()
+  console.log('ana_laxian1', res);
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
+
+//add_my_work
+router.post('/public/api/add_my_work', async (ctx, next) => {
+  const { code, id } = ctx.request.body;
+  console.log('add_my_work', id, code);
+  const result = await Dianlan.checkAndUpdateWorkpack(id, code);  // code 是当前用户的 id
+
+  if (result.success) {
+    ctx.body = { message: result.message };
+    ctx.status = 200;  // 成功状态码
+  } else {
+    ctx.body = { message: result.message };
+    ctx.status = 400;  // 错误状态码
+  }
+  }
+)
+///public/api/ana_laxian
+router.post('/public/api/ana_laxian', async (ctx, next) => {
+  const { id, locaitem } = ctx.request.body;
+  console.log('ana_laxian', id, locaitem)
+  const res = await Dianlan.anaLaxian()
+  console.log('ana_laxian', res);
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
+
+//del_my_work
+router.post('/public/api/del_my_work', async (ctx, next) => {
+  const { code, id } = ctx.request.body;
+  console.log('del_my_work', code, id)
+  const res = await Dianlan.delMyWork(id, code)
+  
+  console.log('del_my_work', res);
+
+  if (res.success) {
+    // 删除成功
+    ctx.body = {
+      code: 0,
+      data: res.message
+    };
+  } else {
+    // 删除失败
+    ctx.body = {
+      code: 1,
+      message: res.message
+    };
+  }
+});
+
 
 // loca_user_add
 router.post('/public/api/loca_user_add', async (ctx, next) => {

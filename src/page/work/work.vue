@@ -282,7 +282,7 @@
     });
     console.log(res.data)
     if (res.code === 0) {
-    showToast('拉线成功');
+    showToast('派工成功');
     
     // 更新目标项的信息
     wp_user_picker.value = false;
@@ -291,7 +291,7 @@
       cart.value.forEach(item => item.last_fangxian = userStore.userInfo.userCode);
     } else {
       // 处理失败的情况（例如可以显示错误提示）
-      showToast(res.message || '拉线失败，请重试');
+      showToast(res.message || '派工失败，请重试');
     }
   };
 

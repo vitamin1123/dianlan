@@ -2,16 +2,179 @@ const dbconfig = require('../db/myconfig_127.js')
 const db = require('../db/db_mysql.js');
 
 module.exports = {
+
+  async getAllSub(usercode) {
+    try {
+      let res = await db.query(`
+WITH RECURSIVE subordinates AS (
+    SELECT usercode, dleader
+    FROM dev.user
+    WHERE dleader = ?
+    UNION
+    SELECT u.usercode, u.dleader
+    FROM user u
+    JOIN subordinates s ON u.dleader = s.usercode
+)
+SELECT wp.username,wp.usercode
+FROM dev.user wp
+JOIN subordinates s ON wp.usercode = s.usercode;`,
+      [usercode],dbconfig)
+      return res
+    } catch (error) {
+      console.error('查询出错:', error);
+      throw error;
+    }
+  },
+
+  async anaLaxian1(){
+    try {
+      let res = await db.query(`SELECT * 
+FROM (
+    SELECT 
+        facilities_loca,
+        COUNT(*) AS total_count,
+        SUM(total_length) AS total_length_sum,
+        COUNT(CASE WHEN state = 1 THEN 1 END) AS count_state_1,
+        SUM(CASE WHEN state = 1 THEN total_length ELSE 0 END) AS sum_length_state_1
+    FROM 
+        dev.dianlan
+    WHERE 
+        proj = 'YZJ2022-1454'
+    GROUP BY 
+        facilities_loca
+) AS subquery
+WHERE count_state_1 != 0;`,[],dbconfig)
+      return res
+    } catch (error) {
+      console.error('查询出错:', error);
+      throw error;
+    }
+  },
+
+  //anaLaxian
+  async anaLaxian () {
+    try {
+      let res = await db.query(`SELECT b.username,sum(a.total_length) as legnth,count(b.username) as cnt FROM dev.dianlan a
+left join dev.user b on a.last_fangxian = b.usercode
+where a.state = 1 group by b.username`,[],dbconfig)
+      return res
+    } catch (error) {
+      console.error('查询出错:', error);
+      throw error;
+    }
+  },
+
+  async delMyWork(id, userId) {
+    try {
+      // 查询工作包的当前状态
+      const [workpack] = await db.query(
+        `SELECT * FROM dev.workpack WHERE dianlanid = ?`,
+        [id],
+        dbconfig
+      );
+
+      // 如果找不到记录
+      if (!workpack) {
+        return { success: false, message: 'Record not found' };
+      }
+
+      // 如果 dianlanstate 不是 0，表示记录已处理过，不允许删除
+      if (workpack.dianlanstate == 0) {
+        return { success: false, message: 'This record cannot be deleted because it has been processed.' };
+      }
+
+      // 如果 fin_user 不是当前用户，不能删除
+      if (workpack.fin_user !== null && workpack.fin_user !== userId) {
+        return { success: false, message: 'You are not authorized to delete this record.' };
+      }
+
+      // 执行删除操作
+      await db.query(
+        `update dev.workpack set dianlanstate=0,fin_user=null WHERE dianlanid = ?`,
+        [id],
+        dbconfig
+      );
+
+      return { success: true, message: 'Record deleted successfully.' };
+    } catch (error) {
+      console.error('Error in delMyWork:', error);
+      throw error;
+    }
+  },
+  // 检查并更新工作包
+  async checkAndUpdateWorkpack(id, userId) {
+    try {
+      // 查询工作包的当前状态
+      const [workpack] = await db.query(
+        `SELECT * FROM dev.workpack WHERE dianlanid = ?`,
+        [id],
+        dbconfig
+      );
+
+      // 如果找不到记录
+      if (!workpack) {
+        throw new Error('Record not found');
+      }
+
+      // 如果 dianlanstate 为 1 或者 fin_user 已是当前用户
+      if (workpack.dianlanstate === 1 || workpack.fin_user === userId) {
+        return { success: false, message: 'This record has already been processed by someone else or you have already processed it.' };
+      }
+
+      // 更新记录：设置 fin_user 为当前用户，dianlanstate 设置为 1
+      await db.query(
+        `UPDATE dev.workpack SET fin_user = ?, dianlanstate = 1, finish_date = NOW() WHERE dianlanid = ?`,
+        [userId, id],
+        dbconfig
+      );
+
+      return { success: true, message: 'Workpack updated successfully.' };
+    } catch (error) {
+      console.error('Error in checkAndUpdateWorkpack:', error);
+      throw error;
+    }
+  },
   // getMyWpList
   async getMyWpList(ope,qdate) {
     try {
-      let res = await db.query(`select a.*,b.user,c.* from dev.workpack a left join dev.wp_user b on a.wpid = b.wp_id
-left join dev.dianlan c on a.dianlanid = c.id
-where b.user = ? and  to_days(wpdate) = to_days(?)
-union (
-select a.*,b.user,c.* from dev.workpack a left join dev.wp_user b on a.wpid = b.wp_id
-left join dev.dianlan c on a.dianlanid = c.id
-where b.user = '10030203' and a.dianlanstate = 0);`,[ope,qdate],dbconfig)
+      let res = await db.query(`SELECT 
+  a.*, 
+  b.user, 
+  c.*,
+  d.username as fin_user_name
+FROM 
+  dev.workpack a
+  LEFT JOIN dev.wp_user b ON a.wpid = b.wp_id
+  LEFT JOIN dev.dianlan c ON a.dianlanid = c.id
+  LEFT JOIN dev.user d ON a.fin_user = d.usercode
+WHERE 
+  b.user = ? 
+  AND to_days(wpdate) = to_days(?)  
+
+UNION 
+
+SELECT 
+  a.*, 
+  b.user, 
+  c.*,
+  d.username as fin_user_name
+FROM 
+  dev.workpack a
+  LEFT JOIN dev.wp_user b ON a.wpid = b.wp_id
+  LEFT JOIN dev.dianlan c ON a.dianlanid = c.id
+  LEFT JOIN dev.user d ON a.fin_user = d.usercode
+WHERE 
+  b.user = ? 
+  AND a.dianlanstate = 0    
+  AND to_days(wpdate) < to_days(?);`,[ope,qdate,ope,qdate],dbconfig)
+    
+//       let res = await db.query(`select a.*,b.user,c.* from dev.workpack a left join dev.wp_user b on a.wpid = b.wp_id
+// left join dev.dianlan c on a.dianlanid = c.id
+// where b.user = ? and  to_days(wpdate) = to_days(?)
+// union (
+// select a.*,b.user,c.* from dev.workpack a left join dev.wp_user b on a.wpid = b.wp_id
+// left join dev.dianlan c on a.dianlanid = c.id
+// where b.user = '10030203' and a.dianlanstate = 0);`,[ope,qdate],dbconfig)
       //console.log('contro_res:  ',res)
       return res
     } catch (error) {

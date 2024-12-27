@@ -13,7 +13,7 @@
         v-for ="item in list"
         :key = "item.dianlanid"
         :name="item.id" 
-        :disabled="item.fin_user != null || date != todayDate"
+        :disabled="(item.fin_user != null && item.fin_user != userStore.userInfo.userCode)|| date != todayDate"
         class="checkbox">
       <van-card
         :num="item.num"
@@ -27,7 +27,7 @@
             <van-tag v-if="item.facilities && item.facilities.trim() !== ''" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities }}</van-tag>
             <van-tag v-if="item.facilities_loca && item.facilities_loca.trim() !== ''"  color="#ffe1e1" text-color="#ad0000" style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
             <van-tag v-if="item.facilities_name && item.facilities_name.trim() !== ''" plain color="#7232dd" style="margin-right: 0.1rem;">{{ item.facilities_name }}</van-tag>
-            <van-tag v-if="item.state" color="#008866" >{{ item.fin_user }}</van-tag>
+            <van-tag v-if="item.state" color="#008866" >{{ item.fin_user_name }}</van-tag>
         </template>
         
       </van-card>
@@ -46,7 +46,7 @@ const checked = ref([]);
 const list = ref([]);
 const checkboxGroup = ref(null);
 const todayDate = new Date().toLocaleDateString('en-CA').replace(/-/g, '/');  // 替换 - 为 /
-
+const isInitialLoad = ref(true);
 const date = ref(todayDate);
 const maxDate = ref(new Date());
 const minDate = ref(new Date());
@@ -57,21 +57,27 @@ const previousCheckedValues = ref([]);
 
 
 const checkChange = async(newCheckedValues) => {
- 
+  // console.log('isInitialLoad', isInitialLoad.value)
+  // if (isInitialLoad.value) {
+  //   isInitialLoad.value = false; // 设置为 false，避免后续的 checkChange 逻辑重复执行
+  //   return;
+  // }
   // 判断哪个复选框的状态发生变化，并判断是选中还是取消选中
   const added = newCheckedValues.filter(value => !previousCheckedValues.value.includes(value)); // 新选中的值
   const removed = previousCheckedValues.value.filter(value => !newCheckedValues.includes(value)); // 取消选中的值
 
   if (added.length > 0) {
-    
+    const res = await http.post('/public/api/add_my_work', {'code': userStore.userInfo.userCode, 'id': added[0] });
     showToast(`选中了: ${added[0]}`);
-    const res = await http.post('/public/api/search_user_code', {'code': usercode.value});
+    console.log('选中了:', res);
+    load()
     console.log('选中了:', added);
   }
 
   if (removed.length > 0) {
-    
+    const res = await http.post('/public/api/del_my_work', {'code': userStore.userInfo.userCode, 'id': removed[0]});
     showToast(`取消选中: ${removed[0]}`);
+    load()
     console.log('取消选中:', removed);
   }
 
@@ -102,6 +108,12 @@ const load = async () => {
     const res = await http.post('/public/api/get_my_wp_list', { userCode: userStore.userInfo.userCode, qdate: date.value });
     console.log('初次加载： ',res.data)
     list.value = res.data
+    const defaultChecked = res.data.filter(item => item.dianlanstate === 1).map(item => item.id);
+    
+    // 更新 checked 数组，使得这些项默认勾选
+    checked.value = defaultChecked;
+    previousCheckedValues.value = defaultChecked;
+    // isInitialLoad.value = false;
 }
 
 onMounted(() => {
