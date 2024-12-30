@@ -162,6 +162,28 @@ where a.state = 1 group by b.username`,[],dbconfig)
       throw error;
     }
   },
+
+  //getPaipWpList
+  async getPaipWpList(user){
+    try {
+      let res = await db.query(`SELECT 
+  a.*, 
+  b.user, 
+  c.*,
+  d.username as fin_user_name
+FROM 
+  dev.workpack a
+  LEFT JOIN dev.wp_user b ON a.wpid = b.wp_id
+  LEFT JOIN dev.dianlan c ON a.dianlanid = c.id
+  LEFT JOIN dev.user d ON a.fin_user = d.usercode
+WHERE 
+  b.user = ? order by wpdate desc;`,[user],dbconfig)
+      return res
+    } catch (error) {
+      console.error('查询出错:', error);
+      throw error;
+    }
+  },
   // getMyWpList
   async getMyWpList(ope,qdate) {
     try {
@@ -177,24 +199,23 @@ FROM
   LEFT JOIN dev.user d ON a.fin_user = d.usercode
 WHERE 
   b.user = ? 
-  AND to_days(wpdate) = to_days(?)  
+  AND to_days(wpdate) = to_days(?)  ;`,[ope,qdate],dbconfig)
+//   UNION 
 
-UNION 
-
-SELECT 
-  a.*, 
-  b.user, 
-  c.*,
-  d.username as fin_user_name
-FROM 
-  dev.workpack a
-  LEFT JOIN dev.wp_user b ON a.wpid = b.wp_id
-  LEFT JOIN dev.dianlan c ON a.dianlanid = c.id
-  LEFT JOIN dev.user d ON a.fin_user = d.usercode
-WHERE 
-  b.user = ? 
-  AND a.dianlanstate = 0    
-  AND to_days(wpdate) < to_days(?);`,[ope,qdate,ope,qdate],dbconfig)
+// SELECT 
+//   a.*, 
+//   b.user, 
+//   c.*,
+//   d.username as fin_user_name
+// FROM 
+//   dev.workpack a
+//   LEFT JOIN dev.wp_user b ON a.wpid = b.wp_id
+//   LEFT JOIN dev.dianlan c ON a.dianlanid = c.id
+//   LEFT JOIN dev.user d ON a.fin_user = d.usercode
+// WHERE 
+//   b.user = ? 
+//   AND a.dianlanstate = 0    
+//   AND to_days(wpdate) < to_days(?)
     
 //       let res = await db.query(`select a.*,b.user,c.* from dev.workpack a left join dev.wp_user b on a.wpid = b.wp_id
 // left join dev.dianlan c on a.dianlanid = c.id
