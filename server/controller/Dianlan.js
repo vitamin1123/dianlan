@@ -164,21 +164,35 @@ where a.state = 1 group by b.username`,[],dbconfig)
   },
 
   //getPaipWpList
-  async getPaipWpList(user){
+  async getPaipWpList(user,page){
     try {
       let res = await db.query(`SELECT 
   a.*, 
-  b.user, 
+  e.username as user, 
   c.*,
   d.username as fin_user_name
+FROM 
+  dev.workpack a
+  LEFT JOIN dev.wp_user b ON a.wpid = b.wp_id
+  LEFT JOIN dev.user e on b.user = e.usercode
+  LEFT JOIN dev.dianlan c ON a.dianlanid = c.id
+  LEFT JOIN dev.user d ON a.fin_user = d.usercode
+WHERE 
+  a.wpowner = ? order by wpdate desc LIMIT 10 offset ?;`,[user,String(page)],dbconfig)
+  let countRes = await db.query(`SELECT 
+  count(1) as totalCount
 FROM 
   dev.workpack a
   LEFT JOIN dev.wp_user b ON a.wpid = b.wp_id
   LEFT JOIN dev.dianlan c ON a.dianlanid = c.id
   LEFT JOIN dev.user d ON a.fin_user = d.usercode
 WHERE 
-  b.user = ? order by wpdate desc;`,[user],dbconfig)
-      return res
+  a.wpowner = ?`,[user],dbconfig)
+  return {
+    data: res,
+    totalCount: countRes[0].totalCount // 总数是查询结果的第一个字段
+  };
+    
     } catch (error) {
       console.error('查询出错:', error);
       throw error;

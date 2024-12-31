@@ -424,13 +424,14 @@ router.post('/public/api/add_work_pack', async (ctx, next) => {
 });
 // public/api/get_paip_wp_list
 router.post('/public/api/get_paip_wp_list', async (ctx, next) => {
-  const { userCode } = ctx.request.body;
-  console.log('get_paip_wp_list', userCode)
-  const res = await Dianlan.getPaipWpList(userCode)
+  const { userCode,page } = ctx.request.body;
+  console.log('get_paip_wp_list', userCode, page)
+  const res = await Dianlan.getPaipWpList(userCode, page)
   console.log('get_paip_wp_list', res)
   ctx.body = {
     "code": 0,
-    "data": res
+    "totalCount"  : res.totalCount,
+    "data": res.data
   }
 });
 // /public/api/get_my_wp_list

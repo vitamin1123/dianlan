@@ -371,7 +371,7 @@ const onLoad = async () => {
     };
 
 const load = async () => {
-    const res = await http.post('/public/api/get_user_list', { sw:null,page:  page.value*1 });
+    const res = await http.post('/public/api/get_user_list', { sw:null,page:  page.value*10 });
     console.log('初次加载： ',res.data,res.totalCount)
     list.value = res.data
 }
