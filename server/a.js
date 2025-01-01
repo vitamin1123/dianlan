@@ -422,12 +422,53 @@ router.post('/public/api/add_work_pack', async (ctx, next) => {
     "data": 'res'
   }
 });
+// del_paip_wp
+router.post('/public/api/del_paip_wp', async (ctx, next) => {
+  const { id } = ctx.request.body;
+
+  // 预检查条件
+  const count = await Dianlan.checkWorkpackExist(id);
+
+  // 如果没有符合条件的 workpack，则返回错误信息
+  if (count === 0) {
+    ctx.body = {
+      code: 1,
+      message: "没有符合条件的 workpack 被删除，操作中止",
+    };
+    return;
+  }
+
+  const sqls = [
+    `DELETE FROM dev.workpack WHERE wpid = ? AND dianlanstate = 0`,
+    `DELETE FROM dev.wp_user WHERE wp_id = ?`,
+    `UPDATE dev.dianlan SET state = 0 WHERE id = (SELECT dianlanid FROM dev.workpack WHERE wpid = ?)`,
+  ];
+  const params = [[id], [id], [id]];
+
+  try {
+    const results = await mysql_trans.transaction(sqls, params);
+
+    ctx.body = {
+      code: 0,
+      data: results,
+    };
+  } catch (error) {
+    ctx.body = {
+      code: 1,
+      message: "批量操作失败",
+      error: error.message || error,
+    };
+  }
+});
+
+
+
 // public/api/get_paip_wp_list
 router.post('/public/api/get_paip_wp_list', async (ctx, next) => {
   const { userCode,page } = ctx.request.body;
   console.log('get_paip_wp_list', userCode, page)
   const res = await Dianlan.getPaipWpList(userCode, page)
-  console.log('get_paip_wp_list', res)
+  // console.log('get_paip_wp_list', res)
   ctx.body = {
     "code": 0,
     "totalCount"  : res.totalCount,
@@ -462,6 +503,8 @@ router.post('/public/api/loca_user_del', async (ctx, next) => {
 router.post('/public/api/laxian', async (ctx, next) => {
   const { xian_id,locaitem,ope } = ctx.request.body;
   console.log('laxian', xian_id, locaitem, ope)
+  // `update dev.dianlan set last_fangxian = ?,last_fangxian_time=now(),last_fangxian_loca=?  where id = ?`
+  // insert into dev.projitem (proj,proj_item,dianlanid,state,last_fangxian,last_fangxian_date) values()
   const res = await Dianlan.addLaxian(xian_id, locaitem, ope)
   
   ctx.body = {
@@ -469,6 +512,7 @@ router.post('/public/api/laxian', async (ctx, next) => {
     "data": res
   }
 });
+
 // batch_laxian
 router.post('/public/api/batch_laxian', async (ctx, next) => {
   const { xian_ids, locaitem, ope } = ctx.request.body; 

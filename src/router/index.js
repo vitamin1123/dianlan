@@ -80,6 +80,12 @@ const routes = [
         name: 'myana-proj',
         component: () => import("@/page/myana-proj/myana-proj.vue"),
 
+    },
+    {
+        path:"/se-proj",
+        name: 'se-proj',
+        component: () => import("@/page/se-proj/se-proj.vue"),
+
     }
 ];
 

@@ -34,7 +34,7 @@
               <van-tag
                 v-for="(user, userIndex) in group.users"
                 :key="userIndex"
-                plain
+                
                 type="success"
                 style="margin-right: 0.1rem;"
               >
@@ -53,6 +53,8 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import http from '@/api/request';
+import { showNotify } from 'vant';
+import { showConfirmDialog } from 'vant';
 import { useUserStore } from '@/store/userStore';
 const userStore = useUserStore();
 
@@ -81,20 +83,46 @@ const loading = ref(false);
 const refreshing = ref(false);
 
 const del_wp = async (id) => {
-  console.log('删除：',id)
-  // const url = '/public/api/del_paip_wp';
-  // const data = {
-  //   userCode: userStore.userInfo.userCode,
-  //   id: list.value[0].id,
-  // };
-  // try {
-  //   const response = await http.post(url, data);
-  //   console.log('删除成功:', response);
-  //   load();
-  // } catch (error) {
-  //   console.error('删除失败:', error);
-  // }
+  console.log('删除：', id);
+  showConfirmDialog({
+    title: '确认删除',
+    message: '是否确认删除该派工单？',
+  })
+    .then(async () => {
+      // 用户确认删除
+      const url = '/public/api/del_paip_wp';
+      const data = {
+        userCode: userStore.userInfo.userCode,
+        id: id,
+      };
+      try {
+        const response = await http.post(url, data);
+
+        if (response.data && response.data.code === 0) {
+          // 删除成功
+          showNotify({ message: '删除成功！', type: 'success' });
+          load(); // 重新加载数据
+        } else {
+          // 操作失败的具体提示信息
+          const errorMessage =
+            response.data?.message || '未知错误，删除操作失败！';
+          showNotify({ message: `无法删除：${errorMessage}`, type: 'warning' });
+        }
+      } catch (error) {
+        console.error('删除失败:', error);
+
+        // 网络错误或服务器异常提示
+        const errorMessage = error.response?.data?.message || '服务器错误';
+        showNotify({ message: `删除失败：${errorMessage}`, type: 'error' });
+      }
+    })
+    .catch(() => {
+      // 用户取消了删除操作
+      showNotify({ message: '已取消删除操作', type: 'info' });
+    });
 };
+
+
 
 const onRefresh = () => {
   finished.value = false;
@@ -134,13 +162,25 @@ const onLoad = async () => {
     return;
   }
 
-  list.value.push(...responseData.data);
+  // Process wpdate for new data
+  const formattedData = responseData.data.map((item) => {
+    const date = new Date(item.wpdate);
+    const datePart = date.toISOString().split('T')[0];
+    const timePart = date.toISOString().split('T')[1].slice(0, 5);
+    return {
+      ...item,
+      formattedWpdate: `${datePart} ${timePart}`,
+    };
+  });
+
+  list.value.push(...formattedData);
   loading.value = false;
 
   if (list.value.length >= responseData.totalCount) {
     finished.value = true;
   }
 };
+
 
 const load = async () => {
   const res = await http.post('/public/api/get_paip_wp_list', {

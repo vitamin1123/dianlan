@@ -2,6 +2,21 @@ const dbconfig = require('../db/myconfig_127.js')
 const db = require('../db/db_mysql.js');
 
 module.exports = {
+   // 检查 workpack 是否存在并且状态为 0
+   async checkWorkpackExist(wpid) {
+    try {
+      const res = await db.query(
+        `SELECT COUNT(*) AS count 
+         FROM dev.workpack 
+         WHERE wpid = ? AND dianlanstate = 0`, 
+        [wpid]
+      );
+      return res[0].count;  // 返回匹配的数量
+    } catch (error) {
+      console.error('检查 workpack 出错:', error);
+      throw error;
+    }
+  },
 
   async getAllSubWorkpacks(leaderUsercode) {
     try {
@@ -164,21 +179,45 @@ where a.state = 1 group by b.username`,[],dbconfig)
   },
 
   //getPaipWpList
+//   SELECT 
+//   a.*, 
+//   e.username as user, 
+//   c.*,
+//   d.username as fin_user_name
+// FROM 
+//   dev.workpack a
+//   LEFT JOIN dev.wp_user b ON a.wpid = b.wp_id
+//   LEFT JOIN dev.user e on b.user = e.usercode
+//   LEFT JOIN dev.dianlan c ON a.dianlanid = c.id
+//   LEFT JOIN dev.user d ON a.fin_user = d.usercode
+// WHERE 
+//   a.wpowner = ? order by wpdate desc LIMIT 10 offset ?
   async getPaipWpList(user,page){
     try {
       let res = await db.query(`SELECT 
   a.*, 
-  e.username as user, 
-  c.*,
-  d.username as fin_user_name
+  e.username AS user, 
+  c.*, 
+  d.username AS fin_user_name
 FROM 
   dev.workpack a
   LEFT JOIN dev.wp_user b ON a.wpid = b.wp_id
-  LEFT JOIN dev.user e on b.user = e.usercode
+  LEFT JOIN dev.user e ON b.user = e.usercode
   LEFT JOIN dev.dianlan c ON a.dianlanid = c.id
   LEFT JOIN dev.user d ON a.fin_user = d.usercode
 WHERE 
-  a.wpowner = ? order by wpdate desc LIMIT 10 offset ?;`,[user,String(page)],dbconfig)
+  a.wpid IN (
+    SELECT wpid
+    FROM (
+      SELECT DISTINCT wpid, wpdate
+      FROM dev.workpack
+      WHERE wpowner = ?
+      ORDER BY wpdate DESC
+      LIMIT 10 OFFSET ?
+    ) AS temp
+  )
+ORDER BY a.wpdate DESC
+LIMIT 0, 1000;`,[user,String(page)],dbconfig)
   let countRes = await db.query(`SELECT 
   count(1) as totalCount
 FROM 

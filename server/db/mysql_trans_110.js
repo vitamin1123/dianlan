@@ -6,9 +6,9 @@ const pool = mysql.createPool({
   password: "123456",
   port: "3306",
   database: "dev",
-  waitForConnections: true,  
-  connectionLimit: 10, 
-  maxIdle: 10, 
+  waitForConnections: true,
+  connectionLimit: 10,
+  maxIdle: 10,
   idleTimeout: 60000,
   queueLimit: 0,
   enableKeepAlive: true,
@@ -32,28 +32,27 @@ async function transaction(sqls, params) {
     await connection.beginTransaction();
     console.log("开始执行事务，共执行" + sqls.length + "条语句");
 
-    // 执行所有的 SQL 语句
-    const results = await Promise.all(
-      sqls.map((sql, index) => connection.query(sql, params[index]))
-    );
+    const results = [];
+    for (let i = 0; i < sqls.length; i++) {
+      const [rows] = await connection.query(sqls[i], params[i]);
+      results.push(rows);
+    }
 
-    // 提交事务
     await connection.commit();
-    connection.release();
-
-    // 返回每个 SQL 语句的执行结果
-    return results.map(([rows]) => rows);
+    console.log("事务提交成功");
+    return results;
   } catch (error) {
-    // 回滚事务
     try {
       await connection.rollback();
       console.log("事务回滚成功");
     } catch (rollbackErr) {
-      console.log("事务回滚失败：" + rollbackErr);
+      console.error("事务回滚失败：" + rollbackErr);
     } finally {
       connection.release();
     }
-    return error;
+
+    // 抛出错误，调用方处理
+    throw error;
   }
 }
 
