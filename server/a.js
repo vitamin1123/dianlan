@@ -556,7 +556,17 @@ router.post('/public/api/batch_laxian', async (ctx, next) => {
     };
   }
 });
-
+// proj_detail_mod
+router.post('/public/api/proj_detail_mod', async (ctx, next) => {
+  const { itemid, itemname } = ctx.request.body;
+  console.log('proj_detail_mod', itemid, itemname)
+  const res = await Dianlan.projItemMod(itemid, itemname)
+  console.log('proj_detail_mod',  res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
 //area_detail_mod
 router.post('/public/api/area_detail_mod', async (ctx, next) => {
   const { itemid, itemname } = ctx.request.body;
@@ -568,11 +578,33 @@ router.post('/public/api/area_detail_mod', async (ctx, next) => {
     "data": res
   }
 });
+//proj_detail_del
+router.post('/public/api/proj_detail_del', async (ctx, next) => {
+  const { itemid } = ctx.request.body;
+  console.log('proj_detail_del',  itemid)
+  const res = await Dianlan.projItemDel(itemid)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
+
 //area_detail_del
 router.post('/public/api/area_detail_del', async (ctx, next) => {
   const { itemid } = ctx.request.body;
   console.log('area_detail_del',  itemid)
   const res = await Dianlan.areaItemDel(itemid)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
+//proj_mod
+router.post('/public/api/proj_mod', async (ctx, next) => {
+  const { locaname, projid } = ctx.request.body;
+  console.log('proj_mod', locaname, projid)
+  const res = await Dianlan.projMod(locaname, projid)
+  console.log('proj_mod',  res)
   ctx.body = {
     "code": 0,
     "data": res
@@ -645,6 +677,37 @@ router.post('/public/api/search_user_code', async (ctx, next) => {
     "data": res
   }
 });
+// proj_add
+router.post('/public/api/proj_add', async (ctx, next) => {
+  const { locaname } = ctx.request.body;
+  console.log('area_add', locaname);
+  try {
+    // 调用 addArea 方法
+    const res = await Dianlan.addProj(locaname);
+    console.log('area_add', res);
+    // 返回成功响应
+    ctx.body = {
+      "code": 0,
+      "data": res
+    };
+  } catch (error) {
+    // 检查是否是重复条目的错误
+    if (error.code === 'ER_DUP_ENTRY') {
+      ctx.status = 400; // 设置为400 Bad Request
+      ctx.body = {
+        code: 1,
+        message: `插入失败，'${locaname}' 已经存在。`
+      };
+    } else {
+      // 其他错误
+      ctx.status = 500; // 设置为500 Internal Server Error
+      ctx.body = {
+        code: 500,
+        message: '服务器内部错误，请稍后再试。'
+      };
+    }
+  }
+});
 //area_add
 router.post('/public/api/area_add', async (ctx, next) => {
   const { locaname } = ctx.request.body;
@@ -678,6 +741,39 @@ router.post('/public/api/area_add', async (ctx, next) => {
     }
   }
 });
+// proj_detail_add
+router.post('/public/api/proj_detail_add', async (ctx, next) => {
+  const { projid, itemname } = ctx.request.body;
+  console.log('proj_detail_add', itemname);
+  try {
+    // 调用 addProjItem 方法
+    const res = await Dianlan.addProjItem(projid, itemname);
+    console.log('proj_detail_add', res);
+    // 返回成功响应
+    ctx.body = {
+      code: 0,
+      data: res,
+    };
+  } catch (error) {
+    // 检查是否是重复条目错误
+    if (error.code === 'ER_DUP_ENTRY') {
+      ctx.status = 400; // 设置为 400 Bad Request
+      ctx.body = {
+        code: 1,
+        message: `插入失败，项目 '${itemname}' 已经存在于项目 ID '${projid}'。`,
+      };
+    } else {
+      // 处理其他错误
+      console.error('proj_detail_add 错误:', error); // 打印错误日志以便调试
+      ctx.status = 500; // 设置为 500 Internal Server Error
+      ctx.body = {
+        code: 500,
+        message: '服务器内部错误，请稍后再试。',
+      };
+    }
+  }
+});
+// area_detail_add
 router.post('/public/api/area_detail_add', async (ctx, next) => {
   const { areaid, itemname } = ctx.request.body;
   console.log('area_detail_add', itemname);
@@ -711,6 +807,17 @@ router.post('/public/api/area_detail_add', async (ctx, next) => {
     }
   }
 });
+// proj_detail_list
+router.post('/public/api/proj_detail_list', async (ctx, next) => {
+  const { projid } = ctx.request.body;
+  console.log('proj_detail_list',projid)
+  const res = await Dianlan.projItem(projid)
+  console.log('proj_detail_list',  res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
 
 //area_detail_list
 router.post('/public/api/area_detail_list', async (ctx, next) => {
@@ -723,7 +830,18 @@ router.post('/public/api/area_detail_list', async (ctx, next) => {
     "data": res
   }
 });
-
+// proj_del
+router.post('/public/api/proj_del', async (ctx, next) => {
+  const { projid } = ctx.request.body;
+  console.log('proj_del',projid)
+  const res = await Dianlan.projDel(projid)
+  console.log('proj_del',  res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+})
+// area_del
 router.post('/public/api/area_del', async (ctx, next) => {
   const { areaid } = ctx.request.body;
   console.log('area_del',areaid)
@@ -734,10 +852,39 @@ router.post('/public/api/area_del', async (ctx, next) => {
     "data": res
   }
 })
+//search_proj_list 
+router.post('/public/api/search_proj_list', async (ctx, next) => {
+  const { sw } = ctx.request.body;
+  console.log('search_proj_list',sw)
+  const res = await Dianlan.projList()
+  var haha = []
+  for (var i in res) {
+    var m = util1.match(res[i]['projname'], sw);
+    if (m) {
+      haha.push({
+          'projname': res[i]['projname']
+        })
+     }
+    
+}
+  console.log('search_proj_list',  res)
+  ctx.body = {
+    "code": 0,
+    "data": haha
+  }
+});
+
+// proj_list
+router.get('/public/api/proj_list', async (ctx, next) => {
+  const res = await Dianlan.projList()
+  console.log('proj_list',  res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
 
 router.get('/public/api/area_list', async (ctx, next) => {
-  
-  
   const res = await Dianlan.areaList()
   console.log('area_list',  res)
   ctx.body = {

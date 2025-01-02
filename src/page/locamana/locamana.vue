@@ -33,6 +33,7 @@
                 <van-cell
                     :title="item.name"
                     @click="leftClick(item)"
+                    :style="{ color: item.id === selectedLoca.id ? 'red' : 'black' }"
                 />
                 <template #right>
                     <van-button square type="danger" text="删除" @click="delLeft(item)"/>

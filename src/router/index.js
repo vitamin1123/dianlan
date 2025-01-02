@@ -86,6 +86,12 @@ const routes = [
         name: 'se-proj',
         component: () => import("@/page/se-proj/se-proj.vue"),
 
+    },
+    {
+        path:"/seriesbook",
+        name: 'seriesbook',
+        component: () => import("@/page/seriesbook/seriesbook.vue"),
+
     }
 ];
 

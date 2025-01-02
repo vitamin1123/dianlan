@@ -504,9 +504,29 @@ async searchRela(id){
   }
 },
 
+async projMod(name,id) {
+  try {
+    let res = await db.query(`update dev.proj set projname =? where id =? `,[name,id], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
+},
+
+
+
 async areaMod(name,id) {
   try {
     let res = await db.query(`update dev.loca set locaname =? where id =? `,[name,id], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
+},
+
+async projItemMod(id,name) {
+  try {
+    let res = await db.query(`update dev.proj_item set itemname =? where id =? `,[name,id], dbconfig);
     return res;
   } catch (error) {
     throw error;  // 如果有错误则抛出到路由处理
@@ -521,6 +541,14 @@ async areaItemMod(id,name) {
   }
 },
 
+async projItemDel(id) {
+  try {
+    let res = await db.query(`update dev.proj_item set state = 0 where id =? `,[id], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
+},
 async areaItemDel(id) {
   try {
     let res = await db.query(`update dev.loca_item set state = 0 where id =? `,[id], dbconfig);
@@ -529,9 +557,26 @@ async areaItemDel(id) {
     throw error;  // 如果有错误则抛出到路由处理
   }
 },
+async addProj(name) {
+  try {
+    let res = await db.query(`insert into dev.proj (projname) values (?)`, [name], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
+},
 async addArea(name){
   try {
     let res = await db.query(`insert into dev.loca (locaname) values (?)`, [name], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
+},
+
+async addProjItem (id,name) {
+  try {
+    let res = await db.query(`insert into dev.proj_item (projid,itemname,state) values (?,?,1) `,[id,name], dbconfig);
     return res;
   } catch (error) {
     throw error;  // 如果有错误则抛出到路由处理
@@ -546,6 +591,15 @@ async addAreaItem (id,name) {
   }
   
 },
+// projItem
+async projItem(id) {
+  try {
+    let res = await db.query(`select * from dev.proj_item where projid =? and state = 1 `,[id], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
+},
 async areaItem (id) {
   try {
     let res = await db.query(`select * from dev.loca_item where locaid =? and state = 1 `,[id], dbconfig);
@@ -556,6 +610,15 @@ async areaItem (id) {
   
 },
 
+async projList() {
+  try {
+    let res = await db.query(`select * from dev.proj where state = 1 order by id `,[], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
+},
+
 async areaList () {
   try {
     let res = await db.query(`select * from dev.loca where state = 1 order by id `,[], dbconfig);
@@ -564,6 +627,15 @@ async areaList () {
     throw error;  // 如果有错误则抛出到路由处理
   }
   
+},
+
+async projDel(id) {
+  try {
+    let res = await db.query(`update dev.proj set state = 0 where id =? `,[id], dbconfig);
+    return res;
+  } catch (error) {
+    throw error;  // 如果有错误则抛出到路由处理
+  }
 },
 
 async areaDel(id) {
