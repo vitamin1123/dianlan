@@ -789,56 +789,56 @@ async searchCode (code) {
     async searchCompany(sw,company, proj, daihao, model, spec, facilities,facilities_loca,total_length,sysname) {
         console.log('搜sql索参数: ',company, proj, daihao, model, spec, facilities,facilities_loca,total_length,sysname)
         const adic = {
-            '公司':'distinct company',
-            '船号':'distinct proj',
-            '代号':'distinct daihao',
-            '型号':'distinct model',
-            '规格':'distinct specification',
-            '设备':'distinct facilities_name',
-            '设备地点':'distinct facilities_loca',
-            '总线长':'distinct total_length',
-            '系统名':'distinct sysname'
+            '公司':'distinct a.company',
+            '船号':'distinct(c.itemname) as proj',
+            '代号':'distinct a.daihao',
+            '型号':'distinct a.model',
+            '规格':'distinct a.specification',
+            '设备':'distinct a.facilities_name',
+            '设备地点':'distinct a.facilities_loca',
+            '总线长':'distinct a.total_length',
+            '系统名':'distinct a.sysname'
         }
         // 初始化 WHERE 条件数组
         let conditions = [];
         let values = [];
         // 拼接完整的 SQL 查询
-        let sql = `SELECT ${adic[sw]} from dev.dianlan `;
+        let sql = `SELECT ${adic[sw]} from dev.dianlan a left join dev.proj b on a.proj = b.projname left join dev.proj_item c on b.id = c.projid `;
         // 根据各个字段的值拼接 WHERE 条件
         if (company !== undefined && company !== '') {
-            conditions.push('company = ?');
+            conditions.push('a.company = ?');
             values.push(company);
         }
         if (proj !== undefined && proj !== '') {
-            conditions.push('instr(proj,?)>0');
+            conditions.push('instr(c.itemname,?)>0');
             values.push(proj);
         }
         if (daihao !== undefined && daihao !== '') {
-            conditions.push('instr(daihao,?)>0');
+            conditions.push('instr(a.daihao,?)>0');
             values.push(daihao);
         }
         if (model !== undefined && model !== '') {
-            conditions.push('model = ?');
+            conditions.push('a.model = ?');
             values.push(model);
         }
         if (spec !== undefined && spec !== '') {
-            conditions.push('instr(specification,?)>0');
+            conditions.push('instr(a.specification,?)>0');
             values.push(spec);
         }
         if (facilities !== undefined && facilities !== '') {
-            conditions.push('instr(facilities_name,?)>0');
+            conditions.push('instr(a.facilities_name,?)>0');
             values.push(facilities);
         }
         if (facilities_loca!== undefined && facilities_loca!== '') {
-            conditions.push('instr(facilities_loca,?)>0');
+            conditions.push('instr(a.facilities_loca,?)>0');
             values.push(facilities_loca);
         }
         if (total_length!== undefined && total_length!== '') {
-            conditions.push('instr(total_length,?)>0');
+            conditions.push('instr(a.total_length,?)>0');
             values.push(total_length);
         }
         if (sysname!== undefined && sysname!== '') {
-            conditions.push('instr(sysname,?)>0');
+            conditions.push('instr(a.sysname,?)>0');
             values.push(sysname);
         }
 
