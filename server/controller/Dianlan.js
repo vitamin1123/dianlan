@@ -660,6 +660,25 @@ async searchCode (code) {
     async searchDl(company, proj, daihao, model, spec, facilities_name, facilities_loca,total_length,sysname ,start) {
         let conditions = [];
         let values = [];
+        // 先查询 projname
+        let projName = '';
+        if (proj !== undefined && proj !== '') {
+          const projQuery = `SELECT a.projname 
+                            FROM dev.proj a 
+                            LEFT JOIN dev.proj_item b ON a.id = b.projid 
+                            WHERE b.itemname = ?`;
+          try {
+            const projRes = await db.query(projQuery, [proj], dbconfig);
+            if (projRes.length > 0) {
+              projName = projRes[0].projname;
+            } else {
+              throw new Error('未找到对应的 projname');
+            }
+          } catch (err) {
+            console.error('查询 projname 出错:', err);
+            throw err;
+          }
+        }
         // 拼接完整的 SQL 查询
         let sql = `SELECT a.*,b.username as fangxianren,c.username as last_operator,d.price as baseprice,e.price as fa_price,g.username as paip,g.usercode as paip_code  from dev.dianlan a `;
         let countSql = `SELECT COUNT(*) as totalCount from dev.dianlan `;
@@ -669,9 +688,9 @@ async searchCode (code) {
           conditions.push('company = ?');
           values.push(company);
         }
-        if (proj !== undefined && proj !== '') {
+        if (projName !== undefined && projName !== '') {
           conditions.push('proj = ?');
-          values.push(proj);
+          values.push(projName);
         }
         if (daihao !== undefined && daihao !== '') {
           conditions.push('daihao = ?');

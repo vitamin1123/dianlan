@@ -354,9 +354,10 @@
       const res = await http.post('/public/api/laxian', {
         ope: userStore.userInfo.userCode,
         locaitem: selectedValues[1],
-        xian_id: clickItem.value.id
+        xian_id: clickItem.value.id,
+        proj: searchWords.value['船号']
       });
-      if (res.data.affectedRows > 0) {
+      if (res.data[0].affectedRows > 0 || res.data[1].affectedRows > 0) {
         showToast('拉线成功')
         const targetItem = show_list.value.find(item => item.id === clickItem.value.id);
         if (targetItem) {
@@ -452,12 +453,12 @@
       })
         .then(async() => {
           // on confirm
-          const res = await http.post('/public/api/laxian', {
+          const res = await http.post('/public/api/cancel_laxian', {
             ope: null,
             locaitem: null,
             xian_id: item.id
           })
-          if (res.data.affectedRows > 0) {
+          if (res.data[0].affectedRows > 0 || res.data[1].affectedRows > 0) {
             showToast('取消拉线成功！')
             const targetItem = show_list.value.find(item1 => item1.id === item.id);
             if (targetItem) {
