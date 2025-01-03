@@ -2,6 +2,43 @@ const dbconfig = require('../db/myconfig_127.js')
 const db = require('../db/db_mysql.js');
 
 module.exports = {
+  // 检查projitem是否存在
+  async checkExistence(dianlanid, proj, projItem) {
+    try {
+      const res = await db.query(
+        `SELECT 1
+         FROM dev.projitem
+         WHERE dianlanid = ? AND proj = ? AND proj_item = ? AND state = 1
+         LIMIT 1`,
+        [dianlanid, proj, projItem]
+      );
+      return res.length > 0; // 返回是否存在
+    } catch (error) {
+      console.error('检查 projitem 是否存在 出错:', error);
+      throw error;
+    }
+  },
+  // 查询proj和proj_item
+  async getProjItem(proj) {
+    try {
+      const res = await db.query(
+        `SELECT 
+            b.projname AS proj,
+            a.itemname AS proj_item
+         FROM 
+            dev.proj_item a
+         LEFT JOIN 
+            dev.proj b ON a.projid = b.id
+         WHERE 
+            a.itemname = ?`,
+        [proj]
+      );
+      return res[0]; // 返回proj和proj_item
+    } catch (error) {
+      console.error('查询 proj 和 proj_item 出错:', error);
+      throw error;
+    }
+  },
    // 检查 workpack 是否存在并且状态为 0
    async checkWorkpackExist(wpid) {
     try {

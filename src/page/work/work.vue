@@ -335,6 +335,7 @@
       // 判断cart中所有元素的 last_fangxian_loca 是否有和 selectedValues[1] 不一样的
       // const hasDifferentLoca = cart.value.some(item => item.last_fangxian_loca !== selectedValues[1]);
       const hasDifferentLoca = cart.value.some(item => item.last_fangxian_loca && item.last_fangxian_loca !== selectedValues[1]);
+      console.log('hasDifferentLoca:', hasDifferentLoca);
       if (hasDifferentLoca) {
         // 如果存在不一样的，弹出确认对话框
         showConfirmDialog({

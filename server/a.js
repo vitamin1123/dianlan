@@ -592,8 +592,8 @@ router.post('/public/api/laxian', async (ctx, next) => {
 
 // batch_laxian
 router.post('/public/api/batch_laxian', async (ctx, next) => {
-  const { xian_ids, locaitem, ope, proj } = ctx.request.body; 
-  console.log('batch_laxian', xian_ids, locaitem, ope);
+  const { xian_ids, locaitem, ope, proj } = ctx.request.body;
+  console.log('batch_laxian', xian_ids, locaitem, ope, proj);
 
   if (!Array.isArray(xian_ids) || xian_ids.length === 0) {
     ctx.body = {
@@ -607,37 +607,60 @@ router.post('/public/api/batch_laxian', async (ctx, next) => {
   const sqls = [];
   const params = [];
 
-  xian_ids.forEach((id) => {
-    sqls.push(
-      `UPDATE dev.dianlan SET last_fangxian = ?, last_fangxian_time = NOW(), last_fangxian_loca = ? WHERE id = ?`
-    );
-    params.push([ope, locaitem, id]);
-    sqls.push(`
-      INSERT INTO dev.projitem (
-        proj, proj_item, dianlanid, state, last_fangxian, last_fangxian_date, last_fangxian_loca
-      ) 
-      SELECT 
-        b.projname AS proj,
-        a.itemname AS proj_item,
-        ? AS dianlanid,           
-        '1' AS state,             
-        ? AS last_fangxian,       
-        CURRENT_TIMESTAMP AS last_fangxian_date,
-        ? AS last_fangxian_loca   
-      FROM 
-        dev.proj_item a
-      LEFT JOIN 
-        dev.proj b 
-      ON 
-        a.projid = b.id
-      WHERE 
-        a.itemname = ?;
-    `);
-    params.push([id, ope, locaitem, proj]);
-  });
-
   try {
-    // 批量执行事务
+    // 对每个xian_id进行操作
+    for (const id of xian_ids) {
+      sqls.push(
+              `UPDATE dev.dianlan SET last_fangxian = ?, last_fangxian_time = NOW(), last_fangxian_loca = ? WHERE id = ?`
+            );
+            params.push([ope, locaitem, id]);
+      // 查询proj和proj_item
+      const projItemResult = await Dianlan.getProjItem(proj);
+
+      if (!projItemResult) {
+        console.error(`无法找到对应的proj和proj_item: ${proj}`);
+        continue;
+      }
+
+      const { proj: projName, proj_item: projItemName } = projItemResult;
+
+      // 检查是否存在projitem
+      const exists = await Dianlan.checkExistence(id, projName, projItemName);
+
+      if (exists) {
+        // 如果存在，执行UPDATE
+        sqls.push(`
+          UPDATE dev.projitem
+          SET last_fangxian = ?, last_fangxian_date = CURRENT_TIMESTAMP, last_fangxian_loca = ?
+          WHERE dianlanid = ? AND proj = ? AND proj_item = ? AND state = 1;
+        `);
+        params.push([ope, locaitem, id, projName, projItemName]);
+      } else {
+        // 如果不存在，执行INSERT
+        sqls.push(`
+          INSERT INTO dev.projitem (
+            proj, proj_item, dianlanid, state, last_fangxian, last_fangxian_date, last_fangxian_loca
+          ) 
+          SELECT 
+            b.projname AS proj,
+            a.itemname AS proj_item,
+            ? AS dianlanid,           
+            '1' AS state,             
+            ? AS last_fangxian,       
+            CURRENT_TIMESTAMP AS last_fangxian_date,
+            ? AS last_fangxian_loca   
+          FROM 
+            dev.proj_item a
+          LEFT JOIN 
+            dev.proj b ON a.projid = b.id
+          WHERE 
+            a.itemname = ?;
+        `);
+        params.push([id, ope, locaitem, proj]);
+      }
+    }
+
+    // 执行事务
     const res = await mysql_trans.transaction(sqls, params);
     console.log('batch_laxian', res);
 
@@ -654,7 +677,80 @@ router.post('/public/api/batch_laxian', async (ctx, next) => {
       error: error.message || error,
     };
   }
+
+
+
+  
 });
+
+// router.post('/public/api/batch_laxian', async (ctx, next) => {
+//   const { xian_ids, locaitem, ope, proj } = ctx.request.body; 
+//   console.log('batch_laxian', xian_ids, locaitem, ope);
+
+//   if (!Array.isArray(xian_ids) || xian_ids.length === 0) {
+//     ctx.body = {
+//       code: 1,
+//       message: 'xian_ids 应该是一个非空数组',
+//     };
+//     return;
+//   }
+
+//   // 构造 SQL 语句和参数
+//   const sqls = [];
+//   const params = [];
+
+//   xian_ids.forEach((id) => {
+//     sqls.push(
+//       `UPDATE dev.dianlan SET last_fangxian = ?, last_fangxian_time = NOW(), last_fangxian_loca = ? WHERE id = ?`
+//     );
+//     params.push([ope, locaitem, id]);
+//     sqls.push(
+//       `update dev.projitem set state = 0 where dianlanid =? and state = 1`
+//     );
+//     params.push([id]);
+//     sqls.push(`
+//       INSERT INTO dev.projitem (
+//         proj, proj_item, dianlanid, state, last_fangxian, last_fangxian_date, last_fangxian_loca
+//       ) 
+//       SELECT 
+//         b.projname AS proj,
+//         a.itemname AS proj_item,
+//         ? AS dianlanid,           
+//         '1' AS state,             
+//         ? AS last_fangxian,       
+//         CURRENT_TIMESTAMP AS last_fangxian_date,
+//         ? AS last_fangxian_loca   
+//       FROM 
+//         dev.proj_item a
+//       LEFT JOIN 
+//         dev.proj b 
+//       ON 
+//         a.projid = b.id
+//       WHERE 
+//         a.itemname = ?;
+//     `);
+//     params.push([id, ope, locaitem, proj]);
+//   });
+
+//   try {
+//     // 批量执行事务
+//     const res = await mysql_trans.transaction(sqls, params);
+//     console.log('batch_laxian', res);
+
+//     ctx.body = {
+//       code: 0,
+//       data: res,
+//     };
+//   } catch (error) {
+//     console.error('事务执行失败', error);
+
+//     ctx.body = {
+//       code: 1,
+//       message: '批量操作失败',
+//       error: error.message || error,
+//     };
+//   }
+// });
 // proj_detail_mod
 router.post('/public/api/proj_detail_mod', async (ctx, next) => {
   const { itemid, itemname } = ctx.request.body;
