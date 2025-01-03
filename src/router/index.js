@@ -92,6 +92,19 @@ const routes = [
         name: 'seriesbook',
         component: () => import("@/page/seriesbook/seriesbook.vue"),
 
+    },
+    {
+        path:"/dianlan_baseprice",
+        name: 'dianlan_baseprice',
+        component: () => import("@/page/dianlan_baseprice/dianlan_baseprice.vue"),
+
+    }
+    ,
+    {
+        path:"/ep_baseprice",
+        name: 'ep_baseprice',
+        component: () => import("@/page/ep_baseprice/ep_baseprice.vue"),
+
     }
 ];
 

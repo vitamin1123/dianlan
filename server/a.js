@@ -439,7 +439,7 @@ router.post('/public/api/del_paip_wp', async (ctx, next) => {
   }
 
   const sqls = [
-    `DELETE FROM dev.workpack WHERE wpid = ? AND dianlanstate = 0`,
+    `DELETE FROM dev.workpack WHERE wpid = ? `,
     `DELETE FROM dev.wp_user WHERE wp_id = ?`,
     `UPDATE dev.dianlan SET state = 0 WHERE id = (SELECT dianlanid FROM dev.workpack WHERE wpid = ?)`,
   ];
@@ -507,8 +507,8 @@ router.post('/public/api/cancel_laxian', async (ctx, next) => {
   var params = [];
   sqls.push(`update dev.projitem set state = 0 where dianlanid = ? and state = 1`);
   params.push([xian_id]);
-  sqls.push(`update dev.dianlan set last_fangxian = null,last_fangxian_time=null,last_fangxian_loca=null where id = ?`);
-  params.push([xian_id]);
+  // sqls.push(`update dev.dianlan set last_fangxian = null,last_fangxian_time=null,last_fangxian_loca=null where id = ?`);
+  // params.push([xian_id]);
   try {
     // 批量执行事务
     const res = await mysql_trans.transaction(sqls, params);
@@ -555,7 +555,7 @@ router.post('/public/api/laxian', async (ctx, next) => {
       ? AS dianlanid,           
       '1' AS state,             
       ? AS last_fangxian,       
-      CURRENT_DATE AS last_fangxian_date,
+      CURRENT_TIMESTAMP AS last_fangxian_date,
       ? AS last_fangxian_loca   
     FROM 
       dev.proj_item a

@@ -186,7 +186,7 @@
     <van-submit-bar :price="totalPrice" button-text="提交派工单" style="margin-bottom: 1.33rem;">
       <template #button>
         <van-action-bar-button type="warning" text="提交拉线" @click="onSubmit_laxian" style="border-top-left-radius: 0.5rem; border-bottom-left-radius: 0.5rem;"/>
-        <van-action-bar-button type="danger" text="提交派工单" @click="onSubmit" style=" border-top-right-radius: 0.5rem;  border-bottom-right-radius: 0.5rem;"/>
+        <van-action-bar-button type="danger" :disabled ="dis_sub" text="提交派工单" @click="onSubmit" style=" border-top-right-radius: 0.5rem;  border-bottom-right-radius: 0.5rem;"/>
       </template>  
       <template #default>
           <div style="display: flex; justify-content: flex-end; align-items: center;">
@@ -211,7 +211,7 @@
   </template>
   
   <script setup>
-  import { ref, onMounted, watch } from 'vue';
+  import { ref, onMounted, watch, computed } from 'vue';
   import { showToast } from 'vant'
   import Pinyin from 'pinyin-match';
   import http from '@/api/request';
@@ -245,6 +245,12 @@
   const searchQuery = ref([]);
   let lastRequestTime = 0;
   const throttleDelay = 1000; 
+
+  const syn_loca = ref(true)
+  const dis_sub = computed(() => {
+  // 如果 cart 为空，或者有任意一个 last_fangxian 为空，则禁用按钮
+  return cart.value.length === 0 || cart.value.some(item => !item.last_fangxian || item.last_fangxian.trim() === '');
+});
   // Grid 项数据
   const gridItems = ref([
     { text: '公司', key: '公司' },
@@ -263,7 +269,7 @@
     totalPrice.value = 0.00;
     showCartPopup.value = false;
   };
-  
+
 
   const filterUsers = ref('');
 

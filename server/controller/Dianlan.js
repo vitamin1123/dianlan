@@ -8,7 +8,7 @@ module.exports = {
       const res = await db.query(
         `SELECT COUNT(*) AS count 
          FROM dev.workpack 
-         WHERE wpid = ? AND dianlanstate = 0`, 
+         WHERE wpid = ?`, 
         [wpid]
       );
       return res[0].count;  // 返回匹配的数量

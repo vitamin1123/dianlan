@@ -51,6 +51,13 @@
       <van-cell v-if="[1,2].includes(roleid)" title="系列船电缆册"  size="large"  is-link to="seriesbook"> 
         
       </van-cell>
+
+      <van-cell v-if="[1,2].includes(roleid)" title="电缆定额"  size="large"  is-link to="dianlan_baseprice"> 
+        
+      </van-cell>
+      <van-cell v-if="[1,2].includes(roleid)" title="设备定额"  size="large"  is-link to="ep_baseprice"> 
+        
+      </van-cell>
       
       <canvas ref="canvas" width="100" height="100" style="display: none;"></canvas>
     </div>

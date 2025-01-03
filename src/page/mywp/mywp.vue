@@ -98,7 +98,7 @@ const del_wp = async (id) => {
       try {
         const response = await http.post(url, data);
 
-        if (response.data && response.data.code === 0) {
+        if (response.data && response.code === 0) {
           // 删除成功
           showNotify({ message: '删除成功！', type: 'success' });
           load(); // 重新加载数据
