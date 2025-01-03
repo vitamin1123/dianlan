@@ -332,28 +332,101 @@
   const onConfirm = async({ selectedValues, selectedOptions }) => {
     console.log('selectedValues:', selectedValues,selectedOptions,cart_laxian.value);
     if (cart_laxian.value){
-      const res = await http.post('/public/api/batch_laxian', {
-        ope: userStore.userInfo.userCode,
-        locaitem: selectedValues[1],
-        xian_ids: cart.value.map(item => item.id)
-      });
-      console.log(res.data)
-      if (res.data.every(result => result.affectedRows > 0)) {
-        showToast('拉线成功');
-        // 更新目标项的信息
-        cart.value.forEach(cartItemId => {
-          console.log('cartItemId:', cartItemId.id);
-          const targetItem = show_list.value.find(item => item.id === cartItemId.id);
-          if (targetItem) {
-            targetItem.fangxianren = userStore.userInfo.userName; // 更新放线人
-            targetItem.last_fangxian = userStore.userInfo.userCode; // 更新最后放线人
-          }
-        });
-        cart_laxian.value = false;
-        console.log('更新后的 show_list1:', show_list.value);
+      // 判断cart中所有元素的 last_fangxian_loca 是否有和 selectedValues[1] 不一样的
+      // const hasDifferentLoca = cart.value.some(item => item.last_fangxian_loca !== selectedValues[1]);
+      const hasDifferentLoca = cart.value.some(item => item.last_fangxian_loca && item.last_fangxian_loca !== selectedValues[1]);
+      if (hasDifferentLoca) {
+        // 如果存在不一样的，弹出确认对话框
+        showConfirmDialog({
+          title: '标题',
+          message: '存在已放线区域和所选区域不一致，是否覆盖。',
+          confirmButtonText: '覆盖',  // 修改确认按钮文本
+          cancelButtonText: '不覆盖',
 
+        })
+          .then(async () => {
+            // on confirm 的时候，执行原逻辑
+            const res = await http.post('/public/api/batch_laxian', {
+              ope: userStore.userInfo.userCode,
+              locaitem: selectedValues[1],
+              xian_ids: cart.value.map(item => item.id),
+              proj: searchWords.value['船号']
+            });
+
+            console.log(res.data);
+            if (res.data.every(result => result.affectedRows > 0)) {
+              showToast('拉线成功');
+              // 更新目标项的信息
+              cart.value.forEach(cartItemId => {
+                console.log('cartItemId:', cartItemId.id);
+                const targetItem = show_list.value.find(item => item.id === cartItemId.id);
+                if (targetItem) {
+                  targetItem.fangxianren = userStore.userInfo.userName; // 更新放线人
+                  targetItem.last_fangxian = userStore.userInfo.userCode; // 更新最后放线人
+                }
+              });
+              cart_laxian.value = false;
+              console.log('更新后的 show_list1:', show_list.value);
+            } else {
+              showToast('部分或全部更新失败，请检查');
+            }
+          })
+          .catch(() => {
+            // on cancel 的时候，跳过那些已经放线的id（last_fangxian_loca不为空的）
+            const skippedIds = cart.value.filter(item => item.last_fangxian_loca !== null).map(item => item.id);
+            const remainingIds = cart.value.filter(item => item.last_fangxian_loca === null).map(item => item.id);
+
+            // 只提交没有放线过的 xian_ids
+            if (remainingIds.length > 0) {
+              http.post('/public/api/batch_laxian', {
+                ope: userStore.userInfo.userCode,
+                locaitem: selectedValues[1],
+                xian_ids: remainingIds,
+                proj: searchWords.value['船号']
+              }).then((res) => {
+                console.log(res.data);
+                if (res.data.every(result => result.affectedRows > 0)) {
+                  showToast('拉线成功');
+                  // 更新目标项的信息
+                  remainingIds.forEach(id => {
+                    const targetItem = show_list.value.find(item => item.id === id);
+                    if (targetItem) {
+                      targetItem.fangxianren = userStore.userInfo.userName; // 更新放线人
+                      targetItem.last_fangxian = userStore.userInfo.userCode; // 更新最后放线人
+                    }
+                  });
+                } else {
+                  showToast('部分或全部更新失败，请检查');
+                }
+              });
+            }
+          });
       } else {
-        showToast('部分或全部更新失败，请检查');
+        // 如果没有不一样的 last_fangxian_loca，直接执行原逻辑
+        const res = await http.post('/public/api/batch_laxian', {
+          ope: userStore.userInfo.userCode,
+          locaitem: selectedValues[1],
+          xian_ids: cart.value.map(item => item.id),
+          proj: searchWords.value['船号']
+        });
+
+        console.log(res.data);
+        if (res.data.every(result => result.affectedRows > 0)) {
+          showToast('拉线成功');
+          // 更新目标项的信息
+          cart.value.forEach(cartItemId => {
+            console.log('cartItemId:', cartItemId.id);
+            const targetItem = show_list.value.find(item => item.id === cartItemId.id);
+            if (targetItem) {
+              targetItem.fangxianren = userStore.userInfo.userName; // 更新放线人
+              targetItem.last_fangxian = userStore.userInfo.userCode; // 更新最后放线人
+            }
+          });
+          cart_laxian.value = false;
+          console.log('更新后的 show_list1:', show_list.value);
+        } else {
+          showToast('部分或全部更新失败，请检查');
+        }
       }
     }else{
       console.log('哪根线？ ',clickItem.value.id)
@@ -369,6 +442,7 @@
         if (targetItem) {
           targetItem.fangxianren = userStore.userInfo.userName; // 更新放线人
           targetItem.last_fangxian = userStore.userInfo.userCode; // 更新最后放线人
+          targetItem.last_fangxian_loca = selectedValues[1];
         }
         console.log('更新后的 show_list2:', show_list.value);
       }
@@ -470,6 +544,7 @@
             if (targetItem) {
               targetItem.fangxianren = null; // 更新放线人
               targetItem.last_fangxian = null; // 更新最后放线人
+              targetItem.last_fangxian_loca = null;
             }
             console.log(show_list.value);
           }
@@ -484,8 +559,10 @@
         ope: userStore.userInfo.userCode
       });
       console.log('拉线： ', res.data);
-      console.log(convertToTree(res.data));
-      columns.value = convertToTree(res.data)
+      console.log(convertToTree1(res.data, item.ori_fangxian_loca));
+      const { tree, defaultPickerValue } = convertToTree1(res.data, item.ori_fangxian_loca);
+      columns.value = tree;
+      pickerValue.value = defaultPickerValue || []; //picker 绑定的值
       showPicker.value = true;
     }
    
@@ -517,6 +594,42 @@
 
     return tree;
 }
+//  转换成树-1
+const convertToTree1 = (data, ori_fangxian_loca) => {
+  // console.log('ori_fangxian_loca:', ori_fangxian_loca);
+    const tree = [];
+    const tempDict = {};
+    let defaultPickerValue = null;
+    data.forEach(({ id, locaname, state, itemid, itemname }) => {
+      // const selected = ori_fangxian_loca && String(ori_fangxian_loca) === String(itemid);
+      // console.log(`itemid: ${itemid}, ori_fangxian_loca: ${ori_fangxian_loca}, selected: ${selected}`);
+        if (!tempDict[id]) {
+            // 添加新的父节点
+            const parentNode = {
+                text: locaname,
+                value: String(id),
+                children: []
+            };
+            tree.push(parentNode);
+            tempDict[id] = parentNode;
+        }
+
+        // 添加子节点
+        const childNode = {
+            text: itemname,
+            value: String(itemid),
+            // 这里设置选中状态
+            selected: ori_fangxian_loca && String(ori_fangxian_loca) === String(itemid)
+        };
+        if (ori_fangxian_loca && String(ori_fangxian_loca) === String(itemid)) {
+            defaultPickerValue = [String(id), String(itemid)]; // 设置默认值
+        }
+
+        tempDict[id].children.push(childNode);
+    });
+
+    return {tree,defaultPickerValue };
+};
   
   // 选中的状态
   const selected = ref(Array(gridItems.value.length).fill(false));

@@ -243,7 +243,7 @@ router.post('/public/api/add_wp', async (ctx, next) => {
     // 更新 dianlan 表状态
     validDianlanIds.forEach((id) => {
       sqls.push(
-        `update dev.dianlan set state = 1 where id = ?`
+        `update dev.projitem set state = 2 where dianlanid = ? and state = 1`
       );
       params.push([id]);
     });
@@ -439,9 +439,10 @@ router.post('/public/api/del_paip_wp', async (ctx, next) => {
   }
 
   const sqls = [
+    `UPDATE dev.projitem SET state = 1 WHERE dianlanid = (SELECT dianlanid FROM dev.workpack WHERE wpid = ?) and state = 2`,
     `DELETE FROM dev.workpack WHERE wpid = ? `,
     `DELETE FROM dev.wp_user WHERE wp_id = ?`,
-    `UPDATE dev.dianlan SET state = 0 WHERE id = (SELECT dianlanid FROM dev.workpack WHERE wpid = ?)`,
+    
   ];
   const params = [[id], [id], [id]];
 
@@ -512,7 +513,7 @@ router.post('/public/api/cancel_laxian', async (ctx, next) => {
   try {
     // 批量执行事务
     const res = await mysql_trans.transaction(sqls, params);
-    console.log('batch_laxian', res);
+    console.log('cancel_laxian', res);
 
     ctx.body = {
       code: 0,
@@ -591,7 +592,7 @@ router.post('/public/api/laxian', async (ctx, next) => {
 
 // batch_laxian
 router.post('/public/api/batch_laxian', async (ctx, next) => {
-  const { xian_ids, locaitem, ope } = ctx.request.body; 
+  const { xian_ids, locaitem, ope, proj } = ctx.request.body; 
   console.log('batch_laxian', xian_ids, locaitem, ope);
 
   if (!Array.isArray(xian_ids) || xian_ids.length === 0) {
@@ -608,9 +609,31 @@ router.post('/public/api/batch_laxian', async (ctx, next) => {
 
   xian_ids.forEach((id) => {
     sqls.push(
-      `UPDATE dev.dianlan SET last_fangxian = ?, last_fangxian_time = NOW(), last_fangxian_loca = ? WHERE id = ? and last_fangxian is null`
+      `UPDATE dev.dianlan SET last_fangxian = ?, last_fangxian_time = NOW(), last_fangxian_loca = ? WHERE id = ?`
     );
     params.push([ope, locaitem, id]);
+    sqls.push(`
+      INSERT INTO dev.projitem (
+        proj, proj_item, dianlanid, state, last_fangxian, last_fangxian_date, last_fangxian_loca
+      ) 
+      SELECT 
+        b.projname AS proj,
+        a.itemname AS proj_item,
+        ? AS dianlanid,           
+        '1' AS state,             
+        ? AS last_fangxian,       
+        CURRENT_TIMESTAMP AS last_fangxian_date,
+        ? AS last_fangxian_loca   
+      FROM 
+        dev.proj_item a
+      LEFT JOIN 
+        dev.proj b 
+      ON 
+        a.projid = b.id
+      WHERE 
+        a.itemname = ?;
+    `);
+    params.push([id, ope, locaitem, proj]);
   });
 
   try {

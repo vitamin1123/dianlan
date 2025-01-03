@@ -680,49 +680,52 @@ async searchCode (code) {
           }
         }
         // 拼接完整的 SQL 查询
-        let sql = `SELECT a.*,b.username as fangxianren,c.username as last_operator,d.price as baseprice,e.price as fa_price,g.username as paip,g.usercode as paip_code  from dev.dianlan a `;
-        let countSql = `SELECT COUNT(*) as totalCount from dev.dianlan `;
+        let sql = `SELECT a.id,a.model,a.specification,a.proj,a.facilities,a.company,a.daihao,a.facilities_name,a.facilities_loca,h.state,a.total_length,a.sysname,
+        a.last_fangxian_loca as ori_fangxian_loca,
+        h.last_fangxian,h.last_fangxian_date,h.last_ope,h.last_ope_date,h.last_fangxian_loca,b.username as fangxianren,c.username as last_operator,d.price as baseprice,e.price as fa_price,g.username as paip,g.usercode as paip_code  from dev.dianlan a `;
+        let countSql = `SELECT COUNT(*) as totalCount from dev.dianlan a `;
       
         // 根据各个字段的值拼接 WHERE 条件
         if (company !== undefined && company !== '') {
-          conditions.push('company = ?');
+          conditions.push('a.company = ?');
           values.push(company);
         }
         if (projName !== undefined && projName !== '') {
-          conditions.push('proj = ?');
+          conditions.push('a.proj = ?');
           values.push(projName);
         }
         if (daihao !== undefined && daihao !== '') {
-          conditions.push('daihao = ?');
+          conditions.push('a.daihao = ?');
           values.push(daihao);
         }
         if (model !== undefined && model !== '') {
-          conditions.push('model = ?');
+          conditions.push('a.model = ?');
           values.push(model);
         }
         if (spec !== undefined && spec !== '') {
-          conditions.push('specification = ?');
+          conditions.push('a.specification = ?');
           values.push(spec);
         }
         if (facilities_name !== undefined && facilities_name !== '') {
-          conditions.push('facilities_name = ?');
+          conditions.push('a.facilities_name = ?');
           values.push(facilities_name);
         }
         if (facilities_loca!== undefined && facilities_loca!== '') {
-          conditions.push('facilities_loca =?');
+          conditions.push('a.facilities_loca =?');
           values.push(facilities_loca);
         }
         if (total_length!== undefined && total_length!== '') {
-          conditions.push('total_length =?');
+          conditions.push('a.total_length =?');
           values.push(total_length);
         }
         if (sysname!== undefined && sysname!== '') {
-          conditions.push('sysname =?');
+          conditions.push('a.sysname =?');
           values.push(sysname);
         }
-        sql += ` left join dev.baseprice d on a.specification = d.model 
-        left join dev.user b on a.last_fangxian = b.usercode 
-        left join dev.user c on a.last_ope = c.usercode
+        sql += ` left join dev.projitem h on a.id = h.dianlanid AND h.state = 1
+        left join dev.baseprice d on a.specification = d.model 
+        left join dev.user b on h.last_fangxian = b.usercode 
+        left join dev.user c on h.last_ope = c.usercode
         left join dev.epprice e on a.facilities = e.ep
         left join dev.workpack f on a.id = f.dianlanid 
         left join dev.user g on f.wpowner = g.usercode
