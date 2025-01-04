@@ -148,7 +148,9 @@ where a.state = 1 group by b.username`,[],dbconfig)
     try {
       // 查询工作包的当前状态
       const [workpack] = await db.query(
-        `SELECT * FROM dev.workpack WHERE dianlanid = ?`,
+        `select a.wpid,a.wpowner,a.state,a.wpdate,a.dianlanstate,a.fin_user,a.finish_date,
+b.proj,b.proj_item,b.dianlanid,b.last_fangxian,b.last_fangxian_date,b.last_ope,b.last_ope_date,b.last_fangxian_loca
+from dev.workpack a left join dev.projitem b on a.dianlanid = b.id and b.state = 1 where b.dianlanid = ?`,
         [id],
         dbconfig
       );
@@ -170,7 +172,7 @@ where a.state = 1 group by b.username`,[],dbconfig)
 
       // 执行删除操作
       await db.query(
-        `update dev.workpack set dianlanstate=0,fin_user=null WHERE dianlanid = ?`,
+        `update dev.workpack set dianlanstate=0,fin_user=null WHERE dianlanid = (select id from dev.projitem where dianlanid =? and state = 1)`,
         [id],
         dbconfig
       );
@@ -186,7 +188,9 @@ where a.state = 1 group by b.username`,[],dbconfig)
     try {
       // 查询工作包的当前状态
       const [workpack] = await db.query(
-        `SELECT * FROM dev.workpack WHERE dianlanid = ?`,
+        `select a.wpid,a.wpowner,a.state,a.wpdate,a.dianlanstate,a.fin_user,a.finish_date,
+b.proj,b.proj_item,b.dianlanid,b.last_fangxian,b.last_fangxian_date,b.last_ope,b.last_ope_date,b.last_fangxian_loca
+from dev.workpack a left join dev.projitem b on a.dianlanid = b.id and b.state = 1 where b.dianlanid = ?`,
         [id],
         dbconfig
       );
@@ -203,7 +207,7 @@ where a.state = 1 group by b.username`,[],dbconfig)
 
       // 更新记录：设置 fin_user 为当前用户，dianlanstate 设置为 1
       await db.query(
-        `UPDATE dev.workpack SET fin_user = ?, dianlanstate = 1, finish_date = NOW() WHERE dianlanid = ?`,
+        `UPDATE dev.workpack SET fin_user = ?, dianlanstate = 1, finish_date = NOW() WHERE dianlanid = (select id from dev.projitem where dianlanid =? and state = 1)`,
         [userId, id],
         dbconfig
       );
@@ -275,7 +279,7 @@ WHERE
     }
   },
   // getMyWpList
-  async getMyWpList(ope,qdate) {
+  async    getMyWpList(ope,qdate) {
     try {
       let res = await db.query(`SELECT 
   a.*, 
@@ -285,7 +289,8 @@ WHERE
 FROM 
   dev.workpack a
   LEFT JOIN dev.wp_user b ON a.wpid = b.wp_id
-  LEFT JOIN dev.dianlan c ON a.dianlanid = c.id
+  left join dev.projitem e on a.dianlanid = e.id
+  LEFT JOIN dev.dianlan c ON e.dianlanid = c.id
   LEFT JOIN dev.user d ON a.fin_user = d.usercode
 WHERE 
   b.user = ? 
@@ -326,7 +331,7 @@ WHERE
     try {
         // 构造 SQL 查询
         const placeholders = dianlanIds.map(() => '?').join(','); // 构造占位符 (?, ?, ...)
-        const sql = `SELECT id FROM dev.dianlan WHERE state = 0 AND id IN (${placeholders})`;
+        const sql = `SELECT id FROM dev.projitem WHERE state = 1 AND dianlanid IN (${placeholders})`;
 
         // 构造完整的调试 SQL
         // const debugSql = sql.replace(/\?/g, (_, index) => `'${dianlanIds[index]}'`);
