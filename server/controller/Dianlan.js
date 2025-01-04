@@ -253,9 +253,9 @@ WHERE
     FROM (
       SELECT DISTINCT wpid, wpdate
       FROM dev.workpack
-      WHERE wpowner = '10030203'
+      WHERE wpowner = ?
       ORDER BY wpdate DESC
-      LIMIT 10 OFFSET 0
+      LIMIT 10 OFFSET ?
     ) AS temp
   )
 ORDER BY a.wpdate DESC
@@ -771,7 +771,7 @@ async searchCode (code) {
         left join dev.user b on h.last_fangxian = b.usercode 
         left join dev.user c on h.last_ope = c.usercode
         left join dev.epprice e on a.facilities = e.ep
-        left join dev.workpack f on a.id = f.dianlanid 
+        left join dev.workpack f on h.id = f.dianlanid 
         left join dev.user g on f.wpowner = g.usercode
         `;
         // 如果有条件，拼接 WHERE 子句
