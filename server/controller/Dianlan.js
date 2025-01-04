@@ -244,7 +244,8 @@ FROM
   dev.workpack a
   LEFT JOIN dev.wp_user b ON a.wpid = b.wp_id
   LEFT JOIN dev.user e ON b.user = e.usercode
-  LEFT JOIN dev.dianlan c ON a.dianlanid = c.id
+  left join dev.projitem  f on a.dianlanid = f.id and f.state = 1
+  LEFT JOIN dev.dianlan c ON f.dianlanid = c.id
   LEFT JOIN dev.user d ON a.fin_user = d.usercode
 WHERE 
   a.wpid IN (
@@ -252,9 +253,9 @@ WHERE
     FROM (
       SELECT DISTINCT wpid, wpdate
       FROM dev.workpack
-      WHERE wpowner = ?
+      WHERE wpowner = '10030203'
       ORDER BY wpdate DESC
-      LIMIT 10 OFFSET ?
+      LIMIT 10 OFFSET 0
     ) AS temp
   )
 ORDER BY a.wpdate DESC
@@ -264,7 +265,8 @@ LIMIT 0, 1000;`,[user,String(page)],dbconfig)
 FROM 
   dev.workpack a
   LEFT JOIN dev.wp_user b ON a.wpid = b.wp_id
-  LEFT JOIN dev.dianlan c ON a.dianlanid = c.id
+  left join dev.projitem  f on a.dianlanid = f.id and f.state = 1
+  LEFT JOIN dev.dianlan c ON f.dianlanid = c.id
   LEFT JOIN dev.user d ON a.fin_user = d.usercode
 WHERE 
   a.wpowner = ?`,[user],dbconfig)
