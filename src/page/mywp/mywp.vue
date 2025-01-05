@@ -59,7 +59,31 @@ import { useUserStore } from '@/store/userStore';
 const userStore = useUserStore();
 
 const list = ref([]);
-const groupedByWpid = computed(() => {
+const groupedByWpid = computed(() => { 
+  const groups = list.value.reduce((acc, item) => {
+    const group = acc.find((g) => g.wpid === item.wpid);
+    if (group) {
+      // 将线缆去重
+      if (!group.items.some(existingItem => existingItem.dianlanid === item.dianlanid)) {
+        group.items.push(item);
+      }
+      // 将用户去重
+      if (!group.users.includes(item.user)) {
+        group.users.push(item.user);
+      }
+    } else {
+      acc.push({
+        wpid: item.wpid,
+        items: [item], // 初始化线缆列表
+        users: [item.user], // 初始化用户列表
+      });
+    }
+    return acc;
+  }, []);
+  return groups;
+});
+
+const groupedByWpid_bak = computed(() => {
   // 按 wpid 分组，并提取唯一用户
   const groups = list.value.reduce((acc, item) => {
     const group = acc.find((g) => g.wpid === item.wpid);
