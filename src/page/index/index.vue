@@ -27,7 +27,7 @@
             <van-tag v-if="item.facilities && item.facilities.trim() !== ''" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities }}</van-tag>
             <van-tag v-if="item.facilities_loca && item.facilities_loca.trim() !== ''"  color="#ffe1e1" text-color="#ad0000" style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
             <van-tag v-if="item.facilities_name && item.facilities_name.trim() !== ''" plain color="#7232dd" style="margin-right: 0.1rem;">{{ item.facilities_name }}</van-tag>
-            <van-tag v-if="item.state" color="#008866" >{{ item.fin_user_name }}</van-tag>
+            <van-tag v-if="item.fin_user_name" color="#008866" >{{ item.fin_user_name }}</van-tag>
         </template>
         
       </van-card>
