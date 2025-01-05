@@ -26,6 +26,8 @@
               <van-tag v-if="item.facilities" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities }}</van-tag>
               <van-tag v-if="item.facilities_loca" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
               <van-tag v-if="item.facilities_name" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities_name }}</van-tag>
+              <van-tag v-if="item.fin_user_name"  type="warning" style="margin-right: 0.1rem;">{{ item.fin_user_name }}</van-tag>
+              
               <van-tag>{{ item.formattedWpdate }}</van-tag>
             </template>
           </van-card>
@@ -34,15 +36,15 @@
               <van-tag
                 v-for="(user, userIndex) in group.users"
                 :key="userIndex"
-                
-                type="success"
+                plain
+                color="#7232dd"
                 style="margin-right: 0.1rem;"
               >
                 {{ user }}
             </van-tag>
           </div>
-            <van-button type="primary" size="small" @click="del_wp(group.wpid)">删除</van-button>
-            
+            <van-button type="primary" size="small" @click="del_wp(group.wpid)" style="margin-right: 0.1rem;">删除</van-button>
+            <van-button type="success" size="small" @click="confirm_wp(group.wpid)">确认</van-button>
           </div>
         </div>
       </van-list>
@@ -105,6 +107,44 @@ const page = ref(0);
 const finished = ref(false);
 const loading = ref(false);
 const refreshing = ref(false);
+
+const confirm_wp = async (id) => {
+  console.log('确认：', id);
+  showConfirmDialog({
+    title: '确认派工',
+    message: '是否确认派工？',
+  })
+   .then(async () => {
+      // 用户确认删除
+      const url = '/public/api/confirm_paip_wp';
+      const data = {
+        userCode: userStore.userInfo.userCode,
+        id: id,
+      };
+      try {
+        const response = await http.post(url, data);
+        if (response.data && response.code === 0) {
+          // 删除成功
+          showNotify({ message: '确认成功！', type:'success' });
+          load(); // 重新加载数据
+        } else {
+          // 操作失败的具体提示信息
+          const errorMessage =
+            response.data?.message || '未知错误，删除操作失败！';
+          showNotify({ message: `无法确认：${errorMessage}`, type: 'warning' });
+        }
+      } catch (error) {
+        console.error('确认失败:', error);
+        // 网络错误或服务器异常提示
+        const errorMessage = error.response?.data?.message || '服务器错误';
+        showNotify({ message: `无法确认：${errorMessage}`, type: 'error' });
+      }
+    })
+    .catch(() => {
+      // 用户取消了删除操作
+      showNotify({ message: '已取消确认操作', type: 'info' });
+    })
+};
 
 const del_wp = async (id) => {
   console.log('删除：', id);
