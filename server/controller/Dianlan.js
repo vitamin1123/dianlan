@@ -2,6 +2,65 @@ const dbconfig = require('../db/myconfig_127.js')
 const db = require('../db/db_mysql.js');
 
 module.exports = {
+  // dianlanBasepriceSubmit
+  async dianlanBasepriceSubmit(model, price) {
+    try {
+      const res = await db.query(
+        `INSERT INTO dev.baseprice (model, price) VALUES (?, ?)`,
+        [model, price],
+        dbconfig
+      );
+      return res;
+    } catch (error) {
+      console.error('插入 dianlan_baseprice 出错:', error);
+  
+      // 抛出错误供上层捕获
+      throw error;
+    }
+  },
+  // dianlanBaseprice
+  async dianlanBaseprice(sw,page) {
+    
+    try {
+      var res
+      if (sw && sw.trim() !== ""){
+        res = await db.query(
+          `SELECT
+              id,
+              model,
+              price
+           FROM
+              dev.baseprice
+           `,
+          [],dbconfig
+        );
+      }else{
+        res = await db.query(
+          `SELECT
+              id,
+              model,
+              price
+           FROM
+              dev.baseprice
+           LIMIT 10 OFFSET?`,
+          [String(page)],dbconfig
+        );
+      }
+      
+      let countRes = await db.query(`SELECT 
+        count(1) as totalCount
+      FROM 
+        dev.baseprice
+      `,[],dbconfig)
+      return {
+        data: res,
+        totalCount: countRes[0].totalCount, // 总数是查询结果的第一个字段
+      };
+    } catch (error) {
+      console.error('查询 dianlan_baseprice 出错:', error);
+      throw error;
+    }
+  },
   // 检查projitem是否存在
   async checkExistence(dianlanid, proj, projItem) {
     try {
@@ -724,9 +783,12 @@ async searchCode (code) {
           }
         }
         // 拼接完整的 SQL 查询
-        let sql = `SELECT a.id,a.model,a.specification,a.proj,a.facilities,a.company,a.daihao,a.facilities_name,a.facilities_loca,h.state,a.total_length,a.sysname,
+        let sql = `SELECT a.id,a.model,a.specification,a.proj,a.facilities,a.company,a.daihao,a.facilities_name,
+        a.facilities_loca,h.state,a.total_length,a.sysname,
         a.last_fangxian_loca as ori_fangxian_loca,
-        h.last_fangxian,h.last_fangxian_date,h.last_ope,h.last_ope_date,h.last_fangxian_loca,b.username as fangxianren,c.username as last_operator,d.price as baseprice,e.price as fa_price,g.username as paip,g.usercode as paip_code  from dev.dianlan a `;
+        h.last_fangxian,h.last_fangxian_date,h.last_ope,h.last_ope_date,h.last_fangxian_loca,
+        b.username as fangxianren,c.username as last_operator,d.price as baseprice,e.price as fa_price,
+        g.username as paip,g.usercode as paip_code,i.username as fin_user from dev.dianlan a `;
         let countSql = `SELECT COUNT(*) as totalCount from dev.dianlan a `;
       
         // 根据各个字段的值拼接 WHERE 条件
@@ -771,8 +833,16 @@ async searchCode (code) {
         left join dev.user b on h.last_fangxian = b.usercode 
         left join dev.user c on h.last_ope = c.usercode
         left join dev.epprice e on a.facilities = e.ep
-        left join dev.workpack f on h.id = f.dianlanid 
+        left join (
+  SELECT 
+    dianlanid,wpowner,fin_user, MAX(wpdate) AS max_wpdate
+  FROM 
+    dev.workpack
+  GROUP BY 
+    dianlanid,wpowner,fin_user
+) f on h.id = f.dianlanid 
         left join dev.user g on f.wpowner = g.usercode
+        left join dev.user i on f.fin_user = i.usercode
         `;
         // 如果有条件，拼接 WHERE 子句
         if (conditions.length > 0) {

@@ -161,7 +161,7 @@
             <van-tag v-if="item.facilities && item.facilities.trim() !== ''" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities }}</van-tag>
             <van-tag v-if="item.facilities_loca && item.facilities_loca.trim() !== ''"  color="#ffe1e1" text-color="#ad0000" style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
             <van-tag v-if="item.facilities_name && item.facilities_name.trim() !== ''" plain color="#7232dd" style="margin-right: 0.1rem;">{{ item.facilities_name }}</van-tag>
-            
+            <van-tag v-if="item.fin_user && item.fin_user.trim() !== ''"  type="warning" style="margin-right: 0.1rem;">{{ item.fin_user }}</van-tag>
         </template>
         <template #footer>
             <!-- <van-button v-if="userStore.userInfo.userRole < 4" :disabled="(item.last_fangxian && item.last_fangxian!=userStore.userInfo.userCode)" size="small" @click="laxian(item)">{{ item.fangxianren || '完成拉线' }}
@@ -174,7 +174,7 @@
               size="small"
               @click="laxian(item)"
             >{{ item.fangxianren || '完成拉线' }}</van-button>
-            <van-button size="small" :disabled="item.paip != null" @click="addCart(item)">{{ item.paip || '选中' }}</van-button>
+            <van-button size="small" :disabled="item.paip != null && item.fin_user != null" @click="addCart(item)">{{ item.paip || '选中' }}</van-button>
         </template>
       </van-card>
     </van-list>

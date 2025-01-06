@@ -1098,6 +1098,30 @@ router.post('/public/api/add_user', async (ctx, next) => {
     "data": res
   }
 });
+//dianlan_baseprice_submit
+router.post('/public/api/dianlan_baseprice_submit', async (ctx, next) => {
+  const { model, price } = ctx.request.body;
+  console.log('dianlan_baseprice_submit', model, price);
+  
+  try {
+    const res = await Dianlan.dianlanBasepriceSubmit(model.toUpperCase(), price);
+    console.log('dianlan_baseprice_submit', res);
+    ctx.body = {
+      code: 0,
+      data: res,
+    };
+  } catch (error) {
+    console.error('插入 dianlan_baseprice 出错:', error);
+
+    // 将错误信息返回给前端
+    ctx.status = 400; // 可根据需要调整状态码
+    ctx.body = {
+      code: 1,
+      message: '插入数据失败',
+      error: error.message,
+    };
+  }
+});
 
 router.post('/public/api/mod_user', async (ctx, next) => {
   const { sw,type,user } = ctx.request.body;
@@ -1129,6 +1153,28 @@ router.post('/public/api/get_leader_list', async (ctx, next) => {
   ctx.body = {
     "code": 0,
     "data": haha
+  }
+});
+//dianlan_baseprice
+router.post('/public/api/dianlan_baseprice', async (ctx, next) => {
+  const { sw,page } = ctx.request.body;
+  const flag = (sw && sw.trim() !== "")
+  console.log('dianlan_baseprice',sw,page)
+  const res = await Dianlan.dianlanBaseprice(sw,page)
+  console.log('dianlan_baseprice',res)
+  var haha = []
+  if (flag) {
+    for (var i in res.data) {
+      var m = util1.match(res.data[i]['model']+res.data[i]['price'], sw);
+      if (m) {
+        haha.push(res.data[i])
+       }
+    }
+  }
+  ctx.body = {
+    "code": 0,
+    "data": flag?haha:res.data,
+    "totalCount": flag?haha.length:res.totalCount
   }
 });
 // 搜索参数
