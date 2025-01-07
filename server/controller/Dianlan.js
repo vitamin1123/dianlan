@@ -2,6 +2,34 @@ const dbconfig = require('../db/myconfig_127.js')
 const db = require('../db/db_mysql.js');
 
 module.exports = {
+  // basepriceDel
+  async basepriceDel(id) {
+    try {
+      const res = await db.query(
+        `update dev.baseprice set state = 0 WHERE id =?`,
+        [id],
+        dbconfig
+      );
+      return res;
+    } catch (error) {
+      console.error('删除 baseprice 出错:', error);
+      throw error;
+    }
+  },
+  // basepriceMod
+  async basepriceMod(id,model,price) {
+    try {
+      const res = await db.query(
+        `UPDATE dev.baseprice SET model = ?, price = ? WHERE id = ?`,
+        [model, price, id],
+        dbconfig
+      );
+      return res;
+    } catch (error) {
+      console.error('更新 baseprice 出错:', error);
+      throw error;
+    }
+  },
   // dianlanBasepriceSubmit
   async dianlanBasepriceSubmit(model, price) {
     try {
@@ -31,6 +59,7 @@ module.exports = {
               price
            FROM
               dev.baseprice
+              where state = 1
            `,
           [],dbconfig
         );
@@ -42,6 +71,7 @@ module.exports = {
               price
            FROM
               dev.baseprice
+              where state = 1
            LIMIT 10 OFFSET?`,
           [String(page)],dbconfig
         );
@@ -51,6 +81,7 @@ module.exports = {
         count(1) as totalCount
       FROM 
         dev.baseprice
+        where state = 1
       `,[],dbconfig)
       return {
         data: res,

@@ -1,8 +1,8 @@
 <template>
   <!-- 磁吸导航 -->
   <van-uploader v-show="false" ref="uploader" accept=".xls, .xlsx">
-  <van-button icon="plus" type="primary">上传文件</van-button>
-</van-uploader>
+    <van-button icon="plus" type="primary">上传文件</van-button>
+  </van-uploader>
   
   <div class="container">
     <!-- 左侧部分，占70% -->
@@ -70,22 +70,26 @@
         
         <template #footer>
             <van-button
-            size="small"
+            size="small" @click = "click_mod(item)"
             >修改</van-button>
-            <van-button size="small">删除</van-button>
+            <van-button size="small" @click = "click_del(item)">删除</van-button>
         </template>
       </van-card>
     </van-list>
     </van-pull-refresh>
-
+    <van-dialog v-model:show="modshow" title="修改" show-cancel-button :confirmButtonDisabled="modvalue.length>0?false:true" @confirm="confirmMod">
+      <van-field v-model="modvalue" placeholder="请输入规格" maxlength="45" @update:model-value="onUpdate"/>
+      <van-field v-model="modvalue1" type="number" placeholder="请输入价格" maxlength="45"/>
+    </van-dialog>
     
 </template>
 
 <script setup>
 
 import { ref, onMounted, watch, computed, nextTick } from 'vue';
-import { showToast } from 'vant'
+import { showToast, showConfirmDialog } from 'vant'
 import Pinyin from 'pinyin-match';
+import axios from 'axios';
 import http from '@/api/request';
 const list = ref([])
 const page = ref(-1)
@@ -100,13 +104,74 @@ const showPopover = ref(false)
 const popoverPlacement = ref('left-end')
 const actions =  ref([{ text: '直接新增' }, { text: '下载模版' }, { text: '上传文件' }])
 const uploader = ref(null);
-
+const modshow = ref(false);
+const modvalue = ref('');
+const modvalue1 = ref('');
+const up_item = ref(null);
 const search_sw = async () => {
     page.value = -1
     list.value = []
     console.log(sw.value)
     await onLoad()
 }
+const click_mod = (item) => {
+  console.log('click_mod: ',item)
+  modshow.value = true;
+  up_item.value = item
+}
+
+const click_del = (item) => {
+  console.log('click_del: ',item)
+  showConfirmDialog({
+  title: '标题',
+  message:
+    '确认删除么？',
+  })
+  .then(async() => {
+    // on confirm
+    const res = await http.post('/public/api/dianlan_baseprice_del', {
+      id: item.id
+    });
+    if (res.data.affectedRows === 1) {
+      showToast('删除成功');
+      onRefresh();
+    } else {
+      // 后端返回的错误信息
+      showToast(`删除失败: ${res.data.message}`);
+    }
+  })
+  .catch(() => {
+    // on cancel
+  });
+}
+
+const onUpdate = () => {
+  // console.log('onUpdate: ',modvalue.value)
+  modvalue.value = modvalue.value.toUpperCase( )
+}
+
+const confirmMod = async () => {
+  try {
+    const res = await http.post('/public/api/dianlan_baseprice_mod', {
+      id: up_item.value.id,
+      model: modvalue.value,
+      price: modvalue1.value,
+    });
+    // 成功处理
+    if (res.data.affectedRows === 1) {
+      showToast('修改成功');
+      modshow.value = false;
+      onRefresh();
+    } else {
+      // 后端返回的错误信息
+      showToast(`修改失败: ${res.data.message}`);
+    }
+  } catch (error) {
+    // 捕获请求或服务器的错误
+    const errorMessage = error.response?.data?.message || '网络错误，请稍后再试';
+    showToast(`修改失败: ${errorMessage}`);
+  }
+};
 
 const onSubmit = async () => {
   try {
@@ -138,6 +203,38 @@ const onSelect=async(action) => {
     showTop.value = true
   }else if (  action.text == '下载模版') {
     // 下载模版
+    try {
+  // 发起请求下载文件
+  const response = await http.get('/public/api/download-template-1', {
+    responseType: 'arraybuffer', // 使用 arraybuffer 确保获取的是二进制数据
+  });
+
+  // 检查响应数据
+  if (!response.data) {
+    throw new Error('没有获取到文件数据');
+  }
+
+  // 将返回的 ArrayBuffer 转为 Blob 对象，并设置正确的文件类型
+  const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+  // 创建下载链接
+  const downloadUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = downloadUrl;
+  link.download = '电缆价目表.xlsx'; // 设置文件名
+
+  // 模拟点击下载链接
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  // 清理 URL 对象
+  window.URL.revokeObjectURL(downloadUrl);
+} catch (error) {
+  console.error('下载模版出错:', error);
+  showToast('下载模版失败，请稍后再试');
+}
+
   }else if (  action.text == '上传文件') {
     // 上传文件
     await nextTick(); // 确保 DOM 已经更新

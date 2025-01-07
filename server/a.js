@@ -10,6 +10,7 @@ const { koaBody } = require('koa-body');
 const jwt = require('koa-jwt');
 const jwt1 = require('jsonwebtoken');
 const bodyParser = require('koa-bodyparser');
+const XLSX = require('xlsx');
 const base64 = require('base-64')
 const crypto = require('crypto');
 const mysql_trans = require("./db/mysql_trans_110.js");
@@ -1002,6 +1003,28 @@ router.post('/public/api/area_detail_add', async (ctx, next) => {
     }
   }
 });
+//dianlan_baseprice_del
+router.post('/public/api/dianlan_baseprice_del', async (ctx, next) => {
+  const { id } = ctx.request.body;
+  console.log('dianlan_baseprice_del',id)
+  const res = await Dianlan.basepriceDel(id)
+  console.log('dianlan_baseprice_del',  res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
+// public/api/dianlan_baseprice_mod
+router.post('/public/api/dianlan_baseprice_mod', async (ctx, next) => {
+  const { id, model, price } = ctx.request.body;
+  console.log('dianlan_baseprice_mod',id, model, price)
+  const res = await Dianlan.basepriceMod(id, model, price)
+  console.log('dianlan_baseprice_mod',  res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
 // proj_detail_list
 router.post('/public/api/proj_detail_list', async (ctx, next) => {
   const { projid } = ctx.request.body;
@@ -1155,6 +1178,46 @@ router.post('/public/api/get_leader_list', async (ctx, next) => {
     "data": haha
   }
 });
+// public/api/download-template-1
+
+router.get('/public/api/download-template-1', async (ctx) => {
+  try {
+    // 创建一个简单的工作表数据
+    const ws_data = [
+      ['规格', '价格'], // 表头
+      ['型号1', 100],    // 数据行
+      ['型号2', 200],
+      ['型号3', 300]
+    ];
+
+    // 将数据转换为工作表
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+    // 创建一个工作簿
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+
+    // 将工作簿转换为 Buffer（Excel 格式）
+    const xlsxBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
+
+    // 设置文件名
+    const fileName = '电缆价目表.xlsx';
+    const encodedFileName = encodeURIComponent(fileName);
+
+    // 设置响应头
+    ctx.set('Content-Type', 'application/vnd.ms-excel'); // Excel 文件的 MIME 类型
+    ctx.set('Content-Disposition', `attachment; filename*=UTF-8''${encodedFileName}`);
+
+    // 将生成的 Excel 文件 Buffer 作为响应体发送
+    ctx.body = xlsxBuffer;
+  } catch (error) {
+    console.error('下载模板出错:', error);
+    ctx.status = 500;
+    ctx.body = { message: '服务器错误，下载失败' };
+  }
+});
+
+
 //dianlan_baseprice
 router.post('/public/api/dianlan_baseprice', async (ctx, next) => {
   const { sw,page } = ctx.request.body;
