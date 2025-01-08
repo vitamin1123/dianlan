@@ -217,6 +217,15 @@ router.post('/public/api/upload-baseprice', async (ctx) => {
     ctx.status = 500;
     ctx.body = { success: false, message: '文件处理失败', error: error.message };
   }
+  finally {
+    // 删除临时文件
+    try {
+      fs.unlinkSync(filePath);
+      console.log('临时文件已删除:', filePath);
+    } catch (err) {
+      console.error('删除文件失败:', err.message);
+    }
+  }
 });
 //locauser_detail_list
 router.post('/public/api/locauser_detail_list', async (ctx, next) => {
