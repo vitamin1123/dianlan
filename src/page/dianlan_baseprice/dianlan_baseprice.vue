@@ -1,6 +1,6 @@
 <template>
   <!-- 磁吸导航 -->
-  <van-uploader v-show="false" ref="uploader" accept=".xls, .xlsx">
+  <van-uploader v-show="false" ref="uploader" accept=".xls, .xlsx" :after-read="onFileRead">
     <van-button icon="plus" type="primary">上传文件</van-button>
   </van-uploader>
   
@@ -89,7 +89,8 @@
 import { ref, onMounted, watch, computed, nextTick } from 'vue';
 import { showToast, showConfirmDialog } from 'vant'
 import Pinyin from 'pinyin-match';
-import axios from 'axios';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 import http from '@/api/request';
 const list = ref([])
 const page = ref(-1)
@@ -114,6 +115,23 @@ const search_sw = async () => {
     console.log(sw.value)
     await onLoad()
 }
+
+const onFileRead = async (file) => {
+      const formData = new FormData();
+      formData.append('file', file.file);
+
+      try {
+        const response = await http.post('/public/api/upload-baseprice', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        console.log('上传成功:', response.data);
+      } catch (error) {
+        console.error('上传失败:', error);
+      }
+    };
+
 const click_mod = (item) => {
   console.log('click_mod: ',item)
   modshow.value = true;
@@ -203,37 +221,21 @@ const onSelect=async(action) => {
     showTop.value = true
   }else if (  action.text == '下载模版') {
     // 下载模版
-    try {
-  // 发起请求下载文件
-  const response = await http.get('/public/api/download-template-1', {
-    responseType: 'arraybuffer', // 使用 arraybuffer 确保获取的是二进制数据
-  });
+    const data = [
+      { '规格': '', '价格': 0.00}
+    ];
 
-  // 检查响应数据
-  if (!response.data) {
-    throw new Error('没有获取到文件数据');
-  }
+    // 创建工作簿
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
 
-  // 将返回的 ArrayBuffer 转为 Blob 对象，并设置正确的文件类型
-  const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    // 导出并保存为 xlsx 文件
+    const xlsxData = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([xlsxData], { type: 'application/octet-stream' });
 
-  // 创建下载链接
-  const downloadUrl = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = downloadUrl;
-  link.download = '电缆价目表.xlsx'; // 设置文件名
-
-  // 模拟点击下载链接
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-
-  // 清理 URL 对象
-  window.URL.revokeObjectURL(downloadUrl);
-} catch (error) {
-  console.error('下载模版出错:', error);
-  showToast('下载模版失败，请稍后再试');
-}
+    // 使用 file-saver 保存文件
+    saveAs(blob, '电缆定额.xlsx');
 
   }else if (  action.text == '上传文件') {
     // 上传文件

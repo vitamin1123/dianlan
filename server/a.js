@@ -31,11 +31,14 @@ app.use(koaConnect(historyFallback()));
 
 // 提供静态文件服务
 app.use(koaStatic('C:/Users/xyy/Desktop/dianlan/dist')); // 假设你的静态文件在该目录下
-
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
 app.use(koaBody({  
   multipart: true,  
   formidable: {  
-    uploadDir: doc_path, // 设置文件上传目录  
+    uploadDir: uploadDir, // 设置文件上传目录  
     keepExtensions: true, // 保持文件扩展名  
     maxFieldsSize: 20 * 1024 * 1024, // 最大字段大小，20MB  
   },  
@@ -169,7 +172,52 @@ router.get('/public/api/gaga', async (ctx, next) => {
     "data": "我的天哪"
   }
 });
+// public/api/upload-baseprice
+router.post('/public/api/upload-baseprice', async (ctx) => {
+  const file = ctx.request.files.file; // 获取上传的文件对象
+  if (!file) {
+    ctx.status = 400;
+    ctx.body = { success: false, message: '未接收到文件' };
+    return;
+  }
 
+  const filePath = file.filepath; // 临时文件路径
+  console.log('上传的文件路径:', filePath); // 打印文件路径
+
+  // 检查文件是否存在
+  if (!fs.existsSync(filePath)) {
+    console.error('文件不存在:', filePath);
+    ctx.status = 400;
+    ctx.body = { success: false, message: '源文件不存在' };
+    return;
+  }
+
+  try {
+    // 读取文件内容
+    const fileBuffer = fs.readFileSync(filePath);
+
+    // 使用 XLSX 解析文件内容
+    const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0]; // 获取第一个工作表的名称
+    const sheet = workbook.Sheets[sheetName];
+
+    // 将表格内容转换为 JSON，从第二行开始，提取第一列和第二列
+    const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    const result = data.slice(1).map(row => ({
+      column1: row[0], // 第一列
+      column2: row[1], // 第二列
+    }));
+
+    ctx.body = {
+      success: true,
+      message: '文件解析成功',
+      data: result,
+    };
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = { success: false, message: '文件处理失败', error: error.message };
+  }
+});
 //locauser_detail_list
 router.post('/public/api/locauser_detail_list', async (ctx, next) => {
   const { areaid } = ctx.request.body;
@@ -1182,34 +1230,20 @@ router.post('/public/api/get_leader_list', async (ctx, next) => {
 
 router.get('/public/api/download-template-1', async (ctx) => {
   try {
-    // 创建一个简单的工作表数据
-    const ws_data = [
-      ['规格', '价格'], // 表头
-      ['型号1', 100],    // 数据行
-      ['型号2', 200],
-      ['型号3', 300]
-    ];
-
-    // 将数据转换为工作表
-    const ws = XLSX.utils.aoa_to_sheet(ws_data);
-
-    // 创建一个工作簿
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-
-    // 将工作簿转换为 Buffer（Excel 格式）
-    const xlsxBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
-
+   
+    const filePath = path.join(__dirname, '/public','/电缆价目表.xlsx'); // 替换为你的Excel文件路径
+    const fileStream = fs.createReadStream(filePath);
     // 设置文件名
     const fileName = '电缆价目表.xlsx';
     const encodedFileName = encodeURIComponent(fileName);
 
     // 设置响应头
-    ctx.set('Content-Type', 'application/vnd.ms-excel'); // Excel 文件的 MIME 类型
+    //ctx.set('Content-Type', 'application/vnd.ms-excel'); // Excel 文件的 MIME 类型
+    ctx.set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     ctx.set('Content-Disposition', `attachment; filename*=UTF-8''${encodedFileName}`);
 
     // 将生成的 Excel 文件 Buffer 作为响应体发送
-    ctx.body = xlsxBuffer;
+    ctx.body = fileStream;
   } catch (error) {
     console.error('下载模板出错:', error);
     ctx.status = 500;
