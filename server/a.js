@@ -204,14 +204,14 @@ router.post('/public/api/upload-baseprice', async (ctx) => {
     // 将表格内容转换为 JSON，从第二行开始，提取第一列和第二列
     const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
     const result = data.slice(1).map(row => ({
-      column1: row[0], // 第一列
-      column2: row[1], // 第二列
+      model: row[0].toUpperCase(), // 第一列
+      price: row[1], // 第二列
     }));
-
+    await Dianlan.insertBasePriceBatch(result); 
     ctx.body = {
       success: true,
       message: '文件解析成功',
-      data: result,
+      // data: result,
     };
   } catch (error) {
     ctx.status = 500;

@@ -2,6 +2,38 @@ const dbconfig = require('../db/myconfig_127.js')
 const db = require('../db/db_mysql.js');
 
 module.exports = {
+  // 批量插入baseprice数据
+  async insertBasePriceBatch(data) {
+    console.log(data)
+    try {
+      // 检查数据并替换 undefined 为 null
+      const cleanedData = data.map(item => ({
+        model: item.model && item.model.trim() ? item.model : null,  // 将 model 转大写，空值转为 null
+        price: item.price !== undefined && item.price !== null ? item.price : null  // price 是 undefined 或 null 则替换为 null
+      }));
+      console.log(cleanedData)
+      // 构建 SQL 查询
+      const insertQuery = `
+        INSERT INTO dev.baseprice (model, price)
+        VALUES ${cleanedData.map(() => "(?, ?)").join(", ")}
+        ON DUPLICATE KEY UPDATE price = VALUES(price);
+      `;
+
+      const values = cleanedData.flatMap(item => [item.model, item.price]);
+
+      // 调试：打印 values 和 insertQuery
+      console.log('values:', values); // 确保 values 是二维数组
+      console.log('insertQuery:', insertQuery); // 确保生成的 SQL 查询语句是正确的
+      
+      // 执行查询
+      const res = await db.query(insertQuery, values, dbconfig); 
+      console.log('Insert result:', res);
+      return res;
+    } catch (error) {
+      console.error('批量插入数据失败:', error);
+      throw error;
+    }
+  },
   // basepriceDel
   async basepriceDel(id) {
     try {
