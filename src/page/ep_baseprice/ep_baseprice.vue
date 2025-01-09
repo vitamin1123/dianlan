@@ -64,7 +64,7 @@
           <van-card
           v-for="item in list"
           :price="item.price"
-          :title="item.model"
+          :title="item.ep"
           style="--van-card-font-size: 0.4rem;"
           >
           
@@ -121,7 +121,7 @@
         formData.append('file', file.file);
   
         try {
-          const response = await http.post('/public/api/upload-baseprice', formData, {
+          const response = await http.post('/public/api/upload-epprice', formData, {
             headers: {
               'Content-Type': 'multipart/form-data',
             },
@@ -147,7 +147,7 @@
     })
     .then(async() => {
       // on confirm
-      const res = await http.post('/public/api/dianlan_baseprice_del', {
+      const res = await http.post('/public/api/ep_price_del', {
         id: item.id
       });
       if (res.data.affectedRows === 1) {
@@ -170,7 +170,7 @@
   
   const confirmMod = async () => {
     try {
-      const res = await http.post('/public/api/dianlan_baseprice_mod', {
+      const res = await http.post('/public/api/ep_price_mod', {
         id: up_item.value.id,
         model: modvalue.value,
         price: modvalue1.value,
@@ -194,7 +194,7 @@
   const onSubmit = async () => {
     try {
       console.log(sub_model.value, sub_price.value);
-      const res = await http.post('/public/api/dianlan_baseprice_submit', {
+      const res = await http.post('/public/api/ep_price_submit', {
         model: sub_model.value,
         price: sub_price.value,
       });
@@ -222,7 +222,7 @@
     }else if (  action.text == '下载模版') {
       // 下载模版
       const data = [
-        { '规格': '', '价格': 0.00}
+        { '设备': '', '价格': 0.00}
       ];
   
       // 创建工作簿
@@ -235,7 +235,7 @@
       const blob = new Blob([xlsxData], { type: 'application/octet-stream' });
   
       // 使用 file-saver 保存文件
-      saveAs(blob, '电缆定额.xlsx');
+      saveAs(blob, '设备定额.xlsx');
   
     }else if (  action.text == '上传文件') {
       // 上传文件
@@ -288,7 +288,7 @@
   
   const fetchData = async () => {
       loading.value = true
-      const res = await http.post('/public/api/dianlan_baseprice', {
+      const res = await http.post('/public/api/ep_price', {
               page: page.value*10,
               sw: sw.value
       })

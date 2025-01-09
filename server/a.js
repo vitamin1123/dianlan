@@ -172,6 +172,64 @@ router.get('/public/api/gaga', async (ctx, next) => {
     "data": "我的天哪"
   }
 });
+// public/api/upload-epprice
+router.post('/public/api/upload-epprice', async (ctx) => {
+  const file = ctx.request.files.file; // 获取上传的文件对象
+  if (!file) {
+    ctx.status = 400;
+    ctx.body = { success: false, message: '未接收到文件' };
+    return;
+  }
+  const filePath = file.filepath; // 临时文件路径
+  console.log('上传的文件路径:', filePath); // 打印文件路径
+  // 检查文件是否存在
+  if (!fs.existsSync(filePath)) {
+    console.error('文件不存在:', filePath);
+    ctx.status = 400;
+    ctx.body = { success: false, message: '源文件不存在' };
+    return;
+  }
+  try {
+    // 读取文件内容
+    const fileBuffer = fs.readFileSync(filePath);
+    // 使用 XLSX 解析文件内容
+    const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0]; // 获取第一个工作表的名称
+    const sheet = workbook.Sheets[sheetName];
+    // 将表格内容转换为 JSON，从第二行开始，提取第一列和第二列
+    const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    // 过滤并验证数据
+    const result = data.slice(1) // 跳过标题行
+      .filter(row => {
+        const ep = row[0];
+        const price = row[1];
+        // 检查第一列长度是否不超过45，第二列是否是 float
+        return typeof ep === 'string' && ep.length <= 45 && !isNaN(parseFloat(price));
+      })
+      .map(row => ({
+        ep: row[0].toUpperCase(), // 第一列转为大写
+        price: parseFloat(row[1]), // 第二列转为 float
+      }));
+    await Dianlan.insertPriceBatch(result);
+    ctx.body = {
+      success: true,
+      message: '文件解析成功',
+      // data: result,
+    };
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = { success: false, message: '文件处理失败', error: error.message };
+  }
+  finally {
+    // 删除临时文件
+    try {
+      fs.unlinkSync(filePath);
+      console.log('临时文件已删除:', filePath);
+    } catch (err) {
+      console.error('删除文件失败:', err.message);
+    }
+  }
+});
 // public/api/upload-baseprice
 router.post('/public/api/upload-baseprice', async (ctx) => {
   const file = ctx.request.files.file; // 获取上传的文件对象
@@ -203,10 +261,22 @@ router.post('/public/api/upload-baseprice', async (ctx) => {
 
     // 将表格内容转换为 JSON，从第二行开始，提取第一列和第二列
     const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-    const result = data.slice(1).map(row => ({
-      model: row[0].toUpperCase(), // 第一列
-      price: row[1], // 第二列
-    }));
+    // const result = data.slice(1).map(row => ({
+    //   model: row[0].toUpperCase(), // 第一列
+    //   price: row[1], // 第二列
+    // }));
+    // 过滤并验证数据
+    const result = data.slice(1) // 跳过标题行
+      .filter(row => {
+        const model = row[0];
+        const price = row[1];
+        // 检查第一列长度是否不超过45，第二列是否是 float
+        return typeof model === 'string' && model.length <= 45 && !isNaN(parseFloat(price));
+      })
+      .map(row => ({
+        model: row[0].toUpperCase(), // 第一列转为大写
+        price: parseFloat(row[1]), // 第二列转为 float
+      }));
     await Dianlan.insertBasePriceBatch(result); 
     ctx.body = {
       success: true,
@@ -1060,12 +1130,34 @@ router.post('/public/api/area_detail_add', async (ctx, next) => {
     }
   }
 });
+// ep_price_del
+router.post('/public/api/ep_price_del', async (ctx, next) => {
+  const { id } = ctx.request.body;
+  console.log('ep_price_del',id)
+  const res = await Dianlan.epPriceDel(id)
+  console.log('ep_price_del',  res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
 //dianlan_baseprice_del
 router.post('/public/api/dianlan_baseprice_del', async (ctx, next) => {
   const { id } = ctx.request.body;
   console.log('dianlan_baseprice_del',id)
   const res = await Dianlan.basepriceDel(id)
   console.log('dianlan_baseprice_del',  res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
+// public/api/ep_price_mod
+router.post('/public/api/ep_price_mod', async (ctx, next) => {
+  const { id, model, price } = ctx.request.body;
+  console.log('ep_price_mod',id, model, price)
+  const res = await Dianlan.epPriceMod(id, model, price)
+  console.log('ep_price_mod',  res)
   ctx.body = {
     "code": 0,
     "data": res
@@ -1127,6 +1219,29 @@ router.post('/public/api/area_del', async (ctx, next) => {
     "data": res
   }
 })
+//dianlan_list
+router.post('/public/api/dianlan_list', async (ctx, next) => {
+  const { sw,page,proj } = ctx.request.body;
+  console.log('dianlan_list',sw,page,proj)
+  const res = await Dianlan.dianlanList(sw,page,proj)
+  var haha = []
+  
+  if(sw){
+    for (var i in res.data) {
+      var m = util1.match(res.data[i]['model']+res.data[i]['specification']+res.data[i]['facilities_name']+res.data[i]['facilities_loca']+res.data[i]['sysname'], sw);
+      if (m) {
+        haha.push(res.data[i])
+       }
+
+    }
+  }
+  console.log('dianlan_list',  haha)
+  ctx.body = {
+    "code": 0,
+    "data": sw?haha:res.data,
+    "totalCount": sw?haha.length:res.totalCount
+  }
+});
 //search_proj_list 
 router.post('/public/api/search_proj_list', async (ctx, next) => {
   const { sw } = ctx.request.body;
@@ -1137,6 +1252,7 @@ router.post('/public/api/search_proj_list', async (ctx, next) => {
     var m = util1.match(res[i]['projname'], sw);
     if (m) {
       haha.push({
+          'id': res[i]['id'],
           'projname': res[i]['projname']
         })
      }
@@ -1178,6 +1294,29 @@ router.post('/public/api/add_user', async (ctx, next) => {
     "data": res
   }
 });
+// ep_price_submit
+router.post('/public/api/ep_price_submit', async (ctx, next) => {
+  const { model, price } = ctx.request.body;
+  console.log('ep_price_submit', model, price);
+  try {
+    const res = await Dianlan.epPriceSubmit(model.toUpperCase(), price);
+    console.log('ep_price_submit', res);
+    ctx.body = {
+      code: 0,
+      data: res,
+    };
+  } catch (error) {
+    console.error('插入 ep_price 出错:', error);
+    // 将错误信息返回给前端
+    ctx.status = 400; // 可根据需要调整状态码
+    ctx.body = {
+      code: 1,
+      message: '插入数据失败',
+      error: error.message,
+    };
+  }
+});
+
 //dianlan_baseprice_submit
 router.post('/public/api/dianlan_baseprice_submit', async (ctx, next) => {
   const { model, price } = ctx.request.body;
@@ -1260,7 +1399,28 @@ router.get('/public/api/download-template-1', async (ctx) => {
   }
 });
 
-
+//ep_price
+router.post('/public/api/ep_price', async (ctx, next) => {
+  const { sw,page } = ctx.request.body;
+  const flag = (sw && sw.trim()!== "")
+  console.log('ep_price',sw,page)
+  const res = await Dianlan.epPrice(sw,page)
+  console.log('ep_price',res)
+  var haha = []
+  if (flag) {
+    for (var i in res.data) {
+      var m = util1.match(res.data[i]['ep']+res.data[i]['price'], sw);
+      if (m) {
+        haha.push(res.data[i])
+       }
+    }
+  }
+  ctx.body = {
+    "code": 0,
+    "data": flag?haha:res.data,
+    "totalCount": flag?haha.length:res.totalCount
+  }
+});
 //dianlan_baseprice
 router.post('/public/api/dianlan_baseprice', async (ctx, next) => {
   const { sw,page } = ctx.request.body;

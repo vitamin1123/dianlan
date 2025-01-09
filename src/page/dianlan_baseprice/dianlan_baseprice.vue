@@ -8,8 +8,7 @@
     <!-- 左侧部分，占70% -->
     <van-search 
       v-model="sw" 
-      placeholder="请输入搜索关键词" 
-     
+      placeholder="请输入搜索关键词"
       @search="search_sw" 
     />
     
@@ -100,7 +99,7 @@ const refreshing = ref(false);
 const showTop = ref(false)
 const sub_model = ref('')
 const sub_price = ref('')
-const sw = ref('')
+const sw = ref(null)
 const showPopover = ref(false)
 const popoverPlacement = ref('left-end')
 const actions =  ref([{ text: '直接新增' }, { text: '下载模版' }, { text: '上传文件' }])

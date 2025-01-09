@@ -2,6 +2,77 @@ const dbconfig = require('../db/myconfig_127.js')
 const db = require('../db/db_mysql.js');
 
 module.exports = {
+  // 分页查询
+  async dianlanList(sw,page,proj) {
+    try {
+      var res
+      if (sw && sw.trim()!== ""){
+        res = await db.query(
+          `SELECT
+             *
+          FROM
+             dev.dianlan
+          where proj = ?
+           `,
+          [proj],dbconfig
+        );
+      }else{
+        res = await db.query(
+          `SELECT
+              *
+           FROM
+              dev.dianlan
+              where proj = ?
+           LIMIT 10 OFFSET ?`,
+          [proj,String(page)],dbconfig
+        );
+      }
+      let countRes = await db.query(`SELECT
+        count(1) as totalCount
+      FROM
+        dev.dianlan
+        where proj = ?
+      `,[proj],dbconfig)
+      return {
+        data: res,
+        totalCount: countRes[0].totalCount, // 总数是查询结果的第一个字段
+      };
+    } catch (error) {
+      console.error('查询 dianlan_list 出错:', error);
+      throw error;
+    }
+  },
+    
+  // 批量插入epprice数据
+  async insertPriceBatch(data) {
+    console.log(data)
+    try {
+      // 检查数据并替换 undefined 为 null
+      const cleanedData = data.map(item => ({
+        ep: item.ep && item.ep.trim()? item.ep : null,  // 将 ep 转大写，空值转为 null
+        price: item.price!== undefined && item.price!== null? item.price : null  // price 是 undefined 或 null 则替换为 null
+      }));
+      console.log(cleanedData)
+      // 构建 SQL 查询
+      const insertQuery = `
+        INSERT INTO dev.epprice (ep, price)
+        VALUES ${cleanedData.map(() => "(?,?)").join(", ")}
+        ON DUPLICATE KEY UPDATE price = VALUES(price);
+      `;
+      const values = cleanedData.flatMap(item => [item.ep, item.price]);
+      // 调试：打印 values 和 insertQuery
+      console.log('values:', values); // 确保 values 是二维数组
+      console.log('insertQuery:', insertQuery); // 确保生成的 SQL 查询语句是正确的
+
+      // 执行查询
+      const res = await db.query(insertQuery, values, dbconfig);
+      console.log('Insert result:', res);
+      return res;
+    } catch (error) {
+      console.error('批量插入数据失败:', error);
+      throw error;
+    }
+  },
   // 批量插入baseprice数据
   async insertBasePriceBatch(data) {
     console.log(data)
@@ -34,6 +105,20 @@ module.exports = {
       throw error;
     }
   },
+  // epPriceDel
+  async epPriceDel(id) {
+    try {
+      const res = await db.query(
+        `update dev.epprice set state = 0 WHERE id =?`,
+        [id],
+        dbconfig
+      );
+      return res;
+    } catch (error) {
+      console.error('删除 ep_price 出错:', error);
+      throw error;
+    }
+  },
   // basepriceDel
   async basepriceDel(id) {
     try {
@@ -48,6 +133,20 @@ module.exports = {
       throw error;
     }
   },
+  // epPriceMod
+  async epPriceMod(id,model,price) {
+    try {
+      const res = await db.query(
+        `UPDATE dev.epprice SET ep =?, price =? WHERE id =?`,
+        [model, price, id],
+        dbconfig
+      );
+      return res;
+    } catch (error) {
+      console.error('更新 ep_price 出错:', error);
+      throw error;
+    }
+  },
   // basepriceMod
   async basepriceMod(id,model,price) {
     try {
@@ -59,6 +158,22 @@ module.exports = {
       return res;
     } catch (error) {
       console.error('更新 baseprice 出错:', error);
+      throw error;
+    }
+  },
+  // epPriceSubmit
+  async epPriceSubmit(ep,price) {
+    try {
+      const res = await db.query(
+        `INSERT INTO dev.epprice (ep, price) VALUES (?,?)`,
+        [ep, price],
+        dbconfig
+      );
+      return res;
+    } catch (error) {
+      console.error('插入 ep_price 出错:', error);
+
+      // 抛出错误供上层捕获
       throw error;
     }
   },
@@ -78,6 +193,51 @@ module.exports = {
       throw error;
     }
   },
+  //epPrice
+  async epPrice(sw,page) {
+
+    try {
+      var res
+      if (sw && sw.trim()!== ""){
+        res = await db.query(
+          `SELECT
+              id,
+              ep,
+              ROUND(price,2) as price
+           FROM
+              dev.epprice
+              where state = 1
+           `,
+          [],dbconfig
+        );
+      }else{
+        res = await db.query(
+          `SELECT
+              id,
+              ep,
+              ROUND(price,2) as price
+           FROM
+              dev.epprice
+              where state = 1
+           LIMIT 10 OFFSET?`,
+          [String(page)],dbconfig
+        );
+      }
+      let countRes = await db.query(`SELECT
+        count(1) as totalCount
+      FROM
+        dev.epprice
+        where state = 1
+      `,[],dbconfig)
+      return {
+        data: res,
+        totalCount: countRes[0].totalCount, // 总数是查询结果的第一个字段
+      };
+    } catch (error) {
+      console.error('查询 ep_price 出错:', error);
+      throw error;
+    }
+  },
   // dianlanBaseprice
   async dianlanBaseprice(sw,page) {
     
@@ -88,7 +248,7 @@ module.exports = {
           `SELECT
               id,
               model,
-              price
+              ROUND(price,2) as price
            FROM
               dev.baseprice
               where state = 1
@@ -100,7 +260,7 @@ module.exports = {
           `SELECT
               id,
               model,
-              price
+              ROUND(price,2) as price
            FROM
               dev.baseprice
               where state = 1
