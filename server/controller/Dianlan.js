@@ -2,6 +2,19 @@ const dbconfig = require('../db/myconfig_127.js')
 const db = require('../db/db_mysql.js');
 
 module.exports = {
+  //updatePaipWp
+  async updatePaipWp(userCode, id) {
+    try {
+      const res = await db.query(
+        `update dev.workpack set state = 1-state where wpid =? and wpowner =? `,
+        [id,userCode],dbconfig
+      );
+      return res;
+    } catch (error) {
+      console.error('更新 wp 出错:', error);
+      throw error;
+    }
+  },
   async deldianlanAll(proj) {
     try {
       const res = await db.query(
@@ -545,7 +558,7 @@ from dev.workpack a left join dev.projitem b on a.dianlanid = b.id and b.state =
       let res = await db.query(`SELECT 
   a.*, 
   e.username AS user, 
-  c.*, 
+  c.id,c.model,c.specification,c.proj,c.facilities,c.daihao,c.facilities_name,c.last_fangxian,c.last_fangxian_time,c.total_length,c.sysname,c.mem,
   d.username AS fin_user_name
 FROM 
   dev.workpack a
@@ -591,9 +604,9 @@ WHERE
   async    getMyWpList(ope,qdate) {
     try {
       let res = await db.query(`SELECT 
-  a.*, 
+  a.*,
   b.user, 
-  c.*,
+  c.id,c.model,c.specification,c.proj,c.facilities,c.daihao,c.facilities_name,c.last_fangxian,c.last_fangxian_time,c.total_length,c.sysname,c.mem,
   d.username as fin_user_name
 FROM 
   dev.workpack a

@@ -13,7 +13,7 @@
         v-for ="item in list"
         :key = "item.dianlanid"
         :name="item.id" 
-        :disabled="(item.fin_user != null && item.fin_user != userStore.userInfo.userCode)|| date != todayDate"
+        :disabled="(item.fin_user != null && item.fin_user != userStore.userInfo.userCode)|| date != todayDate || item.state == 1"
         class="checkbox">
       <van-card
         :num="item.num"
@@ -85,8 +85,11 @@ const checkChange = async(newCheckedValues) => {
   previousCheckedValues.value = [...newCheckedValues];
 };
 
+// const formatDate = (date) => {
+//   return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+// };
 const formatDate = (date) => {
-  return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+  return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
 };
 const onConfirm = (value) => {
  

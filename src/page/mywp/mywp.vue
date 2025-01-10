@@ -43,8 +43,9 @@
                 {{ user }}
             </van-tag>
           </div>
-            <van-button type="primary" size="small" @click="del_wp(group.wpid)" style="margin-right: 0.1rem;">删除</van-button>
-            <van-button type="success" size="small" @click="confirm_wp(group.wpid)">确认</van-button>
+          
+            <van-button type="primary" size="small" :disabled="group.state==1"  @click="del_wp(group.wpid)" style="margin-right: 0.1rem;">删除</van-button>
+            <van-button type="success" size="small" @click="confirm_wp(group.wpid)">{{ group.state==1?'反确认':'确认' }}</van-button>
           </div>
         </div>
       </van-list>
@@ -58,32 +59,70 @@ import http from '@/api/request';
 import { showNotify } from 'vant';
 import { showConfirmDialog } from 'vant';
 import { useUserStore } from '@/store/userStore';
+
 const userStore = useUserStore();
 
 const list = ref([]);
+// const groupedByWpid = computed(() => { 
+//   const groups = list.value.reduce((acc, item) => {
+//     const group = acc.find((g) => g.wpid === item.wpid);
+//     if (group) {
+//       // 将线缆去重
+//       if (!group.items.some(existingItem => existingItem.dianlanid === item.dianlanid)) {
+//         group.items.push(item);
+//       }
+//       // 将用户去重
+//       if (!group.users.includes(item.user)) {
+//         group.users.push(item.user);
+//       }
+//       if (!group.states.includes(item.state)) {
+//         group.states.push(item.state);
+//       }
+//     } else {
+//       acc.push({
+//         wpid: item.wpid,
+//         items: [item], // 初始化线缆列表
+//         users: [item.user], // 初始化用户列表
+//         states: [item.state], // 初始化状态列表
+//       });
+//     }
+//     return acc;
+//   }, []);
+//   return groups;
+// });
+
 const groupedByWpid = computed(() => { 
   const groups = list.value.reduce((acc, item) => {
-    const group = acc.find((g) => g.wpid === item.wpid);
-    if (group) {
-      // 将线缆去重
-      if (!group.items.some(existingItem => existingItem.dianlanid === item.dianlanid)) {
-        group.items.push(item);
-      }
-      // 将用户去重
-      if (!group.users.includes(item.user)) {
-        group.users.push(item.user);
-      }
-    } else {
-      acc.push({
+    // 查找当前 wpid 的分组
+    let group = acc.get(item.wpid);
+    if (!group) {
+      // 如果没有找到该分组，则初始化
+      group = {
         wpid: item.wpid,
-        items: [item], // 初始化线缆列表
-        users: [item.user], // 初始化用户列表
-      });
+        items: [],
+        users: [],
+        state: item.state,  // 每个 wpid 只有一个唯一的 state
+      };
+      acc.set(item.wpid, group);
     }
+
+    // 去重：线缆去重
+    if (!group.items.some(existingItem => existingItem.dianlanid === item.dianlanid)) {
+      group.items.push(item);
+    }
+    
+    // 去重：用户去重
+    if (!group.users.includes(item.user)) {
+      group.users.push(item.user);
+    }
+
     return acc;
-  }, []);
-  return groups;
+  }, new Map());
+
+  // 将 Map 转换为数组并返回
+  return Array.from(groups.values());
 });
+
 
 const groupedByWpid_bak = computed(() => {
   // 按 wpid 分组，并提取唯一用户

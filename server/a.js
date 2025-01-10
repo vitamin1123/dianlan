@@ -174,6 +174,15 @@ router.get('/public/api/gaga', async (ctx, next) => {
     "data": "我的天哪"
   }
 });
+//confirm_paip_wp
+router.post('/public/api/confirm_paip_wp', async (ctx, next) => {
+  const { userCode, id } = ctx.request.body;
+  const res = await Dianlan.updatePaipWp(userCode, id)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
 ///public/api/dianlan_del_all
 router.post('/public/api/dianlan_del_all', async (ctx, next) => {
   const { proj } = ctx.request.body;
