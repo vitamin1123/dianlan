@@ -90,15 +90,18 @@
         
         <template #footer>
             <van-button
-            size="small" @click = "click_mod(item)"
-            >修改</van-button>
-            <van-button size="small" @click = "click_del(item)">删除</van-button>
+            size="small" :disabled = "item.state == 1?false:true"
+            >{{ item.state == 1?"可用":"禁用" }}</van-button>
+            <van-button size="small" @click = "click_del(item)">{{ item.state == 1?"禁用":"启用" }}</van-button>
         </template>
       </van-card>
     </van-list>
     </van-pull-refresh>
     <van-dialog v-model:show="modshow" title="修改" show-cancel-button :confirmButtonDisabled="modvalue.length>0?false:true" @confirm="confirmMod">
       <van-field v-model="modvalue" placeholder="请输入规格" maxlength="45" @update:model-value="onUpdate"/>
+      <van-field v-model="modvalue1" type="number" placeholder="请输入价格" maxlength="45"/>
+      <van-field v-model="modvalue1" type="number" placeholder="请输入价格" maxlength="45"/>
+      <van-field v-model="modvalue1" type="number" placeholder="请输入价格" maxlength="45"/>
       <van-field v-model="modvalue1" type="number" placeholder="请输入价格" maxlength="45"/>
     </van-dialog>
     
@@ -125,7 +128,7 @@ const sub_price = ref('')
 const sw = ref('')
 const showPopover = ref(false)
 const popoverPlacement = ref('left-end')
-const actions =  ref([{ text: '直接新增' }, { text: '下载模版' }, { text: '上传文件' }])
+const actions =  ref([{ text: '上传文件' },{ text: '删除所有' }])
 const uploader = ref(null);
 const modshow = ref(false);
 const modvalue = ref('');
@@ -152,8 +155,10 @@ const search = async () => {
     }
 };
 
-const select = (item) => {
+const select = async(item) => {
+  console.log('select: ',item)
     button_text.value = item.name;
+    onRefresh()
     showTop1.value = false;
 };
 const handleClick = () => {
@@ -169,14 +174,15 @@ const search_sw = async () => {
 const onFileRead = async (file) => {
       const formData = new FormData();
       formData.append('file', file.file);
-
+      formData.append('projname', button_text.value);
       try {
-        const response = await http.post('/public/api/upload-baseprice', formData, {
+        const response = await http.post('/public/api/upload-dianlan', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
         });
         console.log('上传成功:', response.data);
+        onRefresh()
       } catch (error) {
         console.error('上传失败:', error);
       }
@@ -191,21 +197,24 @@ const click_mod = (item) => {
 const click_del = (item) => {
   console.log('click_del: ',item)
   showConfirmDialog({
-  title: '标题',
+  title: '确认',
   message:
-    '确认删除么？',
+    (`确认${item.state == 1?'删除':'启用'}么？`),
   })
   .then(async() => {
     // on confirm
-    const res = await http.post('/public/api/dianlan_baseprice_del', {
-      id: item.id
+    const res = await http.post('/public/api/dianlan_del', {
+      daihao: item.daihao,
+      model: item.model,
+      specification: item.specification,
+      op_type: item.state
     });
-    if (res.data.affectedRows === 1) {
-      showToast('删除成功');
+    if (res.data.affectedRows === 2) {
+      showToast('成功');
       onRefresh();
     } else {
       // 后端返回的错误信息
-      showToast(`删除失败: ${res.data.message}`);
+      showToast(`失败: ${res.data.message}`);
     }
   })
   .catch(() => {
@@ -267,8 +276,26 @@ const onSubmit = async () => {
 
 const onSelect=async(action) => {
   showToast(action.text);
-  if (action.text == '直接新增') {
-    showTop.value = true
+  if (action.text == '删除所有') {
+    // showTop.value = true
+    showConfirmDialog({
+      title: '确认',
+      message:
+        (`确认删除所有么？`),
+    })
+   .then(async() => {
+      // on confirm
+      const res = await http.post('/public/api/dianlan_del_all', {
+        proj: button_text.value
+      });
+      if (res.data.affectedRows > 0) {
+        showToast('成功');
+        onRefresh();
+      } else {
+        // 后端返回的错误信息
+        showToast(`失败: ${res.data.message}`);
+      }
+    })
   }else if (  action.text == '下载模版') {
     // 下载模版
     const data = [

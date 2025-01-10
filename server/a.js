@@ -20,6 +20,8 @@ const util1 = require('./util/pinyin');
 const router = new Router();
 
 const Dianlan = require('./controller/Dianlan') ;
+const { processExcelAndInsert } = require('./parse_dianlan.js'); // 替换为实际路径
+
 
 
 
@@ -172,9 +174,56 @@ router.get('/public/api/gaga', async (ctx, next) => {
     "data": "我的天哪"
   }
 });
+///public/api/dianlan_del_all
+router.post('/public/api/dianlan_del_all', async (ctx, next) => {
+  const { proj } = ctx.request.body;
+  const res = await Dianlan.deldianlanAll(proj)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
+///public/api/upload-dianlan
+router.post('/public/api/upload-dianlan', async (ctx) => {
+  const file = ctx.request.files.file; // 获取上传的文件对象
+  const { projname } = ctx.request.body;
+  console.log('projname',projname);
+  if (!file) {
+    ctx.status = 400;
+    ctx.body = { success: false, message: '未接收到文件' };
+    return;
+  }
+  const filePath = file.filepath; // 临时文件路径
+  console.log('上传的文件路径:', filePath); // 打印文件路径
+  // 检查文件是否存在
+  if (!fs.existsSync(filePath)) {
+    console.error('文件不存在:', filePath);
+    ctx.status = 400;
+    ctx.body = { success: false, message: '源文件不存在' };
+    return;
+  }
+  try {
+    await processExcelAndInsert(filePath,projname)
+    ctx.body = { success: true, message: '文件处理成功' };
+   
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = { success: false, message: '文件处理失败', error: error.message };
+  }
+  finally {
+    // 删除临时文件
+    try {
+      fs.unlinkSync(filePath);
+      console.log('临时文件已删除:', filePath);
+    } catch (err) {
+      console.error('删除文件失败:', err.message);
+    }
+  }
+});
 // public/api/upload-epprice
 router.post('/public/api/upload-epprice', async (ctx) => {
   const file = ctx.request.files.file; // 获取上传的文件对象
+  
   if (!file) {
     ctx.status = 400;
     ctx.body = { success: false, message: '未接收到文件' };
@@ -1203,6 +1252,17 @@ router.post('/public/api/proj_del', async (ctx, next) => {
   console.log('proj_del',projid)
   const res = await Dianlan.projDel(projid)
   console.log('proj_del',  res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+})
+//dianlan_del
+router.post('/public/api/dianlan_del', async (ctx, next) => {
+  const { daihao,model,specification,op_type } = ctx.request.body;
+  console.log('dianlan_del',daihao,model,specification,op_type)
+  const res = await Dianlan.dianlanDel(daihao,model,specification,op_type)
+  console.log('dianlan_del',  res)
   ctx.body = {
     "code": 0,
     "data": res

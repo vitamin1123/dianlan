@@ -2,6 +2,31 @@ const dbconfig = require('../db/myconfig_127.js')
 const db = require('../db/db_mysql.js');
 
 module.exports = {
+  async deldianlanAll(proj) {
+    try {
+      const res = await db.query(
+        `delete from dev.dianlan where proj =?`,
+        [proj],dbconfig
+      );
+      return res;
+    } catch (error) {
+      console.error('删除 dianlan 出错:', error);
+      throw error;
+    }
+  },
+  //dianlanDel
+  async dianlanDel(daihao,model,specification) {
+    try {
+      const res = await db.query(
+        `update dev.dianlan set state = 1-state WHERE daihao = ? and model = ? and specification = ?`,
+        [daihao,model,specification],dbconfig
+      );
+      return res;
+    } catch (error) {
+      console.error('删除 dianlan 出错:', error);
+      throw error;
+    }
+  },
   // 分页查询
   async dianlanList(sw,page,proj) {
     try {
@@ -1007,13 +1032,13 @@ async searchCode (code) {
         }
         // 拼接完整的 SQL 查询
         let sql = `SELECT a.id,a.model,a.specification,a.proj,a.facilities,a.company,a.daihao,a.facilities_name,
-        a.facilities_loca,h.state,a.total_length,a.sysname,
+        a.facilities_loca,h.state,a.state as dlstate,a.total_length,a.sysname,
         a.last_fangxian_loca as ori_fangxian_loca,
         h.last_fangxian,h.last_fangxian_date,h.last_ope,h.last_ope_date,h.last_fangxian_loca,
         b.username as fangxianren,c.username as last_operator,d.price as baseprice,e.price as fa_price,
         g.username as paip,g.usercode as paip_code,i.username as fin_user from dev.dianlan a `;
         let countSql = `SELECT COUNT(*) as totalCount from dev.dianlan a `;
-      
+        conditions.push('AND 1=1 ')
         // 根据各个字段的值拼接 WHERE 条件
         if (company !== undefined && company !== '') {
           conditions.push('a.company = ?');
@@ -1070,8 +1095,8 @@ async searchCode (code) {
         // 如果有条件，拼接 WHERE 子句
         if (conditions.length > 0) {
           const conditionString = conditions.join(' AND ');
-          sql += ' WHERE ' + conditionString;
-          countSql += ' WHERE ' + conditionString;
+          sql += ' WHERE a.state = 1  ' + conditionString;
+          countSql += ' WHERE a.state = 1  ' + conditionString;
         }
       
         // 添加分页支持，LIMIT 10，OFFSET start
