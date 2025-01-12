@@ -138,7 +138,7 @@ const showTop1 = ref(false);
 const search_word = ref('');
 const search = async () => {
     try {
-      const response = await http.post('/public/api/search_proj_list',{sw: search_word.value});
+      const response = await http.post('/api/search_proj_list',{sw: search_word.value});
 
       console.log('请求成功:', response);
       button_text.value = response.data[0].projname;
@@ -176,7 +176,7 @@ const onFileRead = async (file) => {
       formData.append('file', file.file);
       formData.append('projname', button_text.value);
       try {
-        const response = await http.post('/public/api/upload-dianlan', formData, {
+        const response = await http.post('/api/upload-dianlan', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
@@ -203,7 +203,7 @@ const click_del = (item) => {
   })
   .then(async() => {
     // on confirm
-    const res = await http.post('/public/api/dianlan_del', {
+    const res = await http.post('/api/dianlan_del', {
       daihao: item.daihao,
       model: item.model,
       specification: item.specification,
@@ -229,7 +229,7 @@ const onUpdate = () => {
 
 const confirmMod = async () => {
   try {
-    const res = await http.post('/public/api/dianlan_baseprice_mod', {
+    const res = await http.post('/api/dianlan_baseprice_mod', {
       id: up_item.value.id,
       model: modvalue.value,
       price: modvalue1.value,
@@ -253,7 +253,7 @@ const confirmMod = async () => {
 const onSubmit = async () => {
   try {
     console.log(sub_model.value, sub_price.value);
-    const res = await http.post('/public/api/dianlan_baseprice_submit', {
+    const res = await http.post('/api/dianlan_baseprice_submit', {
       model: sub_model.value,
       price: sub_price.value,
     });
@@ -285,7 +285,7 @@ const onSelect=async(action) => {
     })
    .then(async() => {
       // on confirm
-      const res = await http.post('/public/api/dianlan_del_all', {
+      const res = await http.post('/api/dianlan_del_all', {
         proj: button_text.value
       });
       if (res.data.affectedRows > 0) {
@@ -367,7 +367,7 @@ const onLoad = async () => {
 
 const fetchData = async () => {
     loading.value = true
-    const res = await http.post('/public/api/dianlan_list', {
+    const res = await http.post('/api/dianlan_list', {
             page: page.value*10,
             sw: sw.value,
             proj: button_text.value

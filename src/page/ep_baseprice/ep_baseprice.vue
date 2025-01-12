@@ -121,7 +121,7 @@
         formData.append('file', file.file);
   
         try {
-          const response = await http.post('/public/api/upload-epprice', formData, {
+          const response = await http.post('/api/upload-epprice', formData, {
             headers: {
               'Content-Type': 'multipart/form-data',
             },
@@ -147,7 +147,7 @@
     })
     .then(async() => {
       // on confirm
-      const res = await http.post('/public/api/ep_price_del', {
+      const res = await http.post('/api/ep_price_del', {
         id: item.id
       });
       if (res.data.affectedRows === 1) {
@@ -170,7 +170,7 @@
   
   const confirmMod = async () => {
     try {
-      const res = await http.post('/public/api/ep_price_mod', {
+      const res = await http.post('/api/ep_price_mod', {
         id: up_item.value.id,
         model: modvalue.value,
         price: modvalue1.value,
@@ -194,7 +194,7 @@
   const onSubmit = async () => {
     try {
       console.log(sub_model.value, sub_price.value);
-      const res = await http.post('/public/api/ep_price_submit', {
+      const res = await http.post('/api/ep_price_submit', {
         model: sub_model.value,
         price: sub_price.value,
       });
@@ -288,7 +288,7 @@
   
   const fetchData = async () => {
       loading.value = true
-      const res = await http.post('/public/api/ep_price', {
+      const res = await http.post('/api/ep_price', {
               page: page.value*10,
               sw: sw.value
       })

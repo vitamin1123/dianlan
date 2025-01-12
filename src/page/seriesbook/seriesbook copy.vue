@@ -36,7 +36,7 @@ const select = (item) => {
 
 const search = async () => {
     try {
-      const response = await http.post('/public/api/search_proj_list',{sw: search_word.value});
+      const response = await http.post('/api/search_proj_list',{sw: search_word.value});
 
       console.log('请求成功:', response);
       list.value = response.data.map(item => ({

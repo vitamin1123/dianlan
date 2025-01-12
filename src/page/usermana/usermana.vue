@@ -163,7 +163,7 @@ const tag_dic = ref({
 })
 const searchUserCode = async () => {
     console.log('搜索： ',usercode.value)
-    const res = await http.post('/public/api/search_user_code', {'code': usercode.value});
+    const res = await http.post('/api/search_user_code', {'code': usercode.value});
     if (res.data.length > 0) {
         usercode.value = res.data[0].username;
         showFailToast('工号已经存在！');
@@ -189,7 +189,7 @@ const onConfirm = async({ selectedValues, selectedOptions }) => {
     showPicker.value = false;
     if (isSetloca.value) {
         console.log('设置角色： ',selectedOptions[0].value)
-        const res = await http.post('/public/api/mod_user', {'sw': selectedOptions[0].value, 'type': search_type.value, 'user':tmp1.value});
+        const res = await http.post('/api/mod_user', {'sw': selectedOptions[0].value, 'type': search_type.value, 'user':tmp1.value});
         if (res.data.affectedRows == 1) {
             showSuccessToast('修改成功！');
             load()
@@ -228,7 +228,7 @@ const onConfirm2 = async({ selectedValues, selectedOptions }) => {
     showPicker2.value = false;
     pickerValue2.value = selectedValues;
     //fieldValue1.value = selectedOptions[0].text;
-    const res = await http.post('/public/api/mod_user', {'sw': selectedOptions[0].value, 'type': search_type.value,'user':tmp1.value});
+    const res = await http.post('/api/mod_user', {'sw': selectedOptions[0].value, 'type': search_type.value,'user':tmp1.value});
     console.log(res.data)  
     if (res.data.affectedRows == 1) {
         showSuccessToast('修改成功！');
@@ -253,7 +253,7 @@ const onRefresh = () => {
 
 const searchLeader = async () => {
     console.log('搜索11： ',sw1.value)
-    const res = await http.post('/public/api/get_leader_list', {'sw': sw1.value, 'type': search_type.value});
+    const res = await http.post('/api/get_leader_list', {'sw': sw1.value, 'type': search_type.value});
     columns1.value = res.data.map(item => ({ text: item.username, value: item.usercode }));
     console.log(res.data)
     console.log(columns1.value)
@@ -267,7 +267,7 @@ const ssw = async (type) => {
 
 const onSubmit = async () => {
     console.log('提交： ',username.value, usercode.value, juese.value, shangji.value, quyu.value)
-    const res = await http.post('/public/api/add_user', {
+    const res = await http.post('/api/add_user', {
         'username': username.value,
         'usercode': usercode.value,
         'role': juese.value,
@@ -312,7 +312,7 @@ const onOffsetChange = (offset) => {
 
 const search_user = async () => {
     console.log('搜索： ',sw.value)
-    const res = await http.post('/public/api/get_user_list', { sw:sw.value,page:  0 });
+    const res = await http.post('/api/get_user_list', { sw:sw.value,page:  0 });
     console.log('搜索user',res.data)
     list.value = res.data
     finished.value = true;
@@ -327,7 +327,7 @@ const fetchData = async () => {
     }
     lastRequestTime = now;
     // 在 fetchData 中构造 sd 数据
-    const url = '/public/api/get_user_list';
+    const url = '/api/get_user_list';
     const data = {
       sw: sw.value,
       page: page.value*10,
@@ -371,7 +371,7 @@ const onLoad = async () => {
     };
 
 const load = async () => {
-    const res = await http.post('/public/api/get_user_list', { sw:null,page:  page.value*10 });
+    const res = await http.post('/api/get_user_list', { sw:null,page:  page.value*10 });
     console.log('初次加载： ',res.data,res.totalCount)
     list.value = res.data
 }

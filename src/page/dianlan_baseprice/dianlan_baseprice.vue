@@ -120,7 +120,7 @@ const onFileRead = async (file) => {
       formData.append('file', file.file);
 
       try {
-        const response = await http.post('/public/api/upload-baseprice', formData, {
+        const response = await http.post('/api/upload-baseprice', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
@@ -146,7 +146,7 @@ const click_del = (item) => {
   })
   .then(async() => {
     // on confirm
-    const res = await http.post('/public/api/dianlan_baseprice_del', {
+    const res = await http.post('/api/dianlan_baseprice_del', {
       id: item.id
     });
     if (res.data.affectedRows === 1) {
@@ -169,7 +169,7 @@ const onUpdate = () => {
 
 const confirmMod = async () => {
   try {
-    const res = await http.post('/public/api/dianlan_baseprice_mod', {
+    const res = await http.post('/api/dianlan_baseprice_mod', {
       id: up_item.value.id,
       model: modvalue.value,
       price: modvalue1.value,
@@ -193,7 +193,7 @@ const confirmMod = async () => {
 const onSubmit = async () => {
   try {
     console.log(sub_model.value, sub_price.value);
-    const res = await http.post('/public/api/dianlan_baseprice_submit', {
+    const res = await http.post('/api/dianlan_baseprice_submit', {
       model: sub_model.value,
       price: sub_price.value,
     });
@@ -287,7 +287,7 @@ const onLoad = async () => {
 
 const fetchData = async () => {
     loading.value = true
-    const res = await http.post('/public/api/dianlan_baseprice', {
+    const res = await http.post('/api/dianlan_baseprice', {
             page: page.value*10,
             sw: sw.value
     })

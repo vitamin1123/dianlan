@@ -36,7 +36,7 @@ const renderLineBarChart = async() => {
 
   try {
     // 从后端获取数据
-    const res = await http.post('/public/api/ana_laxian', {});
+    const res = await http.post('/api/ana_laxian', {});
 
     // 假设返回的数据格式为数组，处理数据填充 yAxis 和 series
     if (res && res.data) {
@@ -105,7 +105,7 @@ const renderLineBarChart1 = async() => {
 
   try {
     // 从后端获取数据
-    const res = await http.post('/public/api/ana_laxian1', {});
+    const res = await http.post('/api/ana_laxian1', {});
 
     // 假设返回的数据格式为数组，处理数据填充 yAxis 和 series
     if (res && res.data) {

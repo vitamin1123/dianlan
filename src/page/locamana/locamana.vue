@@ -97,7 +97,7 @@
       .then(async() => {
         // on confirm
         try {
-          const response = await http.post('/public/api/area_del', {
+          const response = await http.post('/api/area_del', {
             areaid: item.id,
           });
           console.log('请求成功:', response);
@@ -126,7 +126,7 @@
     }).then(async() => {
       // on confirm
       try {
-        const response = await http.post('/public/api/area_detail_del', {
+        const response = await http.post('/api/area_detail_del', {
           itemid: item.id,
         });
         console.log('请求成功:', response);
@@ -155,7 +155,7 @@
 
   const modLoca = async() => {
     try {
-      const response = await http.post('/public/api/area_mod', {
+      const response = await http.post('/api/area_mod', {
         areaid: selectedLoca.value.id,
         locaname: modvalue.value,
       });
@@ -173,7 +173,7 @@
 
   const modLocaItem = async() => {
     try {
-      const response = await http.post('/public/api/area_detail_mod', {
+      const response = await http.post('/api/area_detail_mod', {
         itemid: modRightItem.id,
         itemname: modvalue.value,
       });
@@ -243,7 +243,7 @@
   const confirmAdd = async () => {
     if (addType.value == 0) {
         try {
-        const response = await http.post('/public/api/area_add', {
+        const response = await http.post('/api/area_add', {
             locaname: text.value,
         });
         console.log('请求成功:', response);
@@ -281,7 +281,7 @@
         }
     }else{
       try {
-        const response = await http.post('/public/api/area_detail_add', {
+        const response = await http.post('/api/area_detail_add', {
             areaid: selectedLoca.value.id,
             itemname: text.value,
         });
@@ -321,7 +321,7 @@
 
   const loadDetails = async (item) => {
   try {
-    const response = await http.post('/public/api/area_detail_list', {
+    const response = await http.post('/api/area_detail_list', {
       areaid: item.id,
     });
     console.log('请求成功:', response);
@@ -343,7 +343,7 @@
 
   const load = async () => {
     try {
-      const response = await http.get('/public/api/area_list');
+      const response = await http.get('/api/area_list');
 
       console.log('请求成功:', response);
       leftList.value = response.data.map(item => ({

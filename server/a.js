@@ -212,7 +212,7 @@ router.get('/public/api/gaga', async (ctx, next) => {
   }
 });
 //confirm_paip_wp
-router.post('/public/api/confirm_paip_wp', async (ctx, next) => {
+router.post('/api/confirm_paip_wp', async (ctx, next) => {
   const { userCode, id } = ctx.request.body;
   const res = await Dianlan.updatePaipWp(userCode, id)
   ctx.body = {
@@ -221,7 +221,7 @@ router.post('/public/api/confirm_paip_wp', async (ctx, next) => {
   }
 });
 ///public/api/dianlan_del_all
-router.post('/public/api/dianlan_del_all', async (ctx, next) => {
+router.post('/api/dianlan_del_all', async (ctx, next) => {
   const { proj } = ctx.request.body;
   const res = await Dianlan.deldianlanAll(proj)
   ctx.body = {
@@ -230,7 +230,7 @@ router.post('/public/api/dianlan_del_all', async (ctx, next) => {
   }
 });
 ///public/api/upload-dianlan
-router.post('/public/api/upload-dianlan', async (ctx) => {
+router.post('/api/upload-dianlan', async (ctx) => {
   const file = ctx.request.files.file; // 获取上传的文件对象
   const { projname } = ctx.request.body;
   console.log('projname',projname);
@@ -267,7 +267,7 @@ router.post('/public/api/upload-dianlan', async (ctx) => {
   }
 });
 // public/api/upload-epprice
-router.post('/public/api/upload-epprice', async (ctx) => {
+router.post('/api/upload-epprice', async (ctx) => {
   const file = ctx.request.files.file; // 获取上传的文件对象
   
   if (!file) {
@@ -326,7 +326,7 @@ router.post('/public/api/upload-epprice', async (ctx) => {
   }
 });
 // public/api/upload-baseprice
-router.post('/public/api/upload-baseprice', async (ctx) => {
+router.post('/api/upload-baseprice', async (ctx) => {
   const file = ctx.request.files.file; // 获取上传的文件对象
   if (!file) {
     ctx.status = 400;
@@ -393,7 +393,7 @@ router.post('/public/api/upload-baseprice', async (ctx) => {
   }
 });
 //locauser_detail_list
-router.post('/public/api/locauser_detail_list', async (ctx, next) => {
+router.post('/api/locauser_detail_list', async (ctx, next) => {
   const { areaid } = ctx.request.body;
   console.log('locauser_detail_list', areaid)
   const res = await Dianlan.getlocaUser(areaid)
@@ -404,7 +404,7 @@ router.post('/public/api/locauser_detail_list', async (ctx, next) => {
   }
 });
 //loca_user_rela
-router.post('/public/api/loca_user_rela', async (ctx, next) => {
+router.post('/api/loca_user_rela', async (ctx, next) => {
   const { areaid } = ctx.request.body;
   console.log('loca_user_rela', areaid)
   const res = await Dianlan.searchRela(areaid)
@@ -415,7 +415,7 @@ router.post('/public/api/loca_user_rela', async (ctx, next) => {
   }
 });
 //locauser_list
-router.get('/public/api/locauser_list', async (ctx, next) => {
+router.get('/api/locauser_list', async (ctx, next) => {
   console.log('locauser_list')
   const res = await Dianlan.getLocaUserList()
   console.log('locauser_list')
@@ -425,7 +425,7 @@ router.get('/public/api/locauser_list', async (ctx, next) => {
   }
 });
 // get_all_user
-router.get('/public/api/get_all_user', async (ctx, next) => {
+router.get('/api/get_all_user', async (ctx, next) => {
   console.log('get_all_user')
   const res = await Dianlan.getAllUser()
   console.log('get_all_user')
@@ -435,7 +435,7 @@ router.get('/public/api/get_all_user', async (ctx, next) => {
   }
 });
 // add_wp
-router.post('/public/api/add_wp', async (ctx, next) => {
+router.post('/api/add_wp', async (ctx, next) => {
   const { ope, dianlan, user } = ctx.request.body;
   console.log('add_wp', dianlan, user, ope);
 
@@ -540,7 +540,7 @@ router.post('/public/api/add_wp', async (ctx, next) => {
 //   }
 // });
 //get AllSubWp
-router.post('/public/api/getAllSubWp', async (ctx, next) => {
+router.post('/api/getAllSubWp', async (ctx, next) => {
   const { id } = ctx.request.body;
   console.log('getAllSubWp', id)
   const res = await Dianlan.getAllSubWorkpacks(id)
@@ -551,7 +551,7 @@ router.post('/public/api/getAllSubWp', async (ctx, next) => {
   }
 });
 //getAllSub
-router.post('/public/api/getAllSub', async (ctx, next) => {
+router.post('/api/getAllSub', async (ctx, next) => {
   const { id } = ctx.request.body;
   console.log('getAllSub', id)
   const res = await Dianlan.getAllSub(id)
@@ -563,7 +563,7 @@ router.post('/public/api/getAllSub', async (ctx, next) => {
 });
 
 // ana_laxian1
-router.post('/public/api/ana_laxian1', async (ctx, next) => {
+router.post('/api/ana_laxian1', async (ctx, next) => {
   const { id, locaitem } = ctx.request.body;
   console.log('ana_laxian1', id, locaitem)
   const res = await Dianlan.anaLaxian1()
@@ -575,7 +575,7 @@ router.post('/public/api/ana_laxian1', async (ctx, next) => {
 });
 
 //add_my_work
-router.post('/public/api/add_my_work', async (ctx, next) => {
+router.post('/api/add_my_work', async (ctx, next) => {
   const { code, id } = ctx.request.body;
   console.log('add_my_work', id, code);
   const result = await Dianlan.checkAndUpdateWorkpack(id, code);  // code 是当前用户的 id
@@ -590,7 +590,7 @@ router.post('/public/api/add_my_work', async (ctx, next) => {
   }
 )
 ///public/api/ana_laxian
-router.post('/public/api/ana_laxian', async (ctx, next) => {
+router.post('/api/ana_laxian', async (ctx, next) => {
   const { id, locaitem } = ctx.request.body;
   console.log('ana_laxian', id, locaitem)
   const res = await Dianlan.anaLaxian()
@@ -602,7 +602,7 @@ router.post('/public/api/ana_laxian', async (ctx, next) => {
 });
 
 //del_my_work
-router.post('/public/api/del_my_work', async (ctx, next) => {
+router.post('/api/del_my_work', async (ctx, next) => {
   const { code, id } = ctx.request.body;
   console.log('del_my_work', code, id)
   const res = await Dianlan.delMyWork(id, code)
@@ -626,7 +626,7 @@ router.post('/public/api/del_my_work', async (ctx, next) => {
 
 
 // loca_user_add
-router.post('/public/api/loca_user_add', async (ctx, next) => {
+router.post('/api/loca_user_add', async (ctx, next) => {
   const { areaid, usercode } = ctx.request.body;
   console.log('loca_user_add', areaid, usercode)
   const res = await Dianlan.addLocaUser(areaid, usercode)
@@ -638,7 +638,7 @@ router.post('/public/api/loca_user_add', async (ctx, next) => {
 });
 // add_work_pack
 // 先判断下是否已经存在
-router.post('/public/api/add_work_pack', async (ctx, next) => {
+router.post('/api/add_work_pack', async (ctx, next) => {
   console.log(uuidv4())
   ctx.body = {
     "code": 0,
@@ -646,7 +646,7 @@ router.post('/public/api/add_work_pack', async (ctx, next) => {
   }
 });
 // del_paip_wp
-router.post('/public/api/del_paip_wp', async (ctx, next) => {
+router.post('/api/del_paip_wp', async (ctx, next) => {
   const { id } = ctx.request.body;
 
   // 预检查条件
@@ -688,7 +688,7 @@ router.post('/public/api/del_paip_wp', async (ctx, next) => {
 
 
 // public/api/get_paip_wp_list
-router.post('/public/api/get_paip_wp_list', async (ctx, next) => {
+router.post('/api/get_paip_wp_list', async (ctx, next) => {
   const { userCode,page } = ctx.request.body;
   console.log('get_paip_wp_list', userCode, page)
   const res = await Dianlan.getPaipWpList(userCode, page)
@@ -700,7 +700,7 @@ router.post('/public/api/get_paip_wp_list', async (ctx, next) => {
   }
 });
 // /public/api/get_my_wp_list
-router.post('/public/api/get_my_wp_list', async (ctx, next) => {
+router.post('/api/get_my_wp_list', async (ctx, next) => {
   const { userCode, qdate } = ctx.request.body;
   console.log('get_my_wp_list', userCode, qdate)
   const res = await Dianlan.getMyWpList(userCode, qdate)
@@ -713,7 +713,7 @@ router.post('/public/api/get_my_wp_list', async (ctx, next) => {
 
 
 // loca_user_del
-router.post('/public/api/loca_user_del', async (ctx, next) => {
+router.post('/api/loca_user_del', async (ctx, next) => {
   const { areaid, usercode } = ctx.request.body;
   console.log('loca_user_del', areaid, usercode)
   const res = await Dianlan.delLocaUser(areaid, usercode)
@@ -724,7 +724,7 @@ router.post('/public/api/loca_user_del', async (ctx, next) => {
   }
 });
 // cancel_laxian
-router.post('/public/api/cancel_laxian', async (ctx, next) => {
+router.post('/api/cancel_laxian', async (ctx, next) => {
   const { ope, locaitem, xian_id, proj } = ctx.request.body;
   console.log('cancel_laxian', ope, locaitem, xian_id, proj)
   var sqls = [];
@@ -753,7 +753,7 @@ router.post('/public/api/cancel_laxian', async (ctx, next) => {
   }
 });
 
-router.post('/public/api/laxian', async (ctx, next) => {
+router.post('/api/laxian', async (ctx, next) => {
   const { xian_id, locaitem, ope, proj } = ctx.request.body;
   console.log('laxian', xian_id, locaitem, ope, proj);
   
@@ -814,7 +814,7 @@ router.post('/public/api/laxian', async (ctx, next) => {
 
 
 // batch_laxian
-router.post('/public/api/batch_laxian', async (ctx, next) => {
+router.post('/api/batch_laxian', async (ctx, next) => {
   const { xian_ids, locaitem, ope, proj } = ctx.request.body;
   console.log('batch_laxian', xian_ids, locaitem, ope, proj);
 
@@ -975,7 +975,7 @@ router.post('/public/api/batch_laxian', async (ctx, next) => {
 //   }
 // });
 // proj_detail_mod
-router.post('/public/api/proj_detail_mod', async (ctx, next) => {
+router.post('/api/proj_detail_mod', async (ctx, next) => {
   const { itemid, itemname } = ctx.request.body;
   console.log('proj_detail_mod', itemid, itemname)
   const res = await Dianlan.projItemMod(itemid, itemname)
@@ -986,7 +986,7 @@ router.post('/public/api/proj_detail_mod', async (ctx, next) => {
   }
 });
 //area_detail_mod
-router.post('/public/api/area_detail_mod', async (ctx, next) => {
+router.post('/api/area_detail_mod', async (ctx, next) => {
   const { itemid, itemname } = ctx.request.body;
   console.log('area_detail_mod', itemid, itemname)
   const res = await Dianlan.areaItemMod(itemid, itemname)
@@ -997,7 +997,7 @@ router.post('/public/api/area_detail_mod', async (ctx, next) => {
   }
 });
 //proj_detail_del
-router.post('/public/api/proj_detail_del', async (ctx, next) => {
+router.post('/api/proj_detail_del', async (ctx, next) => {
   const { itemid } = ctx.request.body;
   console.log('proj_detail_del',  itemid)
   const res = await Dianlan.projItemDel(itemid)
@@ -1008,7 +1008,7 @@ router.post('/public/api/proj_detail_del', async (ctx, next) => {
 });
 
 //area_detail_del
-router.post('/public/api/area_detail_del', async (ctx, next) => {
+router.post('/api/area_detail_del', async (ctx, next) => {
   const { itemid } = ctx.request.body;
   console.log('area_detail_del',  itemid)
   const res = await Dianlan.areaItemDel(itemid)
@@ -1018,7 +1018,7 @@ router.post('/public/api/area_detail_del', async (ctx, next) => {
   }
 });
 //proj_mod
-router.post('/public/api/proj_mod', async (ctx, next) => {
+router.post('/api/proj_mod', async (ctx, next) => {
   const { locaname, projid } = ctx.request.body;
   console.log('proj_mod', locaname, projid)
   const res = await Dianlan.projMod(locaname, projid)
@@ -1029,7 +1029,7 @@ router.post('/public/api/proj_mod', async (ctx, next) => {
   }
 });
 //area_mod
-router.post('/public/api/area_mod', async (ctx, next) => {
+router.post('/api/area_mod', async (ctx, next) => {
   const { locaname, areaid } = ctx.request.body;
   console.log('area_mod', locaname, areaid)
   const res = await Dianlan.areaMod(locaname, areaid)
@@ -1040,7 +1040,7 @@ router.post('/public/api/area_mod', async (ctx, next) => {
   }
 });
 
-router.post('/public/api/search_loca', async (ctx, next) => {
+router.post('/api/search_loca', async (ctx, next) => {
   const { ope } = ctx.request.body;
   console.log('search_loca', ope)
   const res = await Dianlan.searchLoca( ope)
@@ -1051,7 +1051,7 @@ router.post('/public/api/search_loca', async (ctx, next) => {
   }
 });
 
-router.post('/public/api/gaga_post', async (ctx, next) => {
+router.post('/api/gaga_post', async (ctx, next) => {
   const { gaga } = ctx.request.body;
   const res = await Dianlan.getUser(gaga)
   console.log('getUser', gaga, res)
@@ -1061,7 +1061,7 @@ router.post('/public/api/gaga_post', async (ctx, next) => {
   }
 });
 
-router.post('/public/api/get_user_list', async (ctx, next) => {
+router.post('/api/get_user_list', async (ctx, next) => {
   
   const { sw,page } = ctx.request.body;
   console.log('getUserList',sw,page)
@@ -1085,7 +1085,7 @@ router.post('/public/api/get_user_list', async (ctx, next) => {
   }
 });
 
-router.post('/public/api/search_user_code', async (ctx, next) => {
+router.post('/api/search_user_code', async (ctx, next) => {
   const { code } = ctx.request.body;
   console.log('search_user_code',code)
   const res = await Dianlan.searchCode(code)
@@ -1096,7 +1096,7 @@ router.post('/public/api/search_user_code', async (ctx, next) => {
   }
 });
 // proj_add
-router.post('/public/api/proj_add', async (ctx, next) => {
+router.post('/api/proj_add', async (ctx, next) => {
   const { locaname } = ctx.request.body;
   console.log('area_add', locaname);
   try {
@@ -1127,7 +1127,7 @@ router.post('/public/api/proj_add', async (ctx, next) => {
   }
 });
 //area_add
-router.post('/public/api/area_add', async (ctx, next) => {
+router.post('/api/area_add', async (ctx, next) => {
   const { locaname } = ctx.request.body;
   console.log('area_add', locaname);
 
@@ -1160,7 +1160,7 @@ router.post('/public/api/area_add', async (ctx, next) => {
   }
 });
 // proj_detail_add
-router.post('/public/api/proj_detail_add', async (ctx, next) => {
+router.post('/api/proj_detail_add', async (ctx, next) => {
   const { projid, itemname } = ctx.request.body;
   console.log('proj_detail_add', itemname);
   try {
@@ -1192,7 +1192,7 @@ router.post('/public/api/proj_detail_add', async (ctx, next) => {
   }
 });
 // area_detail_add
-router.post('/public/api/area_detail_add', async (ctx, next) => {
+router.post('/api/area_detail_add', async (ctx, next) => {
   const { areaid, itemname } = ctx.request.body;
   console.log('area_detail_add', itemname);
 
@@ -1226,7 +1226,7 @@ router.post('/public/api/area_detail_add', async (ctx, next) => {
   }
 });
 // ep_price_del
-router.post('/public/api/ep_price_del', async (ctx, next) => {
+router.post('/api/ep_price_del', async (ctx, next) => {
   const { id } = ctx.request.body;
   console.log('ep_price_del',id)
   const res = await Dianlan.epPriceDel(id)
@@ -1237,7 +1237,7 @@ router.post('/public/api/ep_price_del', async (ctx, next) => {
   }
 });
 //dianlan_baseprice_del
-router.post('/public/api/dianlan_baseprice_del', async (ctx, next) => {
+router.post('/api/dianlan_baseprice_del', async (ctx, next) => {
   const { id } = ctx.request.body;
   console.log('dianlan_baseprice_del',id)
   const res = await Dianlan.basepriceDel(id)
@@ -1248,7 +1248,7 @@ router.post('/public/api/dianlan_baseprice_del', async (ctx, next) => {
   }
 });
 // public/api/ep_price_mod
-router.post('/public/api/ep_price_mod', async (ctx, next) => {
+router.post('/api/ep_price_mod', async (ctx, next) => {
   const { id, model, price } = ctx.request.body;
   console.log('ep_price_mod',id, model, price)
   const res = await Dianlan.epPriceMod(id, model, price)
@@ -1259,7 +1259,7 @@ router.post('/public/api/ep_price_mod', async (ctx, next) => {
   }
 });
 // public/api/dianlan_baseprice_mod
-router.post('/public/api/dianlan_baseprice_mod', async (ctx, next) => {
+router.post('/api/dianlan_baseprice_mod', async (ctx, next) => {
   const { id, model, price } = ctx.request.body;
   console.log('dianlan_baseprice_mod',id, model, price)
   const res = await Dianlan.basepriceMod(id, model, price)
@@ -1270,7 +1270,7 @@ router.post('/public/api/dianlan_baseprice_mod', async (ctx, next) => {
   }
 });
 // proj_detail_list
-router.post('/public/api/proj_detail_list', async (ctx, next) => {
+router.post('/api/proj_detail_list', async (ctx, next) => {
   const { projid } = ctx.request.body;
   console.log('proj_detail_list',projid)
   const res = await Dianlan.projItem(projid)
@@ -1282,7 +1282,7 @@ router.post('/public/api/proj_detail_list', async (ctx, next) => {
 });
 
 //area_detail_list
-router.post('/public/api/area_detail_list', async (ctx, next) => {
+router.post('/api/area_detail_list', async (ctx, next) => {
   const { areaid } = ctx.request.body;
   console.log('area_detail_list',areaid)
   const res = await Dianlan.areaItem(areaid)
@@ -1293,7 +1293,7 @@ router.post('/public/api/area_detail_list', async (ctx, next) => {
   }
 });
 // proj_del
-router.post('/public/api/proj_del', async (ctx, next) => {
+router.post('/api/proj_del', async (ctx, next) => {
   const { projid } = ctx.request.body;
   console.log('proj_del',projid)
   const res = await Dianlan.projDel(projid)
@@ -1304,7 +1304,7 @@ router.post('/public/api/proj_del', async (ctx, next) => {
   }
 })
 //dianlan_del
-router.post('/public/api/dianlan_del', async (ctx, next) => {
+router.post('/api/dianlan_del', async (ctx, next) => {
   const { daihao,model,specification,op_type } = ctx.request.body;
   console.log('dianlan_del',daihao,model,specification,op_type)
   const res = await Dianlan.dianlanDel(daihao,model,specification,op_type)
@@ -1315,7 +1315,7 @@ router.post('/public/api/dianlan_del', async (ctx, next) => {
   }
 })
 // area_del
-router.post('/public/api/area_del', async (ctx, next) => {
+router.post('/api/area_del', async (ctx, next) => {
   const { areaid } = ctx.request.body;
   console.log('area_del',areaid)
   const res = await Dianlan.areaDel(areaid)
@@ -1326,7 +1326,7 @@ router.post('/public/api/area_del', async (ctx, next) => {
   }
 })
 //dianlan_list
-router.post('/public/api/dianlan_list', async (ctx, next) => {
+router.post('/api/dianlan_list', async (ctx, next) => {
   const { sw,page,proj } = ctx.request.body;
   console.log('dianlan_list',sw,page,proj)
   const res = await Dianlan.dianlanList(sw,page,proj)
@@ -1349,7 +1349,7 @@ router.post('/public/api/dianlan_list', async (ctx, next) => {
   }
 });
 //search_proj_list 
-router.post('/public/api/search_proj_list', async (ctx, next) => {
+router.post('/api/search_proj_list', async (ctx, next) => {
   const { sw } = ctx.request.body;
   console.log('search_proj_list',sw)
   const res = await Dianlan.projList()
@@ -1372,7 +1372,7 @@ router.post('/public/api/search_proj_list', async (ctx, next) => {
 });
 
 // proj_list
-router.get('/public/api/proj_list', async (ctx, next) => {
+router.get('/api/proj_list', async (ctx, next) => {
   const res = await Dianlan.projList()
   console.log('proj_list',  res)
   ctx.body = {
@@ -1381,7 +1381,7 @@ router.get('/public/api/proj_list', async (ctx, next) => {
   }
 });
 
-router.get('/public/api/area_list', async (ctx, next) => {
+router.get('/api/area_list', async (ctx, next) => {
   const res = await Dianlan.areaList()
   console.log('area_list',  res)
   ctx.body = {
@@ -1390,7 +1390,7 @@ router.get('/public/api/area_list', async (ctx, next) => {
   }
 });
 
-router.post('/public/api/add_user', async (ctx, next) => {
+router.post('/api/add_user', async (ctx, next) => {
   const { username,usercode,role,shangji,quyu } = ctx.request.body;
   console.log('add_user',username,usercode,role,shangji,quyu)
   const res = await Dianlan.addUser(username,usercode,role,shangji,quyu)
@@ -1401,7 +1401,7 @@ router.post('/public/api/add_user', async (ctx, next) => {
   }
 });
 // ep_price_submit
-router.post('/public/api/ep_price_submit', async (ctx, next) => {
+router.post('/api/ep_price_submit', async (ctx, next) => {
   const { model, price } = ctx.request.body;
   console.log('ep_price_submit', model, price);
   try {
@@ -1424,7 +1424,7 @@ router.post('/public/api/ep_price_submit', async (ctx, next) => {
 });
 
 //dianlan_baseprice_submit
-router.post('/public/api/dianlan_baseprice_submit', async (ctx, next) => {
+router.post('/api/dianlan_baseprice_submit', async (ctx, next) => {
   const { model, price } = ctx.request.body;
   console.log('dianlan_baseprice_submit', model, price);
   
@@ -1448,7 +1448,7 @@ router.post('/public/api/dianlan_baseprice_submit', async (ctx, next) => {
   }
 });
 
-router.post('/public/api/mod_user', async (ctx, next) => {
+router.post('/api/mod_user', async (ctx, next) => {
   const { sw,type,user } = ctx.request.body;
   console.log('mod_user',sw,type,user)
   const res = await Dianlan.modUser(sw,type,user)
@@ -1459,7 +1459,7 @@ router.post('/public/api/mod_user', async (ctx, next) => {
   }
 });
 
-router.post('/public/api/get_leader_list', async (ctx, next) => {
+router.post('/api/get_leader_list', async (ctx, next) => {
   const { sw,type } = ctx.request.body; 
   console.log('getLeaderList',sw,type)
   const res = await Dianlan.getLeaderList(type)
@@ -1482,7 +1482,7 @@ router.post('/public/api/get_leader_list', async (ctx, next) => {
 });
 // public/api/download-template-1
 
-router.get('/public/api/download-template-1', async (ctx) => {
+router.get('/api/download-template-1', async (ctx) => {
   try {
    
     const filePath = path.join(__dirname, '/public','/电缆价目表.xlsx'); // 替换为你的Excel文件路径
@@ -1506,7 +1506,7 @@ router.get('/public/api/download-template-1', async (ctx) => {
 });
 
 //ep_price
-router.post('/public/api/ep_price', async (ctx, next) => {
+router.post('/api/ep_price', async (ctx, next) => {
   const { sw,page } = ctx.request.body;
   const flag = (sw && sw.trim()!== "")
   console.log('ep_price',sw,page)
@@ -1528,7 +1528,7 @@ router.post('/public/api/ep_price', async (ctx, next) => {
   }
 });
 //dianlan_baseprice
-router.post('/public/api/dianlan_baseprice', async (ctx, next) => {
+router.post('/api/dianlan_baseprice', async (ctx, next) => {
   const { sw,page } = ctx.request.body;
   const flag = (sw && sw.trim() !== "")
   console.log('dianlan_baseprice',sw,page)
@@ -1550,7 +1550,7 @@ router.post('/public/api/dianlan_baseprice', async (ctx, next) => {
   }
 });
 // 搜索参数
-router.post('/public/api/search_company', async (ctx, next) => {
+router.post('/api/search_company', async (ctx, next) => {
   const { sw,company,proj,daihao,model,spec,facilities_name,facilities_loca,total_length,sysname } = ctx.request.body;
   console.log('search_company',sw,company,proj,daihao,model,spec,facilities_name,facilities_loca,total_length,sysname)
   const res = await Dianlan.searchCompany(sw,company,proj,daihao,model,spec,facilities_name,facilities_loca,total_length,sysname)
@@ -1561,7 +1561,7 @@ router.post('/public/api/search_company', async (ctx, next) => {
   }
 });
 //搜索具体电缆
-router.post('/public/api/search_dl', async (ctx, next) => {
+router.post('/api/search_dl', async (ctx, next) => {
   const { company,proj,daihao,model,spec,facilities,facilities_loca,total_length,sysname,page } = ctx.request.body;
   console.log('search_dl',company,proj,daihao,model,spec,facilities,facilities_loca,total_length,sysname,page)
   const res = await Dianlan.searchDl(company,proj,daihao,model,spec,facilities,facilities_loca,total_length,sysname,page)

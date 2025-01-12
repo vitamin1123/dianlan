@@ -103,7 +103,7 @@ const addRight = async(usercode) => {
   console.log(usercode);  
 
     try {
-      const response = await http.post('/public/api/loca_user_add', {
+      const response = await http.post('/api/loca_user_add', {
         areaid: selectedLoca.value.id,
         usercode: usercode,
       });
@@ -125,7 +125,7 @@ const addRight = async(usercode) => {
     
       
       try {
-        const response = await http.post('/public/api/loca_user_del', {
+        const response = await http.post('/api/loca_user_del', {
           areaid: selectedLoca.value.id,
           usercode: usercode,
         });
@@ -184,7 +184,7 @@ const addRight = async(usercode) => {
 
 const loadRela = async (item) => {
   try {
-    const response = await http.post('/public/api/loca_user_rela', {
+    const response = await http.post('/api/loca_user_rela', {
       areaid: item.id,
     });
     relations.value = response.data;
@@ -208,7 +208,7 @@ const loadRela = async (item) => {
 
 const loadUser = async () => {
   try {
-    const response = await http.get('/public/api/locauser_list');
+    const response = await http.get('/api/locauser_list');
     console.log('请求成功:', response);
     rightList.value = response.data.map(item => ({
       id: item.id,
@@ -229,7 +229,7 @@ const loadUser = async () => {
 
   const load = async () => {
     try {
-      const response = await http.get('/public/api/area_list');
+      const response = await http.get('/api/area_list');
 
       console.log('请求成功:', response);
       leftList.value = response.data.map(item => ({

@@ -67,7 +67,7 @@ const checkChange = async(newCheckedValues) => {
   const removed = previousCheckedValues.value.filter(value => !newCheckedValues.includes(value)); // 取消选中的值
 
   if (added.length > 0) {
-    const res = await http.post('/public/api/add_my_work', {'code': userStore.userInfo.userCode, 'id': added[0] });
+    const res = await http.post('/api/add_my_work', {'code': userStore.userInfo.userCode, 'id': added[0] });
     showToast(`选中了: ${added[0]}`);
     console.log('选中了:', res);
     load()
@@ -75,7 +75,7 @@ const checkChange = async(newCheckedValues) => {
   }
 
   if (removed.length > 0) {
-    const res = await http.post('/public/api/del_my_work', {'code': userStore.userInfo.userCode, 'id': removed[0]});
+    const res = await http.post('/api/del_my_work', {'code': userStore.userInfo.userCode, 'id': removed[0]});
     showToast(`取消选中: ${removed[0]}`);
     load()
     console.log('取消选中:', removed);
@@ -108,7 +108,7 @@ const toggleAll = () => {
 };
 
 const load = async () => {
-    const res = await http.post('/public/api/get_my_wp_list', { userCode: userStore.userInfo.userCode, qdate: date.value });
+    const res = await http.post('/api/get_my_wp_list', { userCode: userStore.userInfo.userCode, qdate: date.value });
     console.log('初次加载： ',res.data)
     list.value = res.data
     const defaultChecked = res.data.filter(item => item.dianlanstate === 1).map(item => item.id);

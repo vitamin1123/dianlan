@@ -277,7 +277,7 @@
     
     console.log('confirmSubWp:', rightList.value);
     console.log('confirmSubWp:', cart.value);
-    const res = await http.post('/public/api/add_wp', {
+    const res = await http.post('/api/add_wp', {
       ope: userStore.userInfo.userCode,
       dianlan: cart.value.map(item => item.id),
       user: rightList.value.map(item => item.usercode),
@@ -347,7 +347,7 @@
         })
           .then(async () => {
             // on confirm 的时候，执行原逻辑
-            const res = await http.post('/public/api/batch_laxian', {
+            const res = await http.post('/api/batch_laxian', {
               ope: userStore.userInfo.userCode,
               locaitem: selectedValues[1],
               xian_ids: cart.value.map(item => item.id),
@@ -379,7 +379,7 @@
 
             // 只提交没有放线过的 xian_ids
             if (remainingIds.length > 0) {
-              http.post('/public/api/batch_laxian', {
+              http.post('/api/batch_laxian', {
                 ope: userStore.userInfo.userCode,
                 locaitem: selectedValues[1],
                 xian_ids: remainingIds,
@@ -404,7 +404,7 @@
           });
       } else {
         // 如果没有不一样的 last_fangxian_loca，直接执行原逻辑
-        const res = await http.post('/public/api/batch_laxian', {
+        const res = await http.post('/api/batch_laxian', {
           ope: userStore.userInfo.userCode,
           locaitem: selectedValues[1],
           xian_ids: cart.value.map(item => item.id),
@@ -431,7 +431,7 @@
       }
     }else{
       console.log('哪根线？ ',clickItem.value.id)
-      const res = await http.post('/public/api/laxian', {
+      const res = await http.post('/api/laxian', {
         ope: userStore.userInfo.userCode,
         locaitem: selectedValues[1],
         xian_id: clickItem.value.id,
@@ -514,7 +514,7 @@
   // 
   const onSubmit_laxian = async() => {
     console.log('提交拉线工单：', cart.value);
-    const res = await http.post('/public/api/search_loca', {
+    const res = await http.post('/api/search_loca', {
         ope: userStore.userInfo.userCode
       });
       console.log('拉线： ', res.data);
@@ -534,7 +534,7 @@
       })
         .then(async() => {
           // on confirm
-          const res = await http.post('/public/api/cancel_laxian', {
+          const res = await http.post('/api/cancel_laxian', {
             ope: null,
             locaitem: null,
             xian_id: item.id
@@ -556,7 +556,7 @@
     }else{
       console.log('完成拉线',item,searchWords.value['船号']);
       clickItem.value = item;
-      const res = await http.post('/public/api/search_loca', {
+      const res = await http.post('/api/search_loca', {
         ope: userStore.userInfo.userCode
       });
       console.log('拉线： ', res.data);
@@ -705,7 +705,7 @@ const convertToTree1 = (data, ori_fangxian_loca) => {
     }
     lastRequestTime = now;
     // 在 fetchData 中构造 sd 数据
-    const url = '/public/api/search_dl';
+    const url = '/api/search_dl';
     const data = {
       company: searchWords.value['公司'],
       proj: searchWords.value['船号'],
@@ -788,7 +788,7 @@ const handlePopupClose = () => {
       'total_length': sw.value=='总线长'?search_word.value:searchWords.value['总线长'],
       'sysname': sw.value=='系统名'?search_word.value:searchWords.value['系统名'],
     };
-    var url = '/public/api/search_company';
+    var url = '/api/search_company';
    
     const response = await http.post(url, sd);
     console.log('返回值：',response.data)
@@ -862,7 +862,7 @@ const handlePopupClose = () => {
     };
 
   const loadAllUser = async() => {
-      const url = '/public/api/get_all_user';
+      const url = '/api/get_all_user';
       const response = await http.get(url);
       console.log('返回值：',response.data)
       // all_user.value = response.data;

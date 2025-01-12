@@ -102,7 +102,7 @@
 
 //   const fetchData = async () => {
 //     try {
-//         const response = await http.post('/public/api/gaga_post', { gaga: '10030203' });
+//         const response = await http.post('/api/gaga_post', { gaga: '10030203' });
 //         console.log('Response:', response.data);
 //         text.value = response.data[0]['username'][0]
 //         username.value = response.data[0]['username']
@@ -121,7 +121,7 @@
     
     // await fetchData()
     generateImage()
-    let result = await http.get('/public/api/gaga').catch((err)=>{
+    let result = await http.get('/api/gaga').catch((err)=>{
       console.log(err)
     });
     console.log(result)

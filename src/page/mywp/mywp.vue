@@ -155,7 +155,7 @@ const confirm_wp = async (id) => {
   })
    .then(async () => {
       // 用户确认删除
-      const url = '/public/api/confirm_paip_wp';
+      const url = '/api/confirm_paip_wp';
       const data = {
         userCode: userStore.userInfo.userCode,
         id: id,
@@ -193,7 +193,7 @@ const del_wp = async (id) => {
   })
     .then(async () => {
       // 用户确认删除
-      const url = '/public/api/del_paip_wp';
+      const url = '/api/del_paip_wp';
       const data = {
         userCode: userStore.userInfo.userCode,
         id: id,
@@ -236,7 +236,7 @@ const onRefresh = () => {
 };
 
 const fetchData = async () => {
-  const url = '/public/api/get_paip_wp_list';
+  const url = '/api/get_paip_wp_list';
   const data = {
     userCode: userStore.userInfo.userCode,
     page: page.value * 10,
@@ -286,7 +286,7 @@ const onLoad = async () => {
 
 
 const load = async () => {
-  const res = await http.post('/public/api/get_paip_wp_list', {
+  const res = await http.post('/api/get_paip_wp_list', {
     userCode: userStore.userInfo.userCode,
     page: page.value,
   });
