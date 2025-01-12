@@ -553,8 +553,11 @@ from dev.workpack a left join dev.projitem b on a.dianlanid = b.id and b.state =
 //   LEFT JOIN dev.user d ON a.fin_user = d.usercode
 // WHERE 
 //   a.wpowner = ? order by wpdate desc LIMIT 10 offset ?
-  async getPaipWpList(user,page){
+  async getPaipWpList(users,page){
     try {
+      const userPlaceholders = users.map(() => '?').join(', ');
+      const userParams = [...users]; // 展开用户数组作为查询参数
+      console.log('userParams: ',userPlaceholders,userParams)
       let res = await db.query(`SELECT 
   a.*, 
   e.username AS user, 
@@ -573,13 +576,13 @@ WHERE
     FROM (
       SELECT DISTINCT wpid, wpdate
       FROM dev.workpack
-      WHERE wpowner = ?
+      WHERE wpowner IN (${userPlaceholders})
       ORDER BY wpdate DESC
       LIMIT 10 OFFSET ?
     ) AS temp
   )
 ORDER BY a.wpdate DESC
-LIMIT 0, 1000;`,[user,String(page)],dbconfig)
+LIMIT 0, 1000;`,[...userParams, String(page)],dbconfig)
   let countRes = await db.query(`SELECT 
   count(1) as totalCount
 FROM 
@@ -589,7 +592,7 @@ FROM
   LEFT JOIN dev.dianlan c ON f.dianlanid = c.id
   LEFT JOIN dev.user d ON a.fin_user = d.usercode
 WHERE 
-  a.wpowner = ?`,[user],dbconfig)
+  a.wpowner IN (${userPlaceholders});`,[...userParams],dbconfig)
   return {
     data: res,
     totalCount: countRes[0].totalCount // 总数是查询结果的第一个字段

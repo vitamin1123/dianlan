@@ -20,17 +20,19 @@
             </div>
         </template>
     </van-cell>
-    <van-cell v-if="[1,2,3,4].includes(roleid)" title="我的派工单"  size="large"  is-link to="mywp"> 
+    <van-cell v-if="[1,2,3,4].includes(roleid)" title="我的派工单"  size="large"  label="审批" is-link to="mywp"> 
+      <template #value>
+            <van-tag type="danger">10待办</van-tag>
+        </template>
     </van-cell>
     <van-cell v-if="[1,2,3].includes(roleid)" title="我的拉线"  size="large" is-link to="mytodo"> 
        
     </van-cell>
-    <van-cell v-if="[1,2,3].includes(roleid)" title="我的待办"  size="large" label="审批" is-link to="mytodo"> 
+    <!-- <van-cell v-if="[1,2,3].includes(roleid)" title="我的待办"  size="large" label="审批" is-link to="mytodo"> 
         <template #value>
-            
             <van-tag type="danger">10待办</van-tag>
         </template>
-    </van-cell>
+    </van-cell> -->
     <van-cell v-if="[1,2].includes(roleid)" title="统计"  size="large"  is-link to="myana"> 
         
     </van-cell>
@@ -121,10 +123,7 @@
     
     // await fetchData()
     generateImage()
-    let result = await http.get('/api/gaga').catch((err)=>{
-      console.log(err)
-    });
-    console.log(result)
+    
  
   })
 

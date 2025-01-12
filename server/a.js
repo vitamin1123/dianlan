@@ -21,6 +21,7 @@ const router = new Router();
 const Restuser = require('./controller/Restuser') ;
 const Dianlan = require('./controller/Dianlan') ;
 const { processExcelAndInsert } = require('./parse_dianlan.js'); // 替换为实际路径
+const { user } = require('./db/myconfig_127.js');
 
 
 
@@ -691,7 +692,11 @@ router.post('/api/del_paip_wp', async (ctx, next) => {
 router.post('/api/get_paip_wp_list', async (ctx, next) => {
   const { userCode,page } = ctx.request.body;
   console.log('get_paip_wp_list', userCode, page)
-  const res = await Dianlan.getPaipWpList(userCode, page)
+  const res_0 = await Dianlan.getAllSub(userCode)
+  var users_Code = res_0.map(item => item.usercode);
+  users_Code.push(userCode)
+  console.log('users_Code', users_Code)
+  const res = await Dianlan.getPaipWpList(users_Code, page)
   // console.log('get_paip_wp_list', res)
   ctx.body = {
     "code": 0,

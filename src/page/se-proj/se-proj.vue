@@ -97,7 +97,7 @@
       .then(async() => {
         // on confirm
         try {
-          const response = await http.post('/public/api/area_del', {
+          const response = await http.post('/api/area_del', {
             projid: item.id,
           });
           console.log('请求成功:', response);
@@ -126,7 +126,7 @@
     }).then(async() => {
       // on confirm
       try {
-        const response = await http.post('/public/api/proj_detail_del', {
+        const response = await http.post('/api/proj_detail_del', {
           itemid: item.id,
         });
         console.log('请求成功:', response);
@@ -155,7 +155,7 @@
 
   const modLoca = async() => {
     try {
-      const response = await http.post('/public/api/proj_mod', {
+      const response = await http.post('/api/proj_mod', {
         projid: selectedLoca.value.id,
         locaname: modvalue.value,
       });
@@ -173,7 +173,7 @@
 
   const modLocaItem = async() => {
     try {
-      const response = await http.post('/public/api/proj_detail_mod', {
+      const response = await http.post('/api/proj_detail_mod', {
         itemid: modRightItem.id,
         itemname: modvalue.value,
       });
@@ -243,7 +243,7 @@
   const confirmAdd = async () => {
     if (addType.value == 0) {
         try {
-        const response = await http.post('/public/api/proj_add', {
+        const response = await http.post('/api/proj_add', {
             locaname: text.value,
         });
         console.log('请求成功:', response);
@@ -281,7 +281,7 @@
         }
     }else{
       try {
-        const response = await http.post('/public/api/proj_detail_add', {
+        const response = await http.post('/api/proj_detail_add', {
             projid: selectedLoca.value.id,
             itemname: text.value,
         });
@@ -321,7 +321,7 @@
 
   const loadDetails = async (item) => {
   try {
-    const response = await http.post('/public/api/proj_detail_list', {
+    const response = await http.post('/api/proj_detail_list', {
         projid: item.id,
     });
     console.log('请求成功:', response);
@@ -343,7 +343,7 @@
 
   const load = async () => {
     try {
-      const response = await http.get('/public/api/proj_list');
+      const response = await http.get('/api/proj_list');
 
       console.log('请求成功:', response);
       leftList.value = response.data.map(item => ({

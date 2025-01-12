@@ -209,7 +209,7 @@ const click_del = (item) => {
       specification: item.specification,
       op_type: item.state
     });
-    if (res.data.affectedRows === 2) {
+    if (res.data.affectedRows > 0) {
       showToast('成功');
       onRefresh();
     } else {
