@@ -71,9 +71,9 @@
   
   const text = ref(''); // 存储输入的汉字
   const imageSrc = ref(''); // 存储生成的图片 URL
-  const username = ref('');
+  const username = ref(userStore.userInfo.userName);
   const rolename = ref('');
-  const roleid = ref(-1);
+  const roleid = ref(userStore.userInfo.userRole);
   
   const generateImage = () => {
     const canvas = document.createElement('canvas'); // 或使用 refs 获取 canvas
@@ -100,26 +100,26 @@
     imageSrc.value = canvas.toDataURL('image/png');
   };
 
-  const fetchData = async () => {
-    try {
-        const response = await http.post('/public/api/gaga_post', { gaga: '10030203' });
-        console.log('Response:', response.data);
-        text.value = response.data[0]['username'][0]
-        username.value = response.data[0]['username']
-        rolename.value = response.data[0]['rolename']
-        roleid.value = response.data[0]['roleid']
-        userStore.userInfo.userName = response.data[0]['username']
-        userStore.userInfo.userRole = response.data[0]['roleid']
-        userStore.userInfo.userCode = response.data[0]['usercode']
-    } catch (error) {
-        console.error('Error:', error);
-    }
-};
+//   const fetchData = async () => {
+//     try {
+//         const response = await http.post('/public/api/gaga_post', { gaga: '10030203' });
+//         console.log('Response:', response.data);
+//         text.value = response.data[0]['username'][0]
+//         username.value = response.data[0]['username']
+//         rolename.value = response.data[0]['rolename']
+//         roleid.value = response.data[0]['roleid']
+//         userStore.userInfo.userName = response.data[0]['username']
+//         userStore.userInfo.userRole = response.data[0]['roleid']
+//         userStore.userInfo.userCode = response.data[0]['usercode']
+//     } catch (error) {
+//         console.error('Error:', error);
+//     }
+// };
 
 
   onMounted(async (res) => {
     
-    await fetchData()
+    // await fetchData()
     generateImage()
     let result = await http.get('/public/api/gaga').catch((err)=>{
       console.log(err)

@@ -10,5 +10,15 @@ export const useUserStore = defineStore('user', {
         userToken: ''
       }
     }
+  },
+  actions: {
+    setToken(token) {
+      this.userInfo.userToken = token;
+    },
+    setUserInfo(userInfo) {
+      this.userInfo.userCode = userInfo.userCode;
+      this.userInfo.userName = userInfo.userName;
+      this.userInfo.userRole = userInfo.userRole;
+    }
   }
 })

@@ -18,7 +18,7 @@ const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const util1 = require('./util/pinyin');
 const router = new Router();
-
+const Restuser = require('./controller/Restuser') ;
 const Dianlan = require('./controller/Dianlan') ;
 const { processExcelAndInsert } = require('./parse_dianlan.js'); // 替换为实际路径
 
@@ -162,6 +162,42 @@ router.post('/api/sso/login' ,async (ctx, next) => {
     };  
     console.error('Error during login:', error);  
   }  
+});
+
+const tokenVerify = async (ctx, next) => {
+  const authHeader = ctx.headers['authorization'];
+  console.log('看看请求头：',authHeader)
+  if (!authHeader) {
+    ctx.status = 401;
+    ctx.body = { code: 401, message: '未提供 token' };
+    return;
+  }
+
+  const token = authHeader.split(' ')[1]; // Bearer token格式
+  try {
+    const decoded = jwt1.verify(token, JWT_SECRET); // 验证 token
+    console.log('看看解码：',decoded)
+    ctx.state.user = decoded; // 将用户信息存储在 ctx.state 中
+    await next(); // 继续处理后续逻辑
+  } catch (err) {
+    console.error('Token 验证失败：', err);
+    ctx.status = 403; // token 无效
+    ctx.body = { code: 403, message: 'token 无效或已过期' };
+  }
+};
+
+// /public/api/user-info
+router.get ('/public/api/user-info', tokenVerify,async (ctx, next) => {
+  const user = ctx.state.user;
+  console.log('user: ',user)
+  const res = await Restuser.getUserInfo(user.uid)
+  console.log('res: ',res)
+  ctx.body = {
+    "code": 0,
+    "userCode": user.uid,
+    "userName": res[0]['username'],
+    "userRole": res[0]['role']
+  }
 });
 
 function isEmpty(value) {  

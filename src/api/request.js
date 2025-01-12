@@ -1,5 +1,6 @@
 import axios from "axios"
 import { baseURL } from "./my-account";
+import { useUserStore } from '@/store/userStore';
 
 const http = axios.create({
     baseURL,
@@ -8,16 +9,18 @@ const http = axios.create({
 );
 
 http.interceptors.request.use(config => {
+    const userStore = useUserStore();
+    const token = userStore.userInfo.userToken;
+
+    // 如果 userToken 存在，则添加 Authorization 头
+    if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+    }
     return config
 }, error => {
     return Promise.reject(error)
 });
 
-// http.interceptors.response.use(response => {
-//     return response.data
-// }, error => {
-//     return Promise.reject(error)
-// });
 http.interceptors.response.use(response => {
     if (response.config.responseType === 'blob') {
         return response; // 保留整个响应对象
