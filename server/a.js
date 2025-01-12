@@ -196,7 +196,8 @@ router.get ('/public/api/user-info', tokenVerify,async (ctx, next) => {
     "code": 0,
     "userCode": user.uid,
     "userName": res[0]['username'],
-    "userRole": res[0]['role']
+    "userRole": res[0]['role'],
+    "userRoleName": res[0]['rolename'],
   }
 });
 

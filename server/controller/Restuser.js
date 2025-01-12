@@ -28,7 +28,8 @@ module.exports = {
     //getUserInfo
     async getUserInfo(usercode){
         try {
-            let res = await db.query(`select username,role from dev.user where state = 1 and usercode=?`,[usercode],dbconfig)
+            let res = await db.query(`select username,role,case role when 1 then '超级管理员' when 2 then '管理员' when 3 then '生产主管'
+when 4 then '班组长' else '施工员'  end as rolename from dev.user where state = 1 and usercode=?`,[usercode],dbconfig)
             return res
         } catch (error) {
             console.log('error: ',error)

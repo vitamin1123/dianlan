@@ -69,10 +69,10 @@
   import { useUserStore } from '@/store/userStore';
   const userStore = useUserStore();
   
-  const text = ref(''); // 存储输入的汉字
+  const text = ref(userStore.userInfo.userName[0]); // 存储输入的汉字
   const imageSrc = ref(''); // 存储生成的图片 URL
   const username = ref(userStore.userInfo.userName);
-  const rolename = ref('');
+  const rolename = ref(userStore.userInfo.userRoleName);
   const roleid = ref(userStore.userInfo.userRole);
   
   const generateImage = () => {

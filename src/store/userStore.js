@@ -7,6 +7,7 @@ export const useUserStore = defineStore('user', {
         userCode: '',
         userName: '',
         userRole: 999,
+        userRoleName: '',
         userToken: ''
       }
     }
@@ -19,6 +20,7 @@ export const useUserStore = defineStore('user', {
       this.userInfo.userCode = userInfo.userCode;
       this.userInfo.userName = userInfo.userName;
       this.userInfo.userRole = userInfo.userRole;
+      this.userInfo.userRoleName = userInfo.userRoleName;
     }
   }
 })
