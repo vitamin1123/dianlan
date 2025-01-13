@@ -59,9 +59,9 @@ import http from '@/api/request';
 import { showNotify } from 'vant';
 import { showConfirmDialog } from 'vant';
 import { useUserStore } from '@/store/userStore';
-
+import { useDaibanStore } from '@/store/daibanStore'
 const userStore = useUserStore();
-
+const daibanStore = useDaibanStore();
 const list = ref([]);
 // const groupedByWpid = computed(() => { 
 //   const groups = list.value.reduce((acc, item) => {
@@ -166,6 +166,7 @@ const confirm_wp = async (id) => {
           // 删除成功
           showNotify({ message: '确认成功！', type:'success' });
           load(); // 重新加载数据
+          get_wp_todo_cnt();
         } else {
           // 操作失败的具体提示信息
           const errorMessage =
@@ -224,6 +225,12 @@ const del_wp = async (id) => {
       showNotify({ message: '已取消删除操作', type: 'info' });
     });
 };
+
+const get_wp_todo_cnt = async () => {
+  const res = await http.post('/api/get_paip_wp_todo_cnt', { userCode: userStore.userInfo.userCode });
+  console.log('代办数量： ',res.data)
+  daibanStore.daiban = res.data
+}
 
 
 

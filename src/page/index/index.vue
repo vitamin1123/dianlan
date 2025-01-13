@@ -39,9 +39,11 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useUserStore } from '@/store/userStore';
+import { useDaibanStore } from '@/store/daibanStore'
 import { showToast,showConfirmDialog  } from 'vant';
 import http  from '@/api/request';
 const userStore = useUserStore();
+const daibanStore = useDaibanStore();
 const checked = ref([]);
 const list = ref([]);
 const checkboxGroup = ref(null);
@@ -118,9 +120,15 @@ const load = async () => {
     previousCheckedValues.value = defaultChecked;
     // isInitialLoad.value = false;
 }
+const get_wp_todo_cnt = async () => {
+  const res = await http.post('/api/get_paip_wp_todo_cnt', { userCode: userStore.userInfo.userCode });
+  console.log('代办数量： ',res.data)
+  daibanStore.daiban = res.data
+}
 
 onMounted(() => {
   load()
+  get_wp_todo_cnt()
   console.log("首页加载啦; ", userStore.userInfo);
 });
 </script>

@@ -553,6 +553,29 @@ from dev.workpack a left join dev.projitem b on a.dianlanid = b.id and b.state =
 //   LEFT JOIN dev.user d ON a.fin_user = d.usercode
 // WHERE 
 //   a.wpowner = ? order by wpdate desc LIMIT 10 offset ?
+
+// getPaipWpTodoCnt
+async getPaipWpTodoCnt(users) {
+  try {
+    const userPlaceholders = users.map(() => '?').join(', ');
+    const userParams = [...users]; // 展开用户数组作为查询参数
+    console.log('userParams: ',userPlaceholders,userParams)
+    let res = await db.query(`SELECT 
+  count(distinct(wpid)) as totalCount
+FROM 
+  dev.workpack a
+  LEFT JOIN dev.wp_user b ON a.wpid = b.wp_id
+  left join dev.projitem  f on a.dianlanid = f.id and f.state = 1
+  LEFT JOIN dev.dianlan c ON f.dianlanid = c.id
+  LEFT JOIN dev.user d ON a.fin_user = d.usercode
+WHERE 
+  a.state = 0 and a.wpowner IN (${userPlaceholders});`,[...userParams],dbconfig)
+    return res[0].totalCount
+  } catch (error) {
+    console.error('查询出错:', error);
+    throw error;
+  }
+},
   async getPaipWpList(users,page){
     try {
       const userPlaceholders = users.map(() => '?').join(', ');

@@ -22,7 +22,7 @@
     </van-cell>
     <van-cell v-if="[1,2,3,4].includes(roleid)" title="我的派工单"  size="large"  label="审批" is-link to="mywp"> 
       <template #value>
-            <van-tag type="danger">10待办</van-tag>
+            <van-tag type="danger">{{ daibanStore.daiban }}待办</van-tag>
         </template>
     </van-cell>
     <van-cell v-if="[1,2,3].includes(roleid)" title="我的拉线"  size="large" is-link to="mytodo"> 
@@ -69,8 +69,9 @@
   import { ref, onMounted } from 'vue';
   import http  from '@/api/request';
   import { useUserStore } from '@/store/userStore';
+  import { useDaibanStore } from '@/store/daibanStore'
   const userStore = useUserStore();
-  
+  const daibanStore = useDaibanStore();
   const text = ref(userStore.userInfo.userName[0]); // 存储输入的汉字
   const imageSrc = ref(''); // 存储生成的图片 URL
   const username = ref(userStore.userInfo.userName);

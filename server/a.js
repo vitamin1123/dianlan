@@ -685,7 +685,21 @@ router.post('/api/del_paip_wp', async (ctx, next) => {
     };
   }
 });
-
+// /api/get_paip_wp_todo_cnt
+router.post('/api/get_paip_wp_todo_cnt', async (ctx, next) => {
+  const { userCode } = ctx.request.body;
+  console.log('get_paip_wp_todo_cnt', userCode)
+  const res_0 = await Dianlan.getAllSub(userCode)
+  var users_Code = res_0.map(item => item.usercode);
+  users_Code.push(userCode)
+  console.log('users_Code', users_Code)
+  const res = await Dianlan.getPaipWpTodoCnt(users_Code)
+  console.log('get_paip_wp_todo_cnt', res)
+  ctx.body = {
+    "code": 0,
+    "data": res
+  }
+});
 
 
 // public/api/get_paip_wp_list
