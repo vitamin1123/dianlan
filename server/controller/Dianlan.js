@@ -82,8 +82,8 @@ module.exports = {
   },
     
   // 批量插入epprice数据
-  async insertPriceBatch(data) {
-    console.log(data)
+  async insertPriceBatch(data,user) {
+    console.log(data,user)
     try {
       // 检查数据并替换 undefined 为 null
       const cleanedData = data.map(item => ({
@@ -93,11 +93,12 @@ module.exports = {
       console.log(cleanedData)
       // 构建 SQL 查询
       const insertQuery = `
-        INSERT INTO dev.epprice (ep, price)
-        VALUES ${cleanedData.map(() => "(?,?)").join(", ")}
-        ON DUPLICATE KEY UPDATE price = VALUES(price);
+        INSERT INTO dev.epprice (ep, price, last_modefier, last_up_date)
+        VALUES ${cleanedData.map(() => "(?,?,?,NOW())").join(", ")}
+        ON DUPLICATE KEY UPDATE price = VALUES(price),last_modefier = VALUES(last_modefier),
+        last_up_date = NOW();;
       `;
-      const values = cleanedData.flatMap(item => [item.ep, item.price]);
+      const values = cleanedData.flatMap(item => [item.ep, item.price, user]);
       // 调试：打印 values 和 insertQuery
       console.log('values:', values); // 确保 values 是二维数组
       console.log('insertQuery:', insertQuery); // 确保生成的 SQL 查询语句是正确的
@@ -112,7 +113,7 @@ module.exports = {
     }
   },
   // 批量插入baseprice数据
-  async insertBasePriceBatch(data) {
+  async insertBasePriceBatch(data,user) {
     console.log(data)
     try {
       // 检查数据并替换 undefined 为 null
@@ -123,12 +124,12 @@ module.exports = {
       console.log(cleanedData)
       // 构建 SQL 查询
       const insertQuery = `
-        INSERT INTO dev.baseprice (model, price)
-        VALUES ${cleanedData.map(() => "(?, ?)").join(", ")}
+        INSERT INTO dev.baseprice (model, price, last_modefier, last_up_date)
+        VALUES ${cleanedData.map(() => "(?, ?, ? , NOW())").join(", ")}
         ON DUPLICATE KEY UPDATE price = VALUES(price);
       `;
 
-      const values = cleanedData.flatMap(item => [item.model, item.price]);
+      const values = cleanedData.flatMap(item => [item.model, item.price, user]);
 
       // 调试：打印 values 和 insertQuery
       console.log('values:', values); // 确保 values 是二维数组
@@ -172,11 +173,11 @@ module.exports = {
     }
   },
   // epPriceMod
-  async epPriceMod(id,model,price) {
+  async epPriceMod(id,model,price,user) {
     try {
       const res = await db.query(
-        `UPDATE dev.epprice SET ep =?, price =? WHERE id =?`,
-        [model, price, id],
+        `UPDATE dev.epprice SET ep =?, price =?,last_modefier=?,last_up_date=NOW() WHERE id =?`,
+        [model, price, user, id],
         dbconfig
       );
       return res;
@@ -186,11 +187,11 @@ module.exports = {
     }
   },
   // basepriceMod
-  async basepriceMod(id,model,price) {
+  async basepriceMod(id,model,price,user) {
     try {
       const res = await db.query(
-        `UPDATE dev.baseprice SET model = ?, price = ? WHERE id = ?`,
-        [model, price, id],
+        `UPDATE dev.baseprice SET model = ?, price = ?,last_modefier=?,last_up_date=NOW() WHERE id = ?`,
+        [model, price, user,id],
         dbconfig
       );
       return res;
@@ -200,11 +201,11 @@ module.exports = {
     }
   },
   // epPriceSubmit
-  async epPriceSubmit(ep,price) {
+  async epPriceSubmit(ep,price,user) {
     try {
       const res = await db.query(
-        `INSERT INTO dev.epprice (ep, price) VALUES (?,?)`,
-        [ep, price],
+        `INSERT INTO dev.epprice (ep, price, last_modefier, last_up_date) VALUES (?,?,?,NOW())`,
+        [ep, price, user],
         dbconfig
       );
       return res;
@@ -216,11 +217,11 @@ module.exports = {
     }
   },
   // dianlanBasepriceSubmit
-  async dianlanBasepriceSubmit(model, price) {
+  async dianlanBasepriceSubmit(model, price, user) {
     try {
       const res = await db.query(
-        `INSERT INTO dev.baseprice (model, price) VALUES (?, ?)`,
-        [model, price],
+        `INSERT INTO dev.baseprice (model, price,last_modefier,last_up_date) VALUES (?, ?, ?, NOW())`,
+        [model, price, user],
         dbconfig
       );
       return res;

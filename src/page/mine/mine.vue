@@ -33,9 +33,9 @@
             <van-tag type="danger">10待办</van-tag>
         </template>
     </van-cell> -->
-    <van-cell v-if="[1,2].includes(roleid)" title="统计"  size="large"  is-link to="myana"> 
+    <!-- <van-cell v-if="[1,2].includes(roleid)" title="统计"  size="large"  is-link to="myana"> 
         
-    </van-cell>
+    </van-cell> -->
     <van-cell v-if="[1,2].includes(roleid)" title="人员管理"  size="large"  is-link to="usermana"> 
         
       </van-cell>

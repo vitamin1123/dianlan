@@ -268,9 +268,9 @@ router.post('/api/upload-dianlan', async (ctx) => {
   }
 });
 // public/api/upload-epprice
-router.post('/api/upload-epprice', async (ctx) => {
+router.post('/api/upload-epprice', tokenVerify,async (ctx) => {
   const file = ctx.request.files.file; // 获取上传的文件对象
-  
+  const user = ctx.state.user.uid;
   if (!file) {
     ctx.status = 400;
     ctx.body = { success: false, message: '未接收到文件' };
@@ -306,7 +306,7 @@ router.post('/api/upload-epprice', async (ctx) => {
         ep: row[0].toUpperCase(), // 第一列转为大写
         price: parseFloat(row[1]), // 第二列转为 float
       }));
-    await Dianlan.insertPriceBatch(result);
+    await Dianlan.insertPriceBatch(result,user);
     ctx.body = {
       success: true,
       message: '文件解析成功',
@@ -327,8 +327,9 @@ router.post('/api/upload-epprice', async (ctx) => {
   }
 });
 // public/api/upload-baseprice
-router.post('/api/upload-baseprice', async (ctx) => {
+router.post('/api/upload-baseprice', tokenVerify, async (ctx) => {
   const file = ctx.request.files.file; // 获取上传的文件对象
+  const user = ctx.state.user.uid;
   if (!file) {
     ctx.status = 400;
     ctx.body = { success: false, message: '未接收到文件' };
@@ -373,7 +374,7 @@ router.post('/api/upload-baseprice', async (ctx) => {
         model: row[0].toUpperCase(), // 第一列转为大写
         price: parseFloat(row[1]), // 第二列转为 float
       }));
-    await Dianlan.insertBasePriceBatch(result); 
+    await Dianlan.insertBasePriceBatch(result,user); 
     ctx.body = {
       success: true,
       message: '文件解析成功',
@@ -1267,10 +1268,11 @@ router.post('/api/dianlan_baseprice_del', async (ctx, next) => {
   }
 });
 // public/api/ep_price_mod
-router.post('/api/ep_price_mod', async (ctx, next) => {
+router.post('/api/ep_price_mod', tokenVerify, async (ctx, next) => {
   const { id, model, price } = ctx.request.body;
-  console.log('ep_price_mod',id, model, price)
-  const res = await Dianlan.epPriceMod(id, model, price)
+  const  user = ctx.state.user.uid;
+  console.log('ep_price_mod',id, model, price, user)
+  const res = await Dianlan.epPriceMod(id, model, price, user)
   console.log('ep_price_mod',  res)
   ctx.body = {
     "code": 0,
@@ -1278,10 +1280,11 @@ router.post('/api/ep_price_mod', async (ctx, next) => {
   }
 });
 // public/api/dianlan_baseprice_mod
-router.post('/api/dianlan_baseprice_mod', async (ctx, next) => {
+router.post('/api/dianlan_baseprice_mod', tokenVerify, async (ctx, next) => {
   const { id, model, price } = ctx.request.body;
-  console.log('dianlan_baseprice_mod',id, model, price)
-  const res = await Dianlan.basepriceMod(id, model, price)
+  const user = ctx.state.user;
+  console.log('dianlan_baseprice_mod',id, model, price,user.uid)
+  const res = await Dianlan.basepriceMod(id, model, price, user.uid)
   console.log('dianlan_baseprice_mod',  res)
   ctx.body = {
     "code": 0,
@@ -1420,11 +1423,12 @@ router.post('/api/add_user', async (ctx, next) => {
   }
 });
 // ep_price_submit
-router.post('/api/ep_price_submit', async (ctx, next) => {
+router.post('/api/ep_price_submit',tokenVerify, async (ctx, next) => {
   const { model, price } = ctx.request.body;
-  console.log('ep_price_submit', model, price);
+  const user = ctx.state.user.uid;
+  console.log('ep_price_submit', model, price,user);
   try {
-    const res = await Dianlan.epPriceSubmit(model.toUpperCase(), price);
+    const res = await Dianlan.epPriceSubmit(model.toUpperCase(), price,user);
     console.log('ep_price_submit', res);
     ctx.body = {
       code: 0,
@@ -1443,12 +1447,13 @@ router.post('/api/ep_price_submit', async (ctx, next) => {
 });
 
 //dianlan_baseprice_submit
-router.post('/api/dianlan_baseprice_submit', async (ctx, next) => {
+router.post('/api/dianlan_baseprice_submit', tokenVerify,async (ctx, next) => {
   const { model, price } = ctx.request.body;
-  console.log('dianlan_baseprice_submit', model, price);
+  const user = ctx.state.user.uid;
+  console.log('dianlan_baseprice_submit', model, price,user);
   
   try {
-    const res = await Dianlan.dianlanBasepriceSubmit(model.toUpperCase(), price);
+    const res = await Dianlan.dianlanBasepriceSubmit(model.toUpperCase(), price,user);
     console.log('dianlan_baseprice_submit', res);
     ctx.body = {
       code: 0,
