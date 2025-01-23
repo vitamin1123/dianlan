@@ -253,7 +253,7 @@
 });
   // Grid 项数据
   const gridItems = ref([
-    { text: '公司', key: '公司' },
+    // { text: '公司', key: '公司' },
     { text: '船号', key: '船号' },
     { text: '代号', key: '代号' },
     { text: '型号', key: '型号' },
@@ -828,8 +828,8 @@ const handlePopupClose = () => {
 
     sw.value = selectedItem.key; // 设置当前类型
     console.log('点击grid： ',sw.value);
-    if (!['公司','船号'].includes(sw.value) && (searchWords.value['公司'] == '' || searchWords.value['船号'] == '')) {
-      showToast('请先选择公司和船号');
+    if (!['船号'].includes(sw.value) && (searchWords.value['船号'] == '')) {
+      showToast('请先选择船号');
       return;
     }
     // 如果已经选中过，恢复之前的搜索词；否则清空搜索词

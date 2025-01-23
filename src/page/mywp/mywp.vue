@@ -44,8 +44,8 @@
             </van-tag>
           </div>
           
-            <van-button type="primary" size="small" :disabled="group.state==1"  @click="del_wp(group.wpid)" style="margin-right: 0.1rem;">删除</van-button>
-            <van-button type="success" size="small" @click="confirm_wp(group.wpid)">{{ group.state==1?'反确认':'确认' }}</van-button>
+            <!-- <van-button type="primary" size="small" :disabled="group.state==1"  @click="del_wp(group.wpid)" style="margin-right: 0.1rem;">删除</van-button> -->
+            <van-button type="success" size="small" :plain="group.state==1" @click="confirm_wp(group.wpid)">{{ group.state==1?'反确认':'确认' }}</van-button>
           </div>
         </div>
       </van-list>

@@ -578,9 +578,9 @@ router.post('/api/ana_laxian1', async (ctx, next) => {
 
 //add_my_work
 router.post('/api/add_my_work', async (ctx, next) => {
-  const { code, id } = ctx.request.body;
-  console.log('add_my_work', id, code);
-  const result = await Dianlan.checkAndUpdateWorkpack(id, code);  // code 是当前用户的 id
+  const { code, id, wpid } = ctx.request.body;
+  console.log('add_my_work', id, code,wpid);
+  const result = await Dianlan.checkAndUpdateWorkpack(id, code, wpid);  // code 是当前用户的 id
 
   if (result.success) {
     ctx.body = { message: result.message };
@@ -605,9 +605,9 @@ router.post('/api/ana_laxian', async (ctx, next) => {
 
 //del_my_work
 router.post('/api/del_my_work', async (ctx, next) => {
-  const { code, id } = ctx.request.body;
-  console.log('del_my_work', code, id)
-  const res = await Dianlan.delMyWork(id, code)
+  const { code, id, wpid } = ctx.request.body;
+  console.log('del_my_work', code, id, wpid)
+  const res = await Dianlan.delMyWork(id, code, wpid)
   
   console.log('del_my_work', res);
 

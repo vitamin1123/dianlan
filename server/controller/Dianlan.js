@@ -465,14 +465,14 @@ where a.state = 1 group by b.username`,[],dbconfig)
     }
   },
 
-  async delMyWork(id, userId) {
+  async delMyWork(id, userId, wpid) {
     try {
       // 查询工作包的当前状态
       const [workpack] = await db.query(
         `select a.wpid,a.wpowner,a.state,a.wpdate,a.dianlanstate,a.fin_user,a.finish_date,
 b.proj,b.proj_item,b.dianlanid,b.last_fangxian,b.last_fangxian_date,b.last_ope,b.last_ope_date,b.last_fangxian_loca
-from dev.workpack a left join dev.projitem b on a.dianlanid = b.id and b.state = 1 where b.dianlanid = ?`,
-        [id],
+from dev.workpack a left join dev.projitem b on a.dianlanid = b.id and b.state = 1 where b.dianlanid = ? and a.wpid =?`,
+        [id, wpid],
         dbconfig
       );
 
@@ -493,8 +493,8 @@ from dev.workpack a left join dev.projitem b on a.dianlanid = b.id and b.state =
 
       // 执行删除操作
       await db.query(
-        `update dev.workpack set dianlanstate=0,fin_user=null WHERE dianlanid = (select id from dev.projitem where dianlanid =? and state = 1)`,
-        [id],
+        `update dev.workpack set dianlanstate=0,fin_user=null WHERE dianlanid = (select id from dev.projitem where dianlanid =? and wpid= ? and state = 1)`,
+        [id, wpid],
         dbconfig
       );
 
@@ -505,14 +505,14 @@ from dev.workpack a left join dev.projitem b on a.dianlanid = b.id and b.state =
     }
   },
   // 检查并更新工作包
-  async checkAndUpdateWorkpack(id, userId) {
+  async checkAndUpdateWorkpack(id, userId, wpid) {
     try {
       // 查询工作包的当前状态
       const [workpack] = await db.query(
         `select a.wpid,a.wpowner,a.state,a.wpdate,a.dianlanstate,a.fin_user,a.finish_date,
 b.proj,b.proj_item,b.dianlanid,b.last_fangxian,b.last_fangxian_date,b.last_ope,b.last_ope_date,b.last_fangxian_loca
-from dev.workpack a left join dev.projitem b on a.dianlanid = b.id and b.state = 1 where b.dianlanid = ?`,
-        [id],
+from dev.workpack a left join dev.projitem b on a.dianlanid = b.id and b.state = 1 where b.dianlanid = ? and a.wpid =?`,
+        [id,wpid],
         dbconfig
       );
 
@@ -528,8 +528,8 @@ from dev.workpack a left join dev.projitem b on a.dianlanid = b.id and b.state =
 
       // 更新记录：设置 fin_user 为当前用户，dianlanstate 设置为 1
       await db.query(
-        `UPDATE dev.workpack SET fin_user = ?, dianlanstate = 1, finish_date = NOW() WHERE dianlanid = (select id from dev.projitem where dianlanid =? and state = 1)`,
-        [userId, id],
+        `UPDATE dev.workpack SET fin_user = ?, dianlanstate = 1, finish_date = NOW() WHERE dianlanid = (select id from dev.projitem where dianlanid =? and wpid = ? and state = 1)`,
+        [userId, id, wpid],
         dbconfig
       );
 

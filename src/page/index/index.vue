@@ -12,7 +12,7 @@
       <van-checkbox 
         v-for ="item in list"
         :key = "item.dianlanid"
-        :name="item.id" 
+        :name="item.id+'Φ'+item.wpid" 
         :disabled="(item.fin_user != null && item.fin_user != userStore.userInfo.userCode)|| date != todayDate || item.state == 1"
         class="checkbox">
       <van-card
@@ -67,18 +67,23 @@ const checkChange = async(newCheckedValues) => {
   // 判断哪个复选框的状态发生变化，并判断是选中还是取消选中
   const added = newCheckedValues.filter(value => !previousCheckedValues.value.includes(value)); // 新选中的值
   const removed = previousCheckedValues.value.filter(value => !newCheckedValues.includes(value)); // 取消选中的值
-
+  // console.log('added', added[0].split('Φ'))
   if (added.length > 0) {
-    const res = await http.post('/api/add_my_work', {'code': userStore.userInfo.userCode, 'id': added[0] });
-    showToast(`选中了: ${added[0]}`);
-    console.log('选中了:', res);
-    load()
+    try {
+      const res = await http.post('/api/add_my_work', {'code': userStore.userInfo.userCode, 'id': added[0].split('Φ')[0],'wpid': added[0].split('Φ')[1] });
+      // showToast(`选中了: ${added[0]}`,added);
+    }
+    catch (error) {
+      console.error('Error:', error);
+    }finally{
+      load()
+    }
     console.log('选中了:', added);
   }
 
   if (removed.length > 0) {
-    const res = await http.post('/api/del_my_work', {'code': userStore.userInfo.userCode, 'id': removed[0]});
-    showToast(`取消选中: ${removed[0]}`);
+    const res = await http.post('/api/del_my_work', {'code': userStore.userInfo.userCode, 'id': removed[0].split('Φ')[0],'wpid': removed[0].split('Φ')[1] });
+    // showToast(`取消选中: ${removed[0]}`);
     load()
     console.log('取消选中:', removed);
   }
@@ -113,7 +118,7 @@ const load = async () => {
     const res = await http.post('/api/get_my_wp_list', { userCode: userStore.userInfo.userCode, qdate: date.value });
     console.log('初次加载： ',res.data)
     list.value = res.data
-    const defaultChecked = res.data.filter(item => item.dianlanstate === 1).map(item => item.id);
+    const defaultChecked = res.data.filter(item => item.dianlanstate === 1).map(item => item.id+'Φ'+item.wpid);
     
     // 更新 checked 数组，使得这些项默认勾选
     checked.value = defaultChecked;
