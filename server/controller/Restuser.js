@@ -25,6 +25,24 @@ module.exports = {
         // //console.log('contro_res:  ',res)
         // return res
     },
+    // updatePwd
+    async updatePwd (user,pwd) {
+        try {
+            let res = await db.query(`update dev.user set password =? where usercode =?`,[pwd,user],dbconfig)
+            return res
+        } catch (error) {
+            console.log('error: ',error)
+        }
+    },
+    //getUserName
+    async getUserName(usercode){
+        try {
+            let res = await db.query(`select username from dev.user where usercode =?`,[usercode],dbconfig)
+            return res
+        } catch (error) {
+            console.log('error: ',error)
+        }
+    },
     //getUserInfo
     async getUserInfo(usercode){
         try {

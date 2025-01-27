@@ -105,6 +105,12 @@ const routes = [
         name: 'ep_baseprice',
         component: () => import("@/page/ep_baseprice/ep_baseprice.vue"),
 
+    },
+    {
+        path:"/login",
+        name: 'login',
+        component: () => import("@/page/login/login.vue"),
+
     }
 ];
 

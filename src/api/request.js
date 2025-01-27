@@ -1,7 +1,7 @@
 import axios from "axios"
 import { baseURL } from "./my-account";
 import { useUserStore } from '@/store/userStore';
-
+// import { useRouter } from "vue-router";
 const http = axios.create({
     baseURL,
     timeout:3000
@@ -22,6 +22,19 @@ http.interceptors.request.use(config => {
 });
 
 http.interceptors.response.use(response => {
+    const userStore = useUserStore();
+    console.log('拦截器的response：',response);
+    if (response.data && response.data.code === 50001) {
+        // 清除用户信息和 token
+        userStore.setToken(null);
+        userStore.setUserInfo({});
+
+        // 跳转到登录页面
+        window.location.href = "/login";
+
+        // 手动抛出错误，通知调用者处理
+        return Promise.reject(new Error("用户鉴权失败"));
+    }
     if (response.config.responseType === 'blob') {
         return response; // 保留整个响应对象
     }

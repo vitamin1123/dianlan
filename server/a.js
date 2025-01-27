@@ -81,6 +81,7 @@ router.post('/api/user/login', async (ctx, next) => {
     const hash = crypto.createHmac('sha256', secret)
                     .update(base64.decode(password))
                     .digest('hex');
+    console.log('hash: ',hash)
     var hashedPassword = await Restuser.getPwd(name)
     if (hashedPassword.length > 0 && hashedPassword[0]['password']===hash) {  
       
@@ -90,7 +91,7 @@ router.post('/api/user/login', async (ctx, next) => {
         "code": 200,  
         "message": "登录成功",  
         "data": {  
-          "code": 0,  
+          "code": 200,  
           "token": token,  
           "name": hashedPassword[0]['name']
         }  
@@ -98,7 +99,7 @@ router.post('/api/user/login', async (ctx, next) => {
     } else {  
       ctx.status = 200; // 未授权  
       ctx.body = {  
-        "code": 200,  
+        "code": 401,  
         "message": "用户名或密码错误"  ,
         "data":{
           "code":401
@@ -116,6 +117,67 @@ router.post('/api/user/login', async (ctx, next) => {
     };  
     console.error('Error during login:', error);  
   }  
+});
+
+router.post('/public/api/user/change_pwd', async (ctx, next) => {
+  const { workId, oldPassword, newPassword } = ctx.request.body;
+  console.log(workId,oldPassword,newPassword)
+  if (!workId || !oldPassword || !newPassword) {
+    ctx.status = 400;
+    ctx.body = {
+      code: 40001,
+      message: '工号、原密码和新密码不能为空',
+    };
+    return;
+  }
+
+  try {
+    const secret = JWT_SECRET;
+
+    // 处理旧密码：解码并加密
+    const hashedOldPassword = crypto
+      .createHmac('sha256', secret)
+      .update(base64.decode(oldPassword))
+      .digest('hex');
+
+    // 从数据库获取当前用户的密码
+    const user = await Restuser.getPwd(workId);
+
+    if (!user.length || user[0]['password'] !== hashedOldPassword) {
+      ctx.status = 200; // 未授权
+      ctx.body = {
+        code: 401,
+        message: '原密码错误',
+      };
+      return;
+    }
+
+    // 处理新密码：解码并加密
+    const hashedNewPassword = crypto
+      .createHmac('sha256', secret)
+      .update(base64.decode(newPassword))
+      .digest('hex');
+
+    // 更新密码
+    const updateResult = await Restuser.updatePwd(workId, hashedNewPassword);
+    console.log('updatePwd: ', updatePwd)
+    if (updateResult) {
+      ctx.status = 200;
+      ctx.body = {
+        code: 200,
+        message: '密码修改成功',
+      };
+    } else {
+      throw new Error('密码更新失败');
+    }
+  } catch (error) {
+    ctx.status = 500; // 服务器内部错误
+    ctx.body = {
+      code: 500,
+      message: '服务器错误',
+    };
+    console.error('Error during password change:', error);
+  }
 });
 
 router.post('/api/sso/login' ,async (ctx, next) => {
@@ -186,6 +248,18 @@ const tokenVerify = async (ctx, next) => {
     ctx.body = { code: 403, message: 'token 无效或已过期' };
   }
 };
+// /public/api/get_user_name
+router.post ('/public/api/get_user_name' ,async (ctx, next) => {
+  const { usercode }  = ctx.request.body;
+  console.log('usercode: ',usercode)
+  const res = await Restuser.getUserName(usercode)
+  console.log('res: ',res)
+  ctx.body = {
+    "code": 0,
+    "userCode": usercode,
+    "userName": res.length > 0 ? res[0]['username'] : '',
+  }
+});
 
 // /public/api/user-info
 router.get ('/public/api/user-info', tokenVerify,async (ctx, next) => {

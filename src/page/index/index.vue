@@ -118,11 +118,16 @@ const load = async () => {
     const res = await http.post('/api/get_my_wp_list', { userCode: userStore.userInfo.userCode, qdate: date.value });
     console.log('初次加载： ',res.data)
     list.value = res.data
-    const defaultChecked = res.data.filter(item => item.dianlanstate === 1).map(item => item.id+'Φ'+item.wpid);
+    if (res.data){
+      const defaultChecked = res.data.filter(item => item.dianlanstate === 1).map(item => item.id+'Φ'+item.wpid);
+      checked.value = defaultChecked;
+      previousCheckedValues.value = defaultChecked;
+    }
+    
     
     // 更新 checked 数组，使得这些项默认勾选
-    checked.value = defaultChecked;
-    previousCheckedValues.value = defaultChecked;
+    
+    
     // isInitialLoad.value = false;
 }
 const get_wp_todo_cnt = async () => {
