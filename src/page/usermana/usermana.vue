@@ -1,12 +1,12 @@
 <template>
-    <van-floating-bubble
+    <!-- <van-floating-bubble
         v-if = "[1,2].includes(userStore.userInfo.userRole)"
         axis="xy"
         icon="plus"
         magnetic="x"
         @offset-change="onOffsetChange"
         @click="showTop = true"
-        />
+        /> -->
     
     <van-search v-model="sw" placeholder="请输入搜索关键词" style="position: sticky; top:0;z-index:10;" @search="search_user"/>
     <div class="card-container">
@@ -19,28 +19,28 @@
     >
     <van-card
         v-for="(item,index) in list"
-        :price="item.baseprice"
-        :desc="item.usercode"
+
+        :desc="item.work_id"
         :tag="item.role+''"
-        :title="item.username"
+        :title="item.name"
         
         style="--van-card-font-size: 0.4rem;"
         >
         <template #tags>
-            <van-tag v-if="item.role"  :color="tag_dic[item.role]" style="margin-right: 0.1rem;">{{ role_dic[item.role] }}</van-tag>
-            <van-tag v-if="item.facilities_loca" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
-            <van-tag v-if="item.facilities_name" plain type="primary">{{ item.facilities_name }}</van-tag>
+            <van-tag v-if="item.work_post_id != -1"  :color="tag_dic[item.work_post_id]" style="margin-right: 0.1rem;">{{ role_dic[item.work_post_id] }}</van-tag>
+            <van-tag v-if="item.factory_name" plain type="primary" style="margin-right: 0.1rem;">{{ item.factory_name }}</van-tag>
+            <van-tag v-if="item.class_name" plain type="primary">{{ item.class_name }}</van-tag>
         </template>
-        <template #footer>
+        <!-- <template #footer>
           <van-button  :plain="(item.role?true:false)" :color="(item.role?'#166ee3':'#e3168b')" size="small" @click="setLoca(index,item)">{{ '修改角色' }} </van-button>
           <van-button  :color="(item.leadername?'#a2768a':'#166ee3')" size="small" @click="setDleader(index,item)">{{ item.leadername || '设定上级' }}</van-button>
-        </template>
+        </template> -->
         
     </van-card>
     </van-list>
     </van-pull-refresh>
     </div>
-    <van-popup v-model:show="showTop" position="bottom"  :style="{ height: '80%' }" @click-overlay="handlePopupClose">
+    <!-- <van-popup v-model:show="showTop" position="bottom"  :style="{ height: '80%' }" @click-overlay="handlePopupClose">
         <van-form @submit="onSubmit">
             <van-cell-group inset>
                 <van-field
@@ -95,9 +95,9 @@
                 </van-button>
             </div>
         </van-form>
-    </van-popup>
+    </van-popup> -->
     
-    <van-popup v-model:show="showPicker" destroy-on-close round position="bottom">
+    <!-- <van-popup v-model:show="showPicker" destroy-on-close round position="bottom">
         <van-picker
             :model-value="pickerValue"
             :columns="columns"
@@ -122,7 +122,7 @@
             @cancel="showPicker2 = false"
             @confirm="onConfirm2"
         />
-    </van-popup>
+    </van-popup> -->
     
 </template>
   
@@ -148,18 +148,20 @@ const username = ref('');
 const usercode = ref('');
 const tmp1 = ref(null);
 const role_dic = ref({
-    1: '超级管理员',
-    2: '管理员',
-    3: '生产主管',
+    1: '普工',
+    2: '小组长',
+    3: '组长',
     4: '班组长',
-    5: '施工员',
+    5: '文员',
+    0: '超级管理员'
 })
 const tag_dic = ref({
-    1: '#DC143C',
-    2: '#7232dd',
-    3: '#006400',
-    4: '#4169E1',
-    5: 'warning',
+    1: '#1F99E5',
+    2: '#751FE5',
+    3: '#61E51F',
+    4: '#E2E51F',
+    5: '#DF6F25',
+    0: '#ED2D2D'
 })
 const searchUserCode = async () => {
     console.log('搜索： ',usercode.value)
