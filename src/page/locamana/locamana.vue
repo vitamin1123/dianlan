@@ -16,12 +16,12 @@
 
       <van-row :gutter="[20, 20]">
         <!-- 顶部按钮部分 -->
-        <van-col span="12">
+        <!-- <van-col span="12">
           <van-button type="primary" block @click="addLoca">增加区域</van-button>
         </van-col>
         <van-col span="12">
           <van-button type="success" block @click="addLocaItem">加明细</van-button>
-        </van-col>
+        </van-col> -->
   
         <!-- 底部列表部分 -->
         <van-col span="12" class="list-container">
@@ -35,10 +35,10 @@
                     @click="leftClick(item)"
                     :style="{ color: item.id === selectedLoca.id ? 'red' : 'black' }"
                 />
-                <template #right>
+                <!-- <template #right>
                     <van-button square type="danger" text="删除" @click="delLeft(item)"/>
                     <van-button square type="primary" text="修改" @click="modLeft(item)"/>
-                </template>
+                </template> -->
                 </van-swipe-cell>
                 </van-list>
             </div>
@@ -51,10 +51,10 @@
             <van-list :finished="finished" finished-text="" @load="loadMore">
             <van-swipe-cell v-for="item in rightFilterList" :key="item.id">
               <van-cell :title="item.name" />
-              <template #right>
+              <!-- <template #right>
                 <van-button square type="danger" text="删除" @click="delRight(item)"/>
                 <van-button square type="primary" text="修改" @click="modRight(item)" />
-              </template>
+              </template> -->
             </van-swipe-cell>
             </van-list>
           </div>
@@ -376,7 +376,7 @@
   }
   
   .list-container {
-    height: calc(90vh - 100px); /* 减去按钮区域的高度 */
+    height: 90vh; /* 减去按钮区域的高度 */
     display: flex;
     flex-direction: column;
   }
