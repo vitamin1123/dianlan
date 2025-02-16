@@ -50,7 +50,7 @@
             <van-search v-model="sw_value2" placeholder="搜索明细列表" @search="loca_item_search"/>
             <van-list :finished="finished" finished-text="" @load="loadMore">
             <van-swipe-cell v-for="item in rightFilterList" :key="item.id">
-              <van-cell :title="item.name" />
+              <van-cell :title="item.name" :label="item.bzz"/>
               <!-- <template #right>
                 <van-button square type="danger" text="删除" @click="delRight(item)"/>
                 <van-button square type="primary" text="修改" @click="modRight(item)" />
@@ -328,6 +328,7 @@
     rightList.value = response.data.map(item => ({
       id: item.id,
       name: item.itemname,
+      bzz: item.bzz
     }));
     rightFilterList.value = rightList.value;
   } catch (error) {

@@ -145,11 +145,12 @@
       finished-text="没有更多了"
       @load="onLoad"
     >
+    <!-- :origin-price="(parseFloat(item.baseprice)+parseFloat(item.fa_price)).toFixed(2)" -->
     <van-card
         v-for="item in show_list"
         :num="item.num"
         :price="item.fa_price ? item.baseprice + ' + ' + (parseFloat(item.fa_price).toFixed(2)): item.baseprice.toString()"
-        :origin-price="(parseFloat(item.baseprice)+parseFloat(item.fa_price)).toFixed(2)"
+        
         :desc="item.model+'  '+ item.specification"
        
         :title="item.daihao"
