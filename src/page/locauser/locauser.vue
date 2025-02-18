@@ -6,7 +6,7 @@
         
         <van-col span="12" class="list-container">
             <div class="list">
-                <van-search v-model="sw_value1" placeholder="搜索区域列表" @search="loca_search"/>
+                <van-search v-model="sw_value1" placeholder="搜索系列列表" @search="loca_search"/>
                 <van-list :finished="finished" finished-text="">
                 <van-swipe-cell v-for="item in leftFilterList"
                 :key="item.id">
@@ -23,7 +23,7 @@
   
         <van-col span="12" class="list-container">
         <div class="list">
-          <van-search v-model="sw_value2" placeholder="搜索人员列表" @search="loca_item_search" />
+          <van-search v-model="sw_value2" placeholder="搜索项目列表" @search="loca_item_search" />
           <van-list :finished="finished" finished-text="">
             <van-checkbox-group v-model="checkedValues" ref="checkboxGroup" class="custom-checkbox-group" @change="checkChange"
                 >

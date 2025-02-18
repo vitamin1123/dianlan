@@ -12,6 +12,9 @@
           />
           <van-button type="primary" block @click="confirmAdd" style="margin-top: 1rem;">确认添加</van-button>
     </van-popup>
+    <van-popup v-model:show="showTop1" position="top" :style="{ height: '80%' }" >
+
+    </van-popup>
     <div class="container">
 
       <van-row :gutter="[20, 20]">
@@ -26,7 +29,7 @@
         <!-- 底部列表部分 -->
         <van-col span="12" class="list-container">
             <div class="list">
-                <van-search v-model="sw_value1" placeholder="搜索项目列表" @search="loca_search"/>
+                <van-search v-model="sw_value1" placeholder="搜索系列列表" @search="loca_search"/>
                 <van-list :finished="finished" finished-text="" @load="loadMore">
                 <van-swipe-cell v-for="item in leftFilterList"
                 :key="item.id">
@@ -53,7 +56,7 @@
               <van-cell :title="item.name" />
               <template #right>
                 <van-button square type="danger" text="删除" @click="delRight(item)"/>
-                <van-button square type="primary" text="修改" @click="modRight(item)" />
+                <!-- <van-button square type="primary" text="修改" @click="modRight(item)" /> -->
               </template>
             </van-swipe-cell>
             </van-list>
@@ -80,6 +83,7 @@
   const sw_value2 = ref('');
   const selectedLoca = ref(null);
   const showTop = ref(false);
+  const showTop1 = ref(false);
   const addType = ref(0)
   const rightList = ref([]);
   const rightFilterList = ref([]);
@@ -305,7 +309,7 @@
       return;
     }
     addType.value = 1;
-    showTop.value = true;
+    showTop1.value = true;
     
   }
   const addLoca = async () => {
