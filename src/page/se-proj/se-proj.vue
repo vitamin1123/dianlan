@@ -13,6 +13,20 @@
           <van-button type="primary" block @click="confirmAdd" style="margin-top: 1rem;">确认添加</van-button>
     </van-popup>
     <van-popup v-model:show="showTop1" position="top" :style="{ height: '80%' }" >
+      <van-search v-model="sw_value_add" placeholder="搜索项目列表" @search="proj_search"/>
+      <van-list :finished="finished" finished-text="">
+            <van-checkbox-group v-model="checkedValues" ref="checkboxGroup" class="custom-checkbox-group" @change="checkChange"
+                >
+              <van-checkbox
+                v-for="item in rightFilterList"
+                :key="item.code"
+                :name="item.code"
+                class="custom-checkbox"
+              >
+                {{ item.name }}
+              </van-checkbox>
+          </van-checkbox-group>
+          </van-list>
 
     </van-popup>
     <div class="container">
@@ -78,7 +92,8 @@
     { id: 1, name: '网络不佳' },
   ]);
   const leftFilterList = ref([])
-  
+  const checkboxGroup = ref(null);
+  const checkedValues = ref([]); 
   const sw_value1 = ref('');
   const sw_value2 = ref('');
   const selectedLoca = ref(null);
@@ -92,6 +107,34 @@
   const modshow = ref(false);
   const oriValue = ref('');
   const modRightItem = ref('')
+  const sw_value_add = ref('')
+  const checkChange = async(newCheckedValues) => {
+    console.log(newCheckedValues)
+  // if (isLocaChanged.value) {
+  //   console.log('selectedLoca 变化了，跳过当前变化');
+  //   isLocaChanged.value = false; // 重置标志
+  //   previousCheckedValues.value = [...newCheckedValues];
+  //   return;
+  // }
+  // // 判断哪个复选框的状态发生变化，并判断是选中还是取消选中
+  // const added = newCheckedValues.filter(value => !previousCheckedValues.value.includes(value)); // 新选中的值
+  // const removed = previousCheckedValues.value.filter(value => !newCheckedValues.includes(value)); // 取消选中的值
+
+  // if (added.length > 0) {
+  //   await addRight(added[0])
+  //   showToast(`选中了: ${added[0]}`);
+  //   console.log('选中了:', added);
+  // }
+
+  // if (removed.length > 0) {
+  //   await delRight(removed[0])
+  //   showToast(`取消选中: ${removed[0]}`);
+  //   console.log('取消选中:', removed);
+  // }
+
+  // // 更新 previousCheckedValues 为新的 checkedValues
+  // previousCheckedValues.value = [...newCheckedValues];
+};
   const delLeft = async(item) => {
     showConfirmDialog({
       title: '确认删除',
@@ -399,6 +442,11 @@
     margin-bottom: 10px;
     text-align: center;
   }
+
+  .custom-checkbox-group {
+  display: flex;
+  flex-direction: column;
+}
   
   .van-row {
     height: 100%;
@@ -408,5 +456,11 @@
   .van-col:nth-child(2) {
     margin-bottom: 20px;
   }
+
+  .custom-checkbox {
+  margin-bottom: 12px; /* 每个复选框之间的间距 */
+  height: 0.8rem;
+  border-bottom: 1px solid #dcdcdc;
+}
   </style>
   
