@@ -18,7 +18,7 @@
             <van-checkbox-group v-model="checkedValues" ref="checkboxGroup" class="custom-checkbox-group" @change="checkChange"
                 >
               <van-checkbox
-                v-for="item in rightFilterList"
+                v-for="item in left_proj"
                 :key="item.code"
                 :name="item.code"
                 class="custom-checkbox"
@@ -86,11 +86,14 @@
   <script setup>
   import { ref, onMounted } from 'vue';
   import { showToast,showConfirmDialog  } from 'vant';
+
   import http from '@/api/request';
   import Pinyin from 'pinyin-match';
   const leftList = ref([
     { id: 1, name: '网络不佳' },
   ]);
+
+  const left_proj = ref([]);
   const leftFilterList = ref([])
   const checkboxGroup = ref(null);
   const checkedValues = ref([]); 

@@ -42,13 +42,13 @@
     <van-cell v-if="[1,2].includes(roleid)" title="区域设置"  size="large"  is-link to="locamana"> 
         
       </van-cell>
-    <van-cell v-if="[1,2].includes(roleid)" title="系列项目设置-1"  size="large"  is-link to="locauser"> 
+    <!-- <van-cell v-if="[1,2].includes(roleid)" title="系列项目设置-1"  size="large"  is-link to="locauser"> 
         
       </van-cell>
 
       <van-cell v-if="[1,2].includes(roleid)" title="系列项目设置"  size="large"  is-link to="se-proj"> 
         
-      </van-cell>
+      </van-cell> -->
 
       <van-cell v-if="[1,2].includes(roleid)" title="系列船电缆册"  size="large"  is-link to="seriesbook"> 
         
