@@ -516,7 +516,8 @@
   const onSubmit_laxian = async() => {
     console.log('提交拉线工单：', cart.value);
     const res = await http.post('/api/search_loca', {
-        ope: userStore.userInfo.userCode
+        ope: userStore.userInfo.userCode,
+        proj: searchWords.value['船号']
       });
       console.log('拉线： ', res.data);
       console.log(convertToTree(res.data));
@@ -558,7 +559,8 @@
       console.log('完成拉线',item,searchWords.value['船号']);
       clickItem.value = item;
       const res = await http.post('/api/search_loca', {
-        ope: userStore.userInfo.userCode
+        ope: userStore.userInfo.userCode,
+        proj: searchWords.value['船号']
       });
       console.log('拉线： ', res.data);
       console.log(convertToTree1(res.data, item.ori_fangxian_loca));
