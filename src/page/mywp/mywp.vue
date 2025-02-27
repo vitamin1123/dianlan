@@ -165,7 +165,7 @@ const confirm_wp = async (id) => {
         if (response.data && response.code === 0) {
           // 删除成功
           showNotify({ message: '操作成功！', type:'success' });
-          load(); // 重新加载数据
+          onRefresh(); // 重新加载数据
           get_wp_todo_cnt();
         } else {
           // 操作失败的具体提示信息
@@ -205,7 +205,7 @@ const del_wp = async (id) => {
         if (response.data && response.code === 0) {
           // 删除成功
           showNotify({ message: '删除成功！', type: 'success' });
-          load(); // 重新加载数据
+          onRefresh(); // 重新加载数据
         } else {
           // 操作失败的具体提示信息
           const errorMessage =
@@ -234,77 +234,23 @@ const get_wp_todo_cnt = async () => {
 
 
 
-const onRefresh = () => {
-  finished.value = false;
-  page.value = 0;
-  list.value = [];
-  loading.value = true;
-  onLoad();
-};
-// 下面是ds给的
-// const onRefresh = async () => {
-//   refreshing.value = true;
+// const onRefresh = () => {
+//   finished.value = false;
 //   page.value = 0;
 //   list.value = [];
-//   await onLoad();
-//   refreshing.value = false;
+//   loading.value = true;
+//   onLoad();
 // };
-
-const fetchData = async () => {
-  const url = '/api/get_paip_wp_list';
-  const data = {
-    userCode: userStore.userInfo.userCode,
-    page: page.value * 10,
-  };
-
-  try {
-    const response = await http.post(url, data);
-    return { data: response.data, totalCount: response.totalCount };
-  } catch (error) {
-    console.error('请求失败:', error);
-    throw error;
-  }
+// 下面是ds给的
+const onRefresh = async () => {
+  refreshing.value = true;
+  page.value = 0;
+  list.value = [];
+  await onLoad();
+  refreshing.value = false;
 };
 
-const onLoad = async () => {
-  page.value++;
-  if (refreshing.value) {
-    page.value = 0;
-    list.value = [];
-    refreshing.value = false;
-  }
-
-  const responseData = await fetchData();
-  if (!responseData) {
-    loading.value = false;
-    return;
-  }
-
-  // Process wpdate for new data
-  const formattedData = responseData.data.map((item) => {
-    const date = new Date(item.wpdate);
-    const datePart = date.toISOString().split('T')[0];
-    const timePart = date.toISOString().split('T')[1].slice(0, 5);
-    return {
-      ...item,
-      formattedWpdate: `${datePart} ${timePart}`,
-    };
-  });
-
-  list.value.push(...formattedData);
-  loading.value = false;
-
-  if (list.value.length >= responseData.totalCount) {
-    finished.value = true;
-  }
-};
-// 2025-02-27 
-// const onLoad = async () => {
-//   if (refreshing.value) {
-//     page.value = 0;
-//     list.value = [];
-//   }
-
+// const fetchData = async () => {
 //   const url = '/api/get_paip_wp_list';
 //   const data = {
 //     userCode: userStore.userInfo.userCode,
@@ -313,31 +259,86 @@ const onLoad = async () => {
 
 //   try {
 //     const response = await http.post(url, data);
-//     const formattedData = response.data.map((item) => {
-//       const date = new Date(item.wpdate);
-//       const datePart = date.toISOString().split('T')[0];
-//       const timePart = date.toISOString().split('T')[1].slice(0, 5);
-//       return {
-//         ...item,
-//         formattedWpdate: `${datePart} ${timePart}`,
-//       };
-//     });
-
-//     list.value.push(...formattedData);
-//     console.log('list.length',list.value,list.value.length,response.totalCount)
-
-//     if (list.value.length >= response.totalCount) {
-//       finished.value = true;
-//     }
+//     return { data: response.data, totalCount: response.totalCount };
 //   } catch (error) {
 //     console.error('请求失败:', error);
-    
-//   }finally {
-//     loading.value = false;
+//     throw error;
+//   }
+// };
+
+// const onLoad = async () => {
+//   page.value++;
+//   if (refreshing.value) {
+//     page.value = 0;
+//     list.value = [];
+//     refreshing.value = false;
 //   }
 
-//   page.value++;
+//   const responseData = await fetchData();
+//   if (!responseData) {
+//     loading.value = false;
+//     return;
+//   }
+
+//   // Process wpdate for new data
+//   const formattedData = responseData.data.map((item) => {
+//     const date = new Date(item.wpdate);
+//     const datePart = date.toISOString().split('T')[0];
+//     const timePart = date.toISOString().split('T')[1].slice(0, 5);
+//     return {
+//       ...item,
+//       formattedWpdate: `${datePart} ${timePart}`,
+//     };
+//   });
+
+//   list.value.push(...formattedData);
+//   loading.value = false;
+
+//   if (list.value.length >= responseData.totalCount) {
+//     finished.value = true;
+//   }
 // };
+// 2025-02-27 
+const onLoad = async () => {
+  if (refreshing.value) {
+    page.value = 0;
+    list.value = [];
+  }
+
+  const url = '/api/get_paip_wp_list';
+  const data = {
+    userCode: userStore.userInfo.userCode,
+    page: page.value * 10,
+  };
+
+  try {
+    const response = await http.post(url, data);
+    const formattedData = response.data.map((item) => {
+      const date = new Date(item.wpdate);
+      const datePart = date.toISOString().split('T')[0];
+      const timePart = date.toISOString().split('T')[1].slice(0, 5);
+      return {
+        ...item,
+        formattedWpdate: `${datePart} ${timePart}`,
+      };
+    });
+
+    list.value.push(...formattedData);
+    console.log('list.length',list.value,list.value.length,response.totalCount)
+
+    if (list.value.length >= response.totalCount) {
+      console.log("finished 为 true 了")
+      finished.value = true;
+    }
+  } catch (error) {
+    console.error('请求失败:', error);
+    
+  }finally {
+    loading.value = false;
+  }
+
+  page.value++;
+};
 
 
 // const load = async () => {
