@@ -149,7 +149,7 @@
     <van-card
         v-for="item in show_list"
         :num="item.num"
-        :price="item.fa_price ? item.baseprice + ' + ' + (parseFloat(item.fa_price).toFixed(2)): item.baseprice.toString()"
+        :price="item.fa_price ? item.baseprice + ' + ' + (parseFloat(item.fa_price).toFixed(2)): item.baseprice"
         
         :desc="item.model+'  '+ item.specification"
        
@@ -168,8 +168,9 @@
             <!-- <van-button v-if="userStore.userInfo.userRole < 4" :disabled="(item.last_fangxian && item.last_fangxian!=userStore.userInfo.userCode)" size="small" @click="laxian(item)">{{ item.fangxianren || '完成拉线' }}
 :thumb="dianlanImage"
             </van-button> -->
+             <!-- 1普工 2小组长 3组长 4班组长 5文员 -->
             <van-button
-              v-if="userStore.userInfo.userRole < 4"
+              v-if="[0, 3, 4, 5].includes(userStore.userInfo.userRole)"
               :disabled="(item.last_fangxian && item.last_fangxian !== userStore.userInfo.userCode) || item.paip!= null"
               :type="(item.last_fangxian && item.last_fangxian !== userStore.userInfo.userCode) ? 'warning' : 'default'"
               size="small"
@@ -515,13 +516,27 @@
   // 
   const onSubmit_laxian = async() => {
     console.log('提交拉线工单：', cart.value);
+    const tmp_ori_fangxian_loca = Object.entries(
+    cart.value.reduce((map, { last_fangxian_loca }) => {
+        // 过滤掉 last_fangxian_loca 为 null 的情况
+        if (last_fangxian_loca !== null) {
+            map[last_fangxian_loca] = (map[last_fangxian_loca] || 0) + 1;
+        }
+        return map;
+    }, {})
+).reduce((acc, [loca, count]) => 
+    count > acc[1] ? [loca, count] : count === acc[1] ? [[...acc[0], loca], count] : acc
+, [[], 0])[0];
+console.log(tmp_ori_fangxian_loca);
     const res = await http.post('/api/search_loca', {
         ope: userStore.userInfo.userCode,
         proj: searchWords.value['船号']
       });
       console.log('拉线： ', res.data);
-      console.log(convertToTree(res.data));
-      columns.value = convertToTree(res.data)
+      console.log('car-tree:', convertToTree1(res.data, tmp_ori_fangxian_loca));
+      const { tree, defaultPickerValue } = convertToTree1(res.data, tmp_ori_fangxian_loca);
+      columns.value = tree;
+      pickerValue.value = defaultPickerValue || []; //picker 绑定的值
       cart_laxian.value = true;
       showPicker.value = true;
   };
@@ -537,7 +552,7 @@
         .then(async() => {
           // on confirm
           const res = await http.post('/api/cancel_laxian', {
-            ope: null,
+            ope: userStore.userInfo.userCode,
             locaitem: null,
             xian_id: item.id
           })

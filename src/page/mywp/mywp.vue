@@ -44,8 +44,8 @@
             </van-tag>
           </div>
           
-            <!-- <van-button type="primary" size="small" :disabled="group.state==1"  @click="del_wp(group.wpid)" style="margin-right: 0.1rem;">删除</van-button> -->
-            <van-button type="success" size="small" :plain="group.state==1" @click="confirm_wp(group.wpid)">{{ group.state==1?'反确认':'确认' }}</van-button>
+            <van-button type="primary" size="small" :disabled="group.state==1"  @click="del_wp(group.wpid)" style="margin-right: 0.1rem;">删除</van-button>
+            <van-button type="success" size="small" :plain="group.state==1" @click="confirm_wp(group.wpid)">{{ group.state==1?'取消':'确认' }}</van-button>
           </div>
         </div>
       </van-list>
@@ -150,8 +150,8 @@ const refreshing = ref(false);
 const confirm_wp = async (id) => {
   console.log('确认：', id);
   showConfirmDialog({
-    title: '确认派工',
-    message: '是否确认派工？',
+    title: '确认/取消派工',
+    message: '是否修改派工单确认状态？',
   })
    .then(async () => {
       // 用户确认删除
@@ -164,7 +164,7 @@ const confirm_wp = async (id) => {
         const response = await http.post(url, data);
         if (response.data && response.code === 0) {
           // 删除成功
-          showNotify({ message: '确认成功！', type:'success' });
+          showNotify({ message: '操作成功！', type:'success' });
           load(); // 重新加载数据
           get_wp_todo_cnt();
         } else {
@@ -241,6 +241,14 @@ const onRefresh = () => {
   loading.value = true;
   onLoad();
 };
+// 下面是ds给的
+// const onRefresh = async () => {
+//   refreshing.value = true;
+//   page.value = 0;
+//   list.value = [];
+//   await onLoad();
+//   refreshing.value = false;
+// };
 
 const fetchData = async () => {
   const url = '/api/get_paip_wp_list';
@@ -290,26 +298,69 @@ const onLoad = async () => {
     finished.value = true;
   }
 };
+// 2025-02-27 
+// const onLoad = async () => {
+//   if (refreshing.value) {
+//     page.value = 0;
+//     list.value = [];
+//   }
+
+//   const url = '/api/get_paip_wp_list';
+//   const data = {
+//     userCode: userStore.userInfo.userCode,
+//     page: page.value * 10,
+//   };
+
+//   try {
+//     const response = await http.post(url, data);
+//     const formattedData = response.data.map((item) => {
+//       const date = new Date(item.wpdate);
+//       const datePart = date.toISOString().split('T')[0];
+//       const timePart = date.toISOString().split('T')[1].slice(0, 5);
+//       return {
+//         ...item,
+//         formattedWpdate: `${datePart} ${timePart}`,
+//       };
+//     });
+
+//     list.value.push(...formattedData);
+//     console.log('list.length',list.value,list.value.length,response.totalCount)
+
+//     if (list.value.length >= response.totalCount) {
+//       finished.value = true;
+//     }
+//   } catch (error) {
+//     console.error('请求失败:', error);
+    
+//   }finally {
+//     loading.value = false;
+//   }
+
+//   page.value++;
+// };
 
 
-const load = async () => {
-  const res = await http.post('/api/get_paip_wp_list', {
-    userCode: userStore.userInfo.userCode,
-    page: page.value,
-  });
-  list.value = res.data.map((item) => {
-    const date = new Date(item.wpdate);
-    const datePart = date.toISOString().split('T')[0];
-    const timePart = date.toISOString().split('T')[1].slice(0, 5);
-    return {
-      ...item,
-      formattedWpdate: `${datePart} ${timePart}`,
-    };
-  });
-};
+// const load = async () => {
+//   const res = await http.post('/api/get_paip_wp_list', {
+//     userCode: userStore.userInfo.userCode,
+//     page: page.value,
+//   });
+//   list.value = res.data.map((item) => {
+//     const date = new Date(item.wpdate);
+//     const datePart = date.toISOString().split('T')[0];
+//     const timePart = date.toISOString().split('T')[1].slice(0, 5);
+//     return {
+//       ...item,
+//       formattedWpdate: `${datePart} ${timePart}`,
+//     };
+//   });
+// };
 
 onMounted(() => {
-  load();
+  // load();
+  // 2025-02-27  修改load->
+  //onLoad();
+  get_wp_todo_cnt();
 });
 </script>
 
