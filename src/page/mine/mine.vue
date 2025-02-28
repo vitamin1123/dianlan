@@ -20,9 +20,16 @@
             </div>
         </template>
     </van-cell>
-    <van-cell v-if="[1,2,3,4].includes(roleid)" title="派工单"  size="large"  label="审批" is-link to="mywp"> 
+    <van-cell v-if="[0,3,4,5].includes(roleid)" title="派工单"  size="large"  label="审批" is-link to="mywp"> 
       <template #value>
             <van-tag type="danger">{{ daibanStore.daiban }}待办</van-tag>
+        </template>
+    </van-cell>
+
+    <van-cell v-if="[0,3,4,5].includes(roleid)" title="统计"  size="large"  is-link to="mywp"> 
+      <template #value>
+            <!-- <van-tag type="primary" plain="true" style="margin-right: 0.1rem;">{{ daibanStore.daiban }} 待办</van-tag>
+            <van-tag type="primary" plain="true">{{ daibanStore.daiban }} 待办</van-tag> -->
         </template>
     </van-cell>
     <!-- <van-cell v-if="[1,2,3].includes(roleid)" title="我的拉线"  size="large" is-link to="mytodo"> 
@@ -36,28 +43,28 @@
     <!-- <van-cell v-if="[1,2].includes(roleid)" title="统计"  size="large"  is-link to="myana"> 
         
     </van-cell> -->
-    <van-cell v-if="[1,2].includes(roleid)" title="人员管理"  size="large"  is-link to="usermana"> 
+    <van-cell v-if="[0,5].includes(roleid)" title="人员管理"  size="large"  is-link to="usermana"> 
         
       </van-cell>
-    <van-cell v-if="[1,2].includes(roleid)" title="区域设置"  size="large"  is-link to="locamana"> 
+    <van-cell v-if="[0,5].includes(roleid)" title="区域设置"  size="large"  is-link to="locamana"> 
         
       </van-cell>
-    <!-- <van-cell v-if="[1,2].includes(roleid)" title="系列项目设置-1"  size="large"  is-link to="locauser"> 
-        
-      </van-cell>
-
-      <van-cell v-if="[1,2].includes(roleid)" title="系列项目设置"  size="large"  is-link to="se-proj"> 
+     <!-- <van-cell v-if="[0].includes(roleid)" title="系列项目设置-1"  size="large"  is-link to="locauser"> 
         
       </van-cell> -->
 
-      <van-cell v-if="[1,2].includes(roleid)" title="系列船电缆册"  size="large"  is-link to="seriesbook"> 
+      <van-cell v-if="[0].includes(roleid)" title="系列价目表版本设置"  size="large"  is-link to="se-proj"> 
+        
+      </van-cell> 
+
+      <van-cell v-if="[0].includes(roleid)" title="系列船电缆册"  size="large"  is-link to="seriesbook"> 
         
       </van-cell>
 
-      <van-cell v-if="[1,2].includes(roleid)" title="电缆定额"  size="large"  is-link to="dianlan_baseprice"> 
+      <van-cell v-if="[0].includes(roleid)" title="电缆定额"  size="large"  is-link to="dianlan_baseprice"> 
         
       </van-cell>
-      <van-cell v-if="[1,2].includes(roleid)" title="设备定额"  size="large"  is-link to="ep_baseprice"> 
+      <van-cell v-if="[0].includes(roleid)" title="设备定额"  size="large"  is-link to="ep_baseprice"> 
         
       </van-cell>
       

@@ -1,12 +1,12 @@
 <template>
   <div class="container">
     <div class="header">
-      <van-cell title="工单日期" :value="date" @click="show = true" style="width:55%"/>
+      <van-cell title="工单日期" :value="date" @click="show = true" style="width:70%"/>
       <van-calendar v-model:show="show" :min-date="minDate" :max-date="maxDate" @confirm="onConfirm" />
-      <div class="button-group">
+      <!-- <div class="button-group">
         <van-button type="primary" @click="checkAll">全选</van-button>
         <van-button type="primary" @click="toggleAll">反选</van-button>
-      </div>
+      </div> -->
     </div>
     <van-checkbox-group v-model="checked" ref="checkboxGroup" shape="square" @change="checkChange">
       <van-checkbox 
@@ -20,7 +20,7 @@
         
         :desc="item.model+'  '+ item.specification"
         :title="item.daihao"
-        style="--van-card-font-size: 0.4rem;"
+        style="--van-card-font-size: 0.4rem;--van-card-padding: 0.1rem 0.1rem"
         >
         <template #tags>
           <van-tag v-if="item.proj"  type="primary" style="margin-right: 0.1rem;">{{ 'N'+item.proj.substr(-4) }}</van-tag>
@@ -155,15 +155,15 @@ onMounted(() => {
   margin-bottom: 20px;
 }
 
-p {
+/* p {
   font-size: 1rem;
   margin: 0;
-}
+} */
 
-.button-group {
+/* .button-group {
   display: flex;
   gap: 15px;
-}
+} */
 
 .checkbox {
   /* display: block; */
@@ -175,4 +175,6 @@ p {
   line-height: 2; /* 提高复选框内容的高度 */
   font-size: 0.8rem;
 }
+
+
 </style>

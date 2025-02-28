@@ -327,7 +327,7 @@ const onSelect=async(action) => {
 const onRefresh = () => {
       // 清空列表数据
       finished.value = false;
-      page.value = 0; // 重置页码
+      page.value = -1; // 重置页码
       // 清空列表数据
       list.value = [];
       // 重新加载数据

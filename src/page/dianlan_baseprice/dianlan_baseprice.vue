@@ -1,10 +1,19 @@
 <template>
+  <van-popup v-model:show="showTop1" position="top" :style="{ height: '50%' }" > 
+        <van-search v-model="search_word" placeholder="请输入" show-action  @search="search"/>
+        <van-list>
+            <van-cell v-for="item in ser_list" :key="item.name" :title="item.name" @click="select(item)"/>
+        </van-list>
+    </van-popup>
   <!-- 磁吸导航 -->
   <van-uploader v-show="false" ref="uploader" accept=".xls, .xlsx" :after-read="onFileRead">
     <van-button icon="plus" type="primary">上传文件</van-button>
   </van-uploader>
   
   <div class="container">
+    <van-button type="primary" plain @click="handleClick">
+        {{ "V."+button_text }}
+    </van-button>
     <!-- 左侧部分，占70% -->
     <van-search 
       v-model="sw" 
@@ -100,6 +109,7 @@ const showTop = ref(false)
 const sub_model = ref('')
 const sub_price = ref('')
 const sw = ref(null)
+const ser_list = ref([])
 const showPopover = ref(false)
 const popoverPlacement = ref('left-end')
 const actions =  ref([{ text: '直接新增' }, { text: '下载模版' }, { text: '上传文件' }])
@@ -107,13 +117,45 @@ const uploader = ref(null);
 const modshow = ref(false);
 const modvalue = ref('');
 const modvalue1 = ref('');
+const showTop1 = ref(false);
+const search_word = ref('');
 const up_item = ref(null);
+const button_text = ref('');
+const search = async () => {
+    try {
+      const response = await http.post('/api/search_price_version_list',{sw: search_word.value});
+
+      console.log('请求成功:', response);
+      button_text.value = response.data[0].version;
+      ser_list.value = response.data.map(item => ({
+        id: item.version,
+        name: item.version,
+      }));
+      
+
+      
+    } catch (error) {
+      console.error('请求失败:', error);
+      // 处理错误
+    }
+};
 const search_sw = async () => {
     page.value = -1
     list.value = []
     console.log(sw.value)
     await onLoad()
 }
+
+const select = async(item) => {
+  console.log('select: ',item)
+    button_text.value = item.name;
+    onRefresh()
+    showTop1.value = false;
+};
+
+const handleClick = () => {
+    showTop1.value = true;
+};
 
 const onFileRead = async (file) => {
       const formData = new FormData();
@@ -196,6 +238,7 @@ const onSubmit = async () => {
     const res = await http.post('/api/dianlan_baseprice_submit', {
       model: sub_model.value,
       price: sub_price.value,
+      version: button_text.value
     });
 
     // 成功处理
@@ -221,7 +264,7 @@ const onSelect=async(action) => {
   }else if (  action.text == '下载模版') {
     // 下载模版
     const data = [
-      { '规格': '', '价格': 0.00}
+      { '规格': '', '价格': 0.00, '版本': 1}
     ];
 
     // 创建工作簿
@@ -249,7 +292,7 @@ const onSelect=async(action) => {
 const onRefresh = () => {
       // 清空列表数据
       finished.value = false;
-      page.value = 0; // 重置页码
+      page.value = -1; // 重置页码
       // 清空列表数据
       list.value = [];
       // 重新加载数据
@@ -259,7 +302,9 @@ const onRefresh = () => {
   };
 
 const onLoad = async () => {
-        
+    if(button_text.value == '') {
+          await search();
+        }
         page.value++; // 增加页码 
         
         if (refreshing.value) {
@@ -289,7 +334,8 @@ const fetchData = async () => {
     loading.value = true
     const res = await http.post('/api/dianlan_baseprice', {
             page: page.value*10,
-            sw: sw.value
+            sw: sw.value,
+            version: button_text.value
     })
     // list.value = res.data
     
@@ -320,7 +366,7 @@ onMounted( async() => {
 }
 
 .container > :first-child {
-  flex: 80%; /* 左侧占70% */
+  flex: 20%; /* 左侧占70% */
 }
 
 .container > :last-child {
