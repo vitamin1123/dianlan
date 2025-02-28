@@ -1,170 +1,225 @@
 <template>
-  <!-- <van-dropdown-menu>
-    <van-dropdown-item v-model="value1" :options="option1" />
-  </van-dropdown-menu> -->
+  <div class="analytics-page">
+    <!-- 顶部卡片 -->
+    <div class="top-cards">
+      <van-card class="analytics-card">
+        <template #title>
+          <div class="card-title">
+            <van-icon name="chart-trending-o" size="28" />
+            <span>今日放线</span>
+          </div>
+        </template>
+        <template #desc>
+          <div class="card-content">
+            <span class="card-value">{{ total_length }}</span>
+            <span class="card-unit">米</span>
+          </div>
+          <div class="card-content">
+            <span class="card-value">{{ total_geng }}</span>
+            <span class="card-unit">根</span>
+          </div>
+          <!-- <van-progress :percentage="75" stroke-width="10" color="#1989fa" /> -->
+        </template>
+      </van-card>
 
+      <van-card class="analytics-card">
+        <template #title>
+          <div class="card-title">
+            <van-icon name="completed" size="28" />
+            <span>今日派工完成情况</span>
+          </div>
+        </template>
+        <template #desc>
+          <div class="card-content">
+            <span class="card-value">{{ total_fin+'/'+total_pai }}</span>
+          </div>
+          <van-progress :percentage="total_fin/total_pai*100" stroke-width="10" color="#07c160" />
+        </template>
+      </van-card>
+    </div>
 
-    <div class="echarts-container">
-    <!-- 第一个图：折线图 + 柱状图 -->
-    <div id="lineBarChart" style="width: 100%; height: 400px;"></div>
-    <div id="lineBarChart1" style="width: 100%; height: 400px;"></div>
-    
+    <!-- 下方列表 -->
+    <van-list class="analytics-list">
+      <van-cell v-for="item in list" :key="item.id" class="analytics-item">
+        <template #title>
+          <div class="item-title">
+            <van-icon :name="item.icon" size="24" />
+            <span>{{ item.title }}</span>
+          </div>
+        </template>
+        <template #label>
+          <div class="item-stats">
+            <div class="stat-item">
+              <span class="stat-label">拉线数量</span>
+              <span class="stat-value">{{ item.cableLength }} 米</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">派工数量</span>
+              <span class="stat-value">{{ item.assignedTasks }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">完工数量</span>
+              <span class="stat-value">{{ item.completedTasks }}</span>
+            </div>
+          </div>
+        </template>
+      </van-cell>
+    </van-list>
   </div>
-
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from "vue";
-import http  from '@/api/request';
-import * as echarts from "echarts";
+import { ref,onMounted } from 'vue';
+import http from '@/api/request';
+// 模拟数据
+const total_length = ref(0);
+const total_geng = ref(0);
+const total_pai = ref(0);
+const total_fin = ref(0);
+const list = ref([
+  {
+    id: 1,
+    icon: 'fire-o',
+    title: '项目A',
+    cableLength: 1200,
+    assignedTasks: 15,
+    completedTasks: 12,
+  },
+  {
+    id: 2,
+    icon: 'fire-o',
+    title: '项目B',
+    cableLength: 800,
+    assignedTasks: 10,
+    completedTasks: 8,
+  },
+  {
+    id: 3,
+    icon: 'fire-o',
+    title: '项目C',
+    cableLength: 500,
+    assignedTasks: 8,
+    completedTasks: 5,
+  },
+  {
+    id: 4,
+    icon: 'fire-o',
+    title: '项目D',
+    cableLength: 2000,
+    assignedTasks: 20,
+    completedTasks: 18,
+  },
+]);
 
-const value1 = ref(0); // 控制选择的值，决定显示哪个图表
-const option1 = [
-  { text: "项目统计", value: 0 },
-  { text: "接线统计", value: 1 },
-  { text: "拉线统计", value: 2 },
-  { text: "人员统计", value: 3 },
-];
 
-// 渲染第一个图表（折线图 + 柱状图）的函数
-const renderLineBarChart = async() => {
-  const lineBarChart = document.getElementById('lineBarChart');
-  const myLineBarChart = echarts.init(lineBarChart);
-  let yAxisData = [];
-  let seriesData1 = [];
-  let seriesData2 = [];
-
+onMounted(async () => {
   try {
-    // 从后端获取数据
-    const res = await http.post('/api/ana_laxian', {});
-
-    // 假设返回的数据格式为数组，处理数据填充 yAxis 和 series
-    if (res && res.data) {
-      yAxisData = res.data.map(item => item.username);  // 假设数据包含 name 字段
-      seriesData1 = res.data.map(item => item.legnth);  // 假设数据包含 value1 字段
-      seriesData2 = res.data.map(item => item.cnt);  // 假设数据包含 value2 字段
-    }
-  } catch (error) {
-    console.error('数据加载失败:', error);
-    // 错误时使用默认数据
-    yAxisData = ['数据加载失败'];
-    seriesData1 = [0];
-    seriesData2 = [0];
+    const res = await http.post('/api/get_total_fangxian');
+    total_length.value = res.data[0].total_length;
+    total_geng.value = res.data[0].total_geng;
+    const res1 = await http.post('/api/get_total_pai');
+    total_fin.value = res1.data[0].total_fin;
+    total_pai.value = res1.data[0].total_pai;
+    //console.log('Response:', res.data);
   }
-  const lineBarOption = {
-    // title: {
-    //   text: 'World Population'
-    // },
-  tooltip: {
-    trigger: 'axis',
-    axisPointer: {
-      type: 'shadow'
-    }
-  },
-  legend: {},
-  grid: {
-    left: '3%',
-    right: '4%',
-    bottom: '3%',
-    containLabel: true
-  },
-  xAxis: {
-    type: 'value',
-    boundaryGap: [0, 0.01]
-  },
-  yAxis: {
-    type: 'category',
-    data: yAxisData  
-  },
-  series: [
-    {
-      name: '长度',
-      type: 'bar',
-      data: seriesData1  
-    },
-    {
-      name: '根数',
-      type: 'bar',
-      data: seriesData2  
-    }
-  ]
-  };
-
-  myLineBarChart.setOption(lineBarOption);
-};
-
-//
-const renderLineBarChart1 = async() => {
-  let xAxisData = [];
-  let seriesData1 = [];
-  let seriesData2 = [];
-
-  var chartDom = document.getElementById('lineBarChart1');
-  var myChart = echarts.init(chartDom);
-  var option;
-
-  try {
-    // 从后端获取数据
-    const res = await http.post('/api/ana_laxian1', {});
-
-    // 假设返回的数据格式为数组，处理数据填充 yAxis 和 series
-    if (res && res.data) {
-      xAxisData = res.data.map(item => item.facilities_loca);  // 假设数据包含 name 字段
-      seriesData1 = res.data.map(item => item.total_count);  // 假设数据包含 value1 字段
-      seriesData2 = res.data.map(item => item.count_state_1);  // 假设数据包含 value2 字段
-    }
-  } catch (error) {
-    console.error('数据加载失败:', error);
-    // 错误时使用默认数据
-    yAxisData = ['数据加载失败'];
-    seriesData1 = [0];
-    seriesData2 = [0];
+  catch (error) {
+    console.error('Error:', error); 
   }
-  const lineBarOption = {
-    xAxis: {
-      type: 'category',
-      data: xAxisData,
-      axisLabel: {
-        rotate: 45, // 旋转45度
-        formatter: (value) => value.length > 5 ? value.slice(0, 5) + '...' : value // 可选：截断长文字
-    }
-    },
-    yAxis: {
-      type: 'value'
-    },
-    series: [
-      {
-        data: [820, 932, 901, 934, 1290, 1330, 1320],
-        type: 'line'
-      },
-      {
-        data: [120, 892, 700, 700, 70, 600, 60],
-        type: 'bar'
-      }
-    ]
-  };
-
-  myChart.setOption(lineBarOption);
-};
-
-
-
-// 在 onMounted 中调用渲染函数
-onMounted(() => {
-  renderLineBarChart();
-  renderLineBarChart1();
+  
+  
 });
 </script>
 
 <style scoped>
-.echarts-container {
-  display: flex;
-  flex-direction: column;
-  gap: 20px; /* 图表之间的间距 */
+.analytics-page {
+  padding: 16px;
+  background-color: #f7f8fa;
 }
 
-.echarts-box {
-  flex: 1 1 calc(50% - 16px); /* 每个图表占一半宽度，留出间距 */
-  min-width: 300px; /* 最小宽度 */
+/* 顶部卡片样式 */
+.top-cards {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.analytics-card {
+  flex: 1;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  background-color: #fff;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.4rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.card-content {
+  margin: 16px 0;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.card-value {
+  font-size: 0.4rem;
+  font-weight: bold;
+  color: #1989fa;
+}
+
+.card-unit {
+  font-size: 0.4rem;
+  color: #666;
+}
+
+/* 列表样式 */
+.analytics-list {
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.analytics-item {
+  padding: 16px;
+}
+
+.item-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.4rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.item-stats {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-label {
+  font-size: 0.3rem;
+  color: #666;
+}
+
+.stat-value {
+  font-size: 0.4rem;
+  font-weight: bold;
+  color: #1989fa;
 }
 </style>

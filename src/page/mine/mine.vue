@@ -26,7 +26,7 @@
         </template>
     </van-cell>
 
-    <van-cell v-if="[0,3,4,5].includes(roleid)" title="统计"  size="large"  is-link to="mywp"> 
+    <van-cell v-if="[0,3,4,5].includes(roleid)" title="统计"  size="large"  is-link to="myana-laxian"> 
       <template #value>
             <!-- <van-tag type="primary" plain="true" style="margin-right: 0.1rem;">{{ daibanStore.daiban }} 待办</van-tag>
             <van-tag type="primary" plain="true">{{ daibanStore.daiban }} 待办</van-tag> -->
