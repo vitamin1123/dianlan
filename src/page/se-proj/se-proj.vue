@@ -12,29 +12,29 @@
           />
           <van-button type="primary" block @click="confirmAdd" style="margin-top: 1rem;">确认添加</van-button>
     </van-popup>
-    <van-popup v-model:show="showTop1" position="top" :style="{ height: '80%' }" >
+
+    <van-popup v-model:show="showTop1" position="top" :style="{ height: '80%' }" @closed="selclose">
       <van-search v-model="sw_value_add" placeholder="搜索项目列表" @search="proj_search"/>
       <van-list :finished="finished" finished-text="">
             <van-checkbox-group v-model="checkedValues" ref="checkboxGroup" class="custom-checkbox-group" @change="checkChange"
                 >
               <van-checkbox
-                v-for="item in left_proj"
+                v-for="item in left_filter_proj"
                 :key="item.code"
                 :name="item.code"
                 class="custom-checkbox"
               >
-                {{ item.name }}
+                {{ item.code }}
               </van-checkbox>
           </van-checkbox-group>
-          </van-list>
-
+      </van-list>
     </van-popup>
     <div class="container">
 
       <van-row :gutter="[20, 20]">
         <!-- 顶部按钮部分 -->
         <van-col span="12">
-          <van-button type="primary" block @click="addLoca">增加系列</van-button>
+          <!-- <van-button type="primary" block @click="addLoca">增加系列</van-button> -->
         </van-col>
         <van-col span="12">
           <van-button type="success" block @click="addLocaItem">增加项目</van-button>
@@ -43,19 +43,19 @@
         <!-- 底部列表部分 -->
         <van-col span="12" class="list-container">
             <div class="list">
-                <van-search v-model="sw_value1" placeholder="搜索系列列表" @search="loca_search"/>
+                <van-search v-model="sw_value1" placeholder="搜索版本列表" @search="loca_search"/>
                 <van-list :finished="finished" finished-text="" @load="loadMore">
                 <van-swipe-cell v-for="item in leftFilterList"
                 :key="item.id">
                 <van-cell
-                    :title="item.name"
+                    :title="'V.' + item.name"
                     @click="leftClick(item)"
                     :style="{ color: item.id === selectedLoca.id ? 'red' : 'black' }"
                 />
-                <template #right>
+                <!-- <template #right>
                     <van-button square type="danger" text="删除" @click="delLeft(item)"/>
                     <van-button square type="primary" text="修改" @click="modLeft(item)"/>
-                </template>
+                </template> -->
                 </van-swipe-cell>
                 </van-list>
             </div>
@@ -69,7 +69,7 @@
             <van-swipe-cell v-for="item in rightFilterList" :key="item.id">
               <van-cell :title="item.name" />
               <template #right>
-                <van-button square type="danger" text="删除" @click="delRight(item)"/>
+                <!-- <van-button square type="danger" text="删除" @click="delRight(item)"/> -->
                 <!-- <van-button square type="primary" text="修改" @click="modRight(item)" /> -->
               </template>
             </van-swipe-cell>
@@ -84,7 +84,7 @@
   </template>
   
   <script setup>
-  import { ref, onMounted } from 'vue';
+  import { ref, onMounted, version } from 'vue';
   import { showToast,showConfirmDialog  } from 'vant';
 
   import http from '@/api/request';
@@ -94,6 +94,7 @@
   ]);
 
   const left_proj = ref([]);
+  const left_filter_proj = ref([])
   const leftFilterList = ref([])
   const checkboxGroup = ref(null);
   const checkedValues = ref([]); 
@@ -111,6 +112,38 @@
   const oriValue = ref('');
   const modRightItem = ref('')
   const sw_value_add = ref('')
+
+  const proj_search = async() => {
+    // console.log(sw_value_add.value)
+    left_filter_proj.value = []
+    left_proj.value.forEach(item => {
+      let metchRes = Pinyin.match(item.code, sw_value_add.value);
+      if(metchRes)
+        left_filter_proj.value.push(item)
+    });
+    
+  }
+  const selclose = async() => {
+    console.log('selclose')
+    // checkedValues.value = []
+    // left_filter_proj.value = [] 
+    // 关闭后将 checkedValues 里面的值通过post请求添加到selectedLoca.id对应的项目中
+    if(checkedValues.value.length>0){
+      console.log(checkedValues.value, selectedLoca.value.name)  
+    }
+    try {
+      const response = await http.post('/api/version_proj_add', {
+        proj: checkedValues.value,
+        version: selectedLoca.value.name,
+      }); 
+    }
+    catch (error) {
+      throw error;
+    }finally{
+      await loadDetails()
+      checkedValues.value = []
+    }
+  }
   const checkChange = async(newCheckedValues) => {
     console.log(newCheckedValues)
   // if (isLocaChanged.value) {
@@ -349,11 +382,30 @@
       }
   }
 }
+
+ const get_project_list = async () => {
+  try {
+    const response = await http.get('/api/proj_list');  
+    //console.log('请求成功:', response);
+    
+    left_proj.value = response.data.map(item => ({
+      code: item.projname
+    }))
+    left_filter_proj.value = left_proj.value
+    // console.log(left_proj.value)
+    }
+    catch (error) {
+      console.error('请求失败:', error); 
+    }
+  }
+
   const addLocaItem = async () => {
     if (!selectedLoca.value) {
-      showToast('请选择系列再添加项目');
+      showToast('请选择版本再添加项目');
       return;
     }
+    checkedValues.value = []
+    get_project_list()
     addType.value = 1;
     showTop1.value = true;
     
@@ -369,15 +421,15 @@
     }, 1000);
   };
 
-  const loadDetails = async (item) => {
+  const loadDetails = async () => {
   try {
-    const response = await http.post('/api/proj_detail_list', {
-        projid: item.id,
+    const response = await http.post('/api/priver_proj_detail_list', {
+        version: selectedLoca.value.name,
     });
     console.log('请求成功:', response);
     rightList.value = response.data.map(item => ({
       id: item.id,
-      name: item.itemname,
+      name: item.proj,
     }));
     rightFilterList.value = rightList.value;
   } catch (error) {
@@ -393,12 +445,12 @@
 
   const load = async () => {
     try {
-      const response = await http.get('/api/proj_list');
-
+      //const response = await http.post('/api/search_price_version_list');
+      const response = await http.post('/api/search_price_version_list',{sw: ""});
       console.log('请求成功:', response);
       leftList.value = response.data.map(item => ({
-        id: item.id,
-        name: item.projname,
+        id: item.version,
+        name: item.version,
       }));
       leftFilterList.value = leftList.value;
       // 处理返回的数据
