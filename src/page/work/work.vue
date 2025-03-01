@@ -702,6 +702,7 @@ const convertToTree1 = (data, ori_fangxian_loca) => {
     '设备': '',
     '设备地点': '',
     '区域': '',
+    '区域名称': '',
     '总线长':'',
     '系统名':''
   }); // 存储每个 grid 的搜索词
@@ -737,9 +738,11 @@ const convertToTree1 = (data, ori_fangxian_loca) => {
           show_list.value.push(responseData.data[i]);
         }
         loading.value = false;
-
+        // console.log('返回电缆值-1：',show_list.value.length,responseData.totalCount)
         if (show_list.value.length >= responseData.totalCount) {
+          
           finished.value = true;
+          // console.log('返回电缆值-2：',finished.value)
         }
       
     };
@@ -802,10 +805,13 @@ const convertToTree1 = (data, ori_fangxian_loca) => {
       
       list.value = [];
       searchWords.value[sw.value] = item.value; // 保存搜索词
+      if (sw.value === '区域') {
+        searchWords.value['区域名称'] = item.title; // 保存区域的名称
+      }
       console.log('select------searchWords.value: ',searchWords.value);
       page.value = 0;
       const responseData = await fetchData();
-      console.log('返回电缆值：', responseData.totalCount,responseData.data);
+      console.log('返回电缆值-select：', responseData.totalCount,responseData.data);
       show_list.value = responseData.data;
       showTop.value = false; 
     } catch (error) {
@@ -826,7 +832,12 @@ const handlePopupClose = () => {
         if (index !== -1) {
             refreshing.value = true;
             onLoad();
-            gridItems.value[index].text = currentKey; // 恢复默认的 key 作为 text
+            // gridItems.value[index].text = currentKey; // 恢复默认的 key 作为 text
+            if (currentKey === '区域') {
+              gridItems.value[index].text = searchWords.value['区域名称'] || currentKey; // 恢复区域的名称
+            } else {
+              gridItems.value[index].text = currentKey; // 恢复默认的 key 作为 text
+            }
             selected.value[index] = false; // 取消选中状态
         }
       }
@@ -909,6 +920,12 @@ const handlePopupClose = () => {
       if (savedSearchWords) {
         searchWords.value = JSON.parse(savedSearchWords);
         gridItems.value = gridItems.value.map(item => {
+          if (item.key === '区域') {
+            return {
+              ...item,
+              text: searchWords.value['区域名称'] || item.text // 显示区域的名称
+            };
+          }
           return {
             ...item,
             text: searchWords.value[item.key] || item.text
@@ -918,9 +935,13 @@ const handlePopupClose = () => {
           return searchWords.value[item.key] ? true : false;
         });
         const responseData = await fetchData();
-        console.log('返回电缆值：', responseData.totalCount,responseData.data);
+        console.log('返回电缆值-loadSearchWords：', responseData.totalCount,responseData.data);
         show_list.value = responseData.data;
-
+        if (show_list.value.length >= responseData.totalCount) {
+          
+          finished.value = true;
+          // console.log('返回电缆值-2：',finished.value)
+        }
 
         console.log('parse---savedSearchWords: ',searchWords.value);
       }

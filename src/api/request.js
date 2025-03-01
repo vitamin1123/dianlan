@@ -23,7 +23,7 @@ http.interceptors.request.use(config => {
 
 http.interceptors.response.use(response => {
     const userStore = useUserStore();
-    console.log('拦截器的response：',response);
+    // console.log('拦截器的response：',response);
     if (response.data && response.data.code === 50001) {
         // 清除用户信息和 token
         userStore.setToken(null);
