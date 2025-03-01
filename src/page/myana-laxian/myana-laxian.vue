@@ -10,10 +10,10 @@
           </div>
         </template>
         <template #desc>
-          <div class="card-content">
+          <!-- <div class="card-content">
             <span class="card-value">{{ total_length }}</span>
             <span class="card-unit">米</span>
-          </div>
+          </div> -->
           <div class="card-content">
             <span class="card-value">{{ total_geng }}</span>
             <span class="card-unit">根</span>
@@ -33,7 +33,7 @@
           <div class="card-content">
             <span class="card-value">{{ total_fin+'/'+total_pai }}</span>
           </div>
-          <van-progress :percentage="total_fin/total_pai*100" stroke-width="10" color="#07c160" />
+          <van-progress :percentage="(total_fin/total_pai*100).toFixed(0)" stroke-width="10" color="#07c160" />
         </template>
       </van-card>
     </div>

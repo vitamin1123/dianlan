@@ -4,13 +4,18 @@ import { createRouter, createWebHashHistory, createWebHistory } from "vue-router
 const routes = [
     {
         path:"/",
-        name: 'index',
-        component: () => import("@/page/index/index.vue"),
-    },
-    {
-        path:"/mine",
         name: 'mine',
         component: () => import("@/page/mine/mine.vue"),
+    },
+    {
+        path:"/mine_dt",
+        name: 'mine_dt',
+        component: () => import("@/page/mine_dt/mine_dt.vue"),
+    },
+    {
+        path:"/index",
+        name: 'index',
+        component: () => import("@/page/index/index.vue"),
 
     },
     {

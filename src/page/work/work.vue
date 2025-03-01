@@ -125,18 +125,44 @@
       </van-swipe-cell>
       
     </van-popup>
-    <van-grid direction="horizontal" :column-num="3" clickable 
-      style="z-index: 10; position: sticky; top: 0; background-color: #fff;">
-      <van-grid-item
+    <!-- <van-collapse v-model="activeNames">
+      <van-collapse-item title="搜索条件" name="1">
+        <van-grid direction="horizontal" :column-num="3" clickable 
+        style="z-index: 10; position: sticky; top: 0; background-color: #fff;">
+        <van-grid-item
+          v-for="(item, index) in gridItems"
+          :key="index"
+          :text="item.text"
+          :style="{
+            '--van-grid-item-text-color': selected[index] ? '#000' : '#ccc',
+          }"
+          @click="handleGridClick(index)"
+        />
+      </van-grid>
+      </van-collapse-item>
+        
+    </van-collapse> -->
+    <van-collapse v-model="activeNames">
+  <van-collapse-item title="搜索条件" name="1">
+    <van-cell-group 
+      style="z-index: 10; position: sticky; top: 0; background-color: #fff; display: grid;">
+      <van-cell
         v-for="(item, index) in gridItems"
         :key="index"
-        :text="item.text"
+        :title="item.key"
+        :value="item.text"
+        clickable
         :style="{
-          '--van-grid-item-text-color': selected[index] ? '#000' : '#ccc',
+          '--van-cell-text-color': selected[index] ? '#000' : '#ccc',
+          '--van-cell-value-color': selected[index] ? '#000' : '#ccc',
         }"
         @click="handleGridClick(index)"
+        style="border-bottom: 1px solid #f5f5f5; border-right: 1px solid #f5f5f5;"
       />
-    </van-grid>
+    </van-cell-group>
+  </van-collapse-item>
+</van-collapse>
+    
 <div class="card-container">
   <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
     <van-list
@@ -185,7 +211,7 @@
 
 
 
-    <van-submit-bar :price="totalPrice" button-text="提交派工单" style="margin-bottom: 1.33rem;">
+    <van-submit-bar :price="totalPrice" button-text="提交派工单">
       <template #button>
         <van-action-bar-button type="warning" text="提交拉线" @click="onSubmit_laxian" style="border-top-left-radius: 0.5rem; border-bottom-left-radius: 0.5rem;"/>
         <van-action-bar-button type="danger" :disabled ="dis_sub" text="提交派工单" @click="onSubmit" style=" border-top-right-radius: 0.5rem;  border-bottom-right-radius: 0.5rem;"/>
@@ -206,9 +232,7 @@
             />
           </div>
         </template>
-        <!-- <template #tip>
-            你的工作清单里有未全部完成的设备接线，待全部完成后结算 <span @click="onClickLink"></span>
-        </template>  -->
+        
     </van-submit-bar>
   </template>
   
@@ -247,7 +271,7 @@
   const searchQuery = ref([]);
   let lastRequestTime = 0;
   const throttleDelay = 1000; 
-
+  const activeNames = ref(['1']);
   const syn_loca = ref(true)
   const dis_sub = computed(() => {
   // 如果 cart 为空，或者有任意一个 last_fangxian 为空，则禁用按钮
@@ -257,13 +281,16 @@
   const gridItems = ref([
     // { text: '公司', key: '公司' },
     { text: '船号', key: '船号' },
-    { text: '代号', key: '代号' },
-    { text: '型号', key: '型号' },
-    { text: '规格', key: '规格' },
-    { text: '设备', key: '设备' },
+    { text: '区域', key: '区域' },
     { text: '设备地点', key: '设备地点' },
-    { text: '总线长', key: '总线长' },
-    { text: '系统名', key: '系统名' },
+    { text: '设备', key: '设备' },
+    { text: '电缆规格', key: '电缆规格' },
+    { text: '电缆型号', key: '电缆型号' },
+    { text: '电缆代号', key: '电缆代号' },
+    
+    
+    // { text: '总线长', key: '总线长' },
+    // { text: '系统名', key: '系统名' },
   ]);
 
   const rmCart = () => {
@@ -655,11 +682,12 @@ const convertToTree1 = (data, ori_fangxian_loca) => {
   const searchWords = ref({
     '公司': '',
     '船号': '',
-    '代号': '',
-    '型号': '',
-    '规格': '',
+    '电缆代号': '',
+    '电缆型号': '',
+    '电缆规格': '',
     '设备': '',
     '设备地点': '',
+    '区域': '',
     '总线长':'',
     '系统名':''
   }); // 存储每个 grid 的搜索词
@@ -727,11 +755,12 @@ const convertToTree1 = (data, ori_fangxian_loca) => {
     const data = {
       company: searchWords.value['公司'],
       proj: searchWords.value['船号'],
-      daihao: searchWords.value['代号'],
-      model: searchWords.value['型号'],
-      spec: searchWords.value['规格'],
+      daihao: searchWords.value['电缆代号'],
+      model: searchWords.value['电缆型号'],
+      spec: searchWords.value['电缆规格'],
       facilities: searchWords.value['设备'],
       facilities_loca: searchWords.value['设备地点'],
+      loca_item: searchWords.value['区域'],
       total_length: searchWords.value['总线长'],
       sysname: searchWords.value['系统名'],
       page: page.value*10,
@@ -798,11 +827,12 @@ const handlePopupClose = () => {
       'sw': sw.value,
       'company': sw.value=='公司'?search_word.value:searchWords.value['公司'],
       'proj': sw.value=='船号'?search_word.value:searchWords.value['船号'],
-      'daihao': sw.value=='代号'?search_word.value:searchWords.value['代号'],
-      'model': sw.value=='型号'?search_word.value:searchWords.value['型号'],
-      'spec': sw.value=='规格'?search_word.value:searchWords.value['规格'],
+      'daihao': sw.value=='电缆代号'?search_word.value:searchWords.value['电缆代号'],
+      'model': sw.value=='电缆型号'?search_word.value:searchWords.value['电缆型号'],
+      'spec': sw.value=='电缆规格'?search_word.value:searchWords.value['电缆规格'],
       'facilities_name': sw.value=='设备'?search_word.value:searchWords.value['设备'],
       'facilities_loca': sw.value=='设备地点'?search_word.value:searchWords.value['设备地点'],
+      'loca_item': sw.value=='区域'?search_word.value:searchWords.value['区域'],
       'total_length': sw.value=='总线长'?search_word.value:searchWords.value['总线长'],
       'sysname': sw.value=='系统名'?search_word.value:searchWords.value['系统名'],
     };
@@ -819,17 +849,20 @@ const handlePopupClose = () => {
       }else if (sw.value=='船号'){
         tmp.push({ key: i, title: response.data[i]['proj'] });
       }
-      else if (sw.value=='代号'){
+      else if (sw.value=='电缆代号'){
         tmp.push({ key: i, title: response.data[i]['daihao'] });
-      }else if (sw.value=='型号'){
+      }else if (sw.value=='电缆型号'){
         tmp.push({ key: i, title: response.data[i]['model'] });
-      }else if (sw.value=='规格'){
+      }else if (sw.value=='电缆规格'){
         tmp.push({ key: i, title: response.data[i]['specification'] });
       }else if (sw.value=='设备'){
         tmp.push({ key: i, title: response.data[i]['facilities_name'] });
       }else if (sw.value=='设备地点'){
         tmp.push({ key: i, title: response.data[i]['facilities_loca'] });
-      }else if (sw.value=='总线长'){
+      }else if (sw.value=='区域'){
+        tmp.push({ key: i, title: response.data[i]['loca_item'] });
+      }
+      else if (sw.value=='总线长'){
         tmp.push({ key: i, title: response.data[i]['total_length'] });
       }else if (sw.value=='系统名'){
         tmp.push({ key: i, title: response.data[i]['sysname'] });

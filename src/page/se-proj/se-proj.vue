@@ -516,6 +516,7 @@
   margin-bottom: 12px; /* 每个复选框之间的间距 */
   height: 0.8rem;
   border-bottom: 1px solid #dcdcdc;
+  font-size: 0.4rem;
 }
   </style>
   
