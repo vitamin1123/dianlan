@@ -1,4 +1,10 @@
 <template>
+  <van-nav-bar
+      title="确认工单"
+      left-text="返回"
+      left-arrow
+      @click-left="onClickLeft"
+    />
   <div class="header">
       <van-cell title="工单日期" :value="date" @click="show = true" style="width:100%" />
       
@@ -86,6 +92,8 @@ minDate.value.setDate(maxDate.value.getDate() - 30);
 const formatDate = (date) => {
   return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
 };
+
+const onClickLeft = () => history.back();
 const onConfirm = async(value) => {
  
  show.value = false;

@@ -5,6 +5,7 @@
 
  </router-view>
  <!-- <tabbar></tabbar> -->
+
 </template>
 
 <script setup>

@@ -1,4 +1,10 @@
 <template>
+  <van-nav-bar
+      title="派工"
+      left-text="返回"
+      left-arrow
+      @click-left="onClickLeft"
+    />
     <van-popup v-model:show="showTop" position="top" round :style="{ height: '50%' }" @click-overlay="handlePopupClose">
       <van-search
         v-model="search_word"
@@ -203,8 +209,8 @@
             <van-tag v-if="item.facilities_loca && item.facilities_loca.trim() !== ''"  color="#5a73a4"  style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
             <van-tag v-if="item.facilities_name && item.facilities_name.trim() !== ''" plain color="#5a73a4" style="margin-right: 0.1rem;">{{ item.facilities_name }}</van-tag>
             
-            <van-tag v-if="item.last_fangxian_loca_name && item.last_fangxian_loca_name.trim() !== ''"   color="#8d3f20" style="margin-right: 0.1rem;">{{ "放线区域："+item.last_fangxian_loca_name }}</van-tag>
-            <van-tag v-if="item.fangxianren && item.fangxianren.trim() !== ''"   color="#8d3f20" style="margin-right: 0.1rem;">{{ " 放线:"+item.fangxianren}}</van-tag>
+            <van-tag v-if="item.last_fangxian_loca_name && item.last_fangxian_loca_name.trim() !== ''"   color="#8d3f20" >{{ "放线区域："+item.last_fangxian_loca_name }}</van-tag>
+            <van-tag v-if="item.fangxianren && item.fangxianren.trim() !== ''" plain  color="#8d3f20" style="margin-right: 0.1rem;">{{ " 放线:"+item.fangxianren}}</van-tag>
             <van-tag v-if="item.fin_user && item.fin_user.trim() !== ''"  type="warning" style="margin-right: 0.1rem;">{{ "接线："+item.fin_user }}</van-tag>
           </template>
         <template #footer>
@@ -323,6 +329,7 @@
     totalPrice.value = 0.00;
     showCartPopup.value = false;
   };
+  const onClickLeft = () => history.back();
 
 
   const filterUsers = ref('');

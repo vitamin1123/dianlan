@@ -1,4 +1,10 @@
 <template>
+  <van-nav-bar
+      title="当日产值"
+      left-text="返回"
+      left-arrow
+      @click-left="onClickLeft"
+    />
   <div class="container">
     <div class="header">
       <van-cell title="工单日期" :value="date" @click="show = true" style="width:60%" />
@@ -63,7 +69,7 @@ const show = ref(false);
 const previousCheckedValues = ref([]);
 const totalConfirmedPrice = ref(0); // 已确认的合计
 const totalCheckedPrice = ref(0); // 所有勾选的合计
-
+const onClickLeft = () => history.back();
 
 const checkChange = async(newCheckedValues) => {
   // console.log('isInitialLoad', isInitialLoad.value)

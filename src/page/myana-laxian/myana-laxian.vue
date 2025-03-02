@@ -1,4 +1,10 @@
 <template>
+  <van-nav-bar
+      title="统计"
+      left-text="返回"
+      left-arrow
+      @click-left="onClickLeft"
+    />
   <div class="analytics-page">
     <!-- 顶部卡片 -->
     <div class="top-cards">
@@ -111,7 +117,7 @@ const list = ref([
   },
 ]);
 
-
+const onClickLeft = () => history.back();
 onMounted(async () => {
   try {
     const res = await http.post('/api/get_total_fangxian');
