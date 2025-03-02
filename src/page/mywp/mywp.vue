@@ -1,4 +1,9 @@
 <template>
+  <div class="header">
+      <van-cell title="工单日期" :value="date" @click="show = true" style="width:100%" />
+      
+      <van-calendar v-model:show="show" :min-date="minDate" :max-date="maxDate" @confirm="onConfirm" />
+    </div>
   <div style="margin-bottom: 1rem;">
     <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
       <van-list
@@ -26,27 +31,36 @@
               <van-tag v-if="item.facilities" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities }}</van-tag>
               <van-tag v-if="item.facilities_loca" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
               <van-tag v-if="item.facilities_name" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities_name }}</van-tag>
+              <van-tag v-if="item.last_fangxian_loca_name"  color="#b27f3d" style="margin-right: 0.1rem;">{{ item.last_fangxian_loca_name }}</van-tag>
               <van-tag v-if="item.fin_user_name"  type="warning" style="margin-right: 0.1rem;">{{ "接线："+item.fin_user_name }}</van-tag>
-              
+             
               <!-- <van-tag>{{ item.formattedWpdate }}</van-tag> -->
             </template>
           </van-card>
           <div class="button-container">
-            <div class="user-tags">
-              <van-tag
-                v-for="(user, userIndex) in group.users"
-                :key="userIndex"
-                plain
-                color="#7232dd"
-                style="margin-right: 0.1rem;"
-              >
-                {{ user }}
+          <!-- 左侧的 tags -->
+          <div class="user-tags">
+            <van-tag
+              v-for="(user, userIndex) in group.users"
+              :key="userIndex"
+              size="small"
+              color="#676161"
+              class="custom-tag"
+            >
+              {{ user }}
             </van-tag>
           </div>
-          
-            <van-button type="primary" size="small" :disabled="group.state==1"  @click="del_wp(group.wpid)" style="margin-right: 0.1rem;">删除</van-button>
-            <van-button type="success" size="small" :plain="group.state==1" @click="confirm_wp(group.wpid)">{{ group.state==1?'取消':'确认' }}</van-button>
+
+          <!-- 右侧的 buttons -->
+          <div class="button-group">
+            <van-button type="primary" size="small" :disabled="group.state==1" @click="del_wp(group.wpid)" style="margin-right: 0.1rem;">
+              删除
+            </van-button>
+            <van-button type="success" size="small" :plain="group.state==1" @click="confirm_wp(group.wpid)">
+              {{ group.state==1?'取消':'确认' }}
+            </van-button>
           </div>
+        </div>
         </div>
       </van-list>
     </van-pull-refresh>
@@ -63,34 +77,23 @@ import { useDaibanStore } from '@/store/daibanStore'
 const userStore = useUserStore();
 const daibanStore = useDaibanStore();
 const list = ref([]);
-// const groupedByWpid = computed(() => { 
-//   const groups = list.value.reduce((acc, item) => {
-//     const group = acc.find((g) => g.wpid === item.wpid);
-//     if (group) {
-//       // 将线缆去重
-//       if (!group.items.some(existingItem => existingItem.dianlanid === item.dianlanid)) {
-//         group.items.push(item);
-//       }
-//       // 将用户去重
-//       if (!group.users.includes(item.user)) {
-//         group.users.push(item.user);
-//       }
-//       if (!group.states.includes(item.state)) {
-//         group.states.push(item.state);
-//       }
-//     } else {
-//       acc.push({
-//         wpid: item.wpid,
-//         items: [item], // 初始化线缆列表
-//         users: [item.user], // 初始化用户列表
-//         states: [item.state], // 初始化状态列表
-//       });
-//     }
-//     return acc;
-//   }, []);
-//   return groups;
-// });
-
+const todayDate = new Date().toLocaleDateString('en-CA').replace(/-/g, '/'); 
+const date = ref(todayDate);
+const show = ref(false);
+const maxDate = ref(new Date());
+const minDate = ref(new Date());
+minDate.value.setDate(maxDate.value.getDate() - 30);
+const formatDate = (date) => {
+  return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+};
+const onConfirm = async(value) => {
+ 
+ show.value = false;
+ date.value = formatDate(value);
+ console.log('选中日期:', date.value, todayDate );
+ await onLoad()
+//  load()
+};
 const groupedByWpid = computed(() => { 
   const groups = list.value.reduce((acc, item) => {
     // 查找当前 wpid 的分组
@@ -309,6 +312,7 @@ const onLoad = async () => {
   const data = {
     userCode: userStore.userInfo.userCode,
     page: page.value * 10,
+    qdate: date.value
   };
 
   try {
@@ -340,23 +344,6 @@ const onLoad = async () => {
   page.value++;
 };
 
-
-// const load = async () => {
-//   const res = await http.post('/api/get_paip_wp_list', {
-//     userCode: userStore.userInfo.userCode,
-//     page: page.value,
-//   });
-//   list.value = res.data.map((item) => {
-//     const date = new Date(item.wpdate);
-//     const datePart = date.toISOString().split('T')[0];
-//     const timePart = date.toISOString().split('T')[1].slice(0, 5);
-//     return {
-//       ...item,
-//       formattedWpdate: `${datePart} ${timePart}`,
-//     };
-//   });
-// };
-
 onMounted(() => {
   // load();
   // 2025-02-27  修改load->
@@ -383,12 +370,28 @@ onMounted(() => {
 }
 .button-container {
   display: flex;
-  justify-content: flex-end; /* 将按钮靠右 */
-  margin-right: 0.11rem; /* 根据需要调整与上方内容的间距 */
+  align-items: flex-start; /* 让子元素顶部对齐，避免高度拉伸 */
+  justify-content: space-between; /* 左右两侧分开 */
 }
 
 .user-tags {
   display: flex;
-  flex-wrap: wrap; /* 如果用户标签过多，可以换行 */
+  margin-left: 0.4rem;
+  flex-wrap: wrap; /* 允许 tags 换行 */
+  gap: 0.1rem; /* 设置 tags 之间的间距 */
+  align-items: flex-start; /* 让 tags 顶部对齐 */
 }
+
+.button-group {
+  display: flex;
+  align-items: center; /* 让按钮垂直居中 */
+  flex-shrink: 0; /* 防止按钮被压缩 */
+}
+
+.custom-tag {
+  font-size: 0.2rem; /* 调整 tag 的字体大小 */
+
+}
+
+
 </style>

@@ -339,7 +339,9 @@
     console.log(res.data)
     if (res.code === 0) {
       showToast('派工成功');
-      
+      // 清空cart
+      cart.value = [];
+      totalPrice.value = 0.00;
       // 更新目标项的信息
       wp_user_picker.value = false;
     
