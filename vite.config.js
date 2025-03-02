@@ -1,22 +1,27 @@
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
+import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+import removeConsole from 'vite-plugin-remove-console';
+import { resolve } from 'path';
 
-import {resolve} from "path"
 const pathResolve = (dir) => {
-  return resolve(__dirname,'.',dir)
-}
-// https://vite.dev/config/
+  return resolve(__dirname, '.', dir);
+};
+
 export default defineConfig({
-  plugins: [vue()],
-  server:{
-    host:'0.0.0.0',
-    port:8080,
-  } ,
-  resolve:{
+  plugins: [vue(), removeConsole()], // 添加插件
+  server: {
+    host: '0.0.0.0',
+    port: 8080,
+  },
+  resolve: {
     alias: [
       {
-        find:"@",
-        replacement: pathResolve('src')
-      }]
-  }
-})
+        find: '@',
+        replacement: pathResolve('src'),
+      },
+    ],
+  },
+  build: {
+    minify: 'esbuild', // 使用 esbuild
+  },
+});

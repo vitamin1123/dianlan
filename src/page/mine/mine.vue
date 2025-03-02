@@ -39,7 +39,7 @@
         title="接线派工"
         size="large"
         is-link
-        to="work"
+        to="work1"
         class="custom-cell"
       />
       <van-cell

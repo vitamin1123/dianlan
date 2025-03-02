@@ -205,23 +205,29 @@
             
             <van-tag v-if="item.last_fangxian_loca_name && item.last_fangxian_loca_name.trim() !== ''"   color="#8d3f20" style="margin-right: 0.1rem;">{{ "放线区域："+item.last_fangxian_loca_name }}</van-tag>
             <van-tag v-if="item.last_fangxian_loca_name && item.last_fangxian_loca_name.trim() !== ''"   color="#8d3f20" style="margin-right: 0.1rem;">{{ " 放线人:"+item.fangxianren}}</van-tag>
-            
             <van-tag v-if="item.fin_user && item.fin_user.trim() !== ''"  type="warning" style="margin-right: 0.1rem;">{{ "接线人："+item.fin_user }}</van-tag>
           </template>
         <template #footer>
             <!-- <van-button v-if="userStore.userInfo.userRole < 4" :disabled="(item.last_fangxian && item.last_fangxian!=userStore.userInfo.userCode)" size="small" @click="laxian(item)">{{ item.fangxianren || '完成拉线' }}
 :thumb="dianlanImage"
             </van-button> -->
-             <!-- 1普工 2小组长 3组长 4班组长 5文员 -->
+            <!-- :disabled="(item.last_fangxian && item.last_fangxian !== userStore.userInfo.userCode) || item.paip!= null" -->
             <van-button
-              v-if="[0, 3, 4, 5].includes(userStore.userInfo.userRole)"
-              :disabled="(item.last_fangxian && item.last_fangxian !== userStore.userInfo.userCode) || item.paip!= null"
+              v-if="[0, 3, 4, 5].includes(userStore.userInfo.userRole) && item.fangxianren != null"
+              :disabled = "true"
               
               :color="(item.last_fangxian )?'#dd9e21' : ''"
               size="small"
               @click="laxian(item)"
             >{{ item.fangxianren || '完成拉线' }}</van-button>
-            <van-button size="small" :disabled="item.last_fangxian != null || (item.paip != null && item.fin_user != null)" @click="addCart(item)">{{ item.paip || '选中' }}</van-button>
+            <van-button 
+              size="small" 
+              :color="(item.fin_user )?'#ffc107' : ''"
+              :disabled="((item.paip != null && item.fin_user != null) || item.last_fangxian== null)" 
+              @click="addCart(item)">
+              {{ item.paip || '选中' }}
+          </van-button>
+          <!-- :disabled="item.last_fangxian != null || (item.paip != null && item.fin_user != null)"  -->
         </template>
       </van-card>
     </van-list>
@@ -232,8 +238,8 @@
 
     <van-submit-bar :price="totalPrice" button-text="提交派工单">
       <template #button>
-        <van-action-bar-button type="warning" text="提交拉线" @click="onSubmit_laxian" style="border-radius: 0.5rem; border-bottom-left-radius: 0.5rem;"/>
-        <!-- <van-action-bar-button type="danger" :disabled ="dis_sub" text="提交派工单" @click="onSubmit" style=" border-top-right-radius: 0.5rem;  border-bottom-right-radius: 0.5rem;"/> -->
+        <!-- <van-action-bar-button type="warning" text="提交拉线" @click="onSubmit_laxian" style="border-radius: 0.5rem; border-bottom-left-radius: 0.5rem;"/> -->
+        <van-action-bar-button type="danger" :disabled ="dis_sub" text="提交派工单" @click="onSubmit" style=" border-radius: 0.5rem;  border-bottom-right-radius: 0.5rem;"/>
       </template>  
       <template #default>
           <div style="display: flex; justify-content: flex-end; align-items: center;">
@@ -514,8 +520,9 @@
     // 筛选出未在购物车中的商品
     const newItems = show_list.value.filter(item => 
       (!cart.value.some(cartItem => cartItem.id === item.id)) && 
+      item.last_fangxian &&
       !item.paip &&
-      (item.last_fangxian === null || item.last_fangxian === '')
+      (item.fin_user === null || item.fin_user === '')
     );
 
     if (newItems.length === 0) {

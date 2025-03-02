@@ -51,6 +51,12 @@ const routes = [
 
     },
     {
+        path:"/work1",
+        name: 'work1',
+        component: () => import("@/page/work1/work1.vue"),
+
+    },
+    {
         path:"/locamana",
         name: 'locamana',
         component: () => import("@/page/locamana/locamana.vue"),

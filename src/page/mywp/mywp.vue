@@ -28,7 +28,7 @@
               <van-tag v-if="item.facilities_name" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities_name }}</van-tag>
               <van-tag v-if="item.fin_user_name"  type="warning" style="margin-right: 0.1rem;">{{ item.fin_user_name }}</van-tag>
               
-              <van-tag>{{ item.formattedWpdate }}</van-tag>
+              <!-- <van-tag>{{ item.formattedWpdate }}</van-tag> -->
             </template>
           </van-card>
           <div class="button-container">
