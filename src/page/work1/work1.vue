@@ -347,15 +347,20 @@
     if (res.code === 0) {
       showToast('派工成功');
       // 清空cart
+      
+    
+      // 更新 cart 中的 last_fangxian 字段
+      // show_list.value.forEach(item => item.last_fangxian = userStore.userInfo.userCode);
+      // 更新 show_list 中的paip 字段
+      show_list.value.forEach((item) => {
+      if (cart.value.map(item => item.id).includes(item.id)) {
+        item.paip = userStore.userInfo.userName;
+      }
+    });
       cart.value = [];
       totalPrice.value = 0.00;
       // 更新目标项的信息
       wp_user_picker.value = false;
-    
-      // 更新 cart 中的 last_fangxian 字段
-      show_list.value.forEach(item => item.last_fangxian = userStore.userInfo.userCode);
-      // 更新 show_list 中的paip 字段
-      show_list.value.forEach(item => item.paip = userStore.userInfo.userName);
     } else {
       // 处理失败的情况（例如可以显示错误提示）
       showToast(res.message || '派工失败，请重试');

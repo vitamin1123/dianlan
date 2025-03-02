@@ -25,7 +25,7 @@
       </van-card>
 
       <!-- 今日工单完成情况卡片 -->
-      <van-card class="analytics-card" @click="showWorkOrderData">
+      <van-card class="analytics-card1" @click="showWorkOrderData">
         <template #title>
           <div class="card-title">
             <van-icon name="completed" size="28" />
@@ -33,13 +33,18 @@
           </div>
         </template>
         <template #desc>
+          
           <div class="card-content">
             <span class="card-value">{{ confirmedPai }}/{{ total_pai }}</span>
             <span class="card-unit">已确认/总派工单数</span>
           </div>
           <div class="card-content">
-            <span class="card-value">{{ total_fin }}</span>
-            <span class="card-unit">已确认完成接线数</span>
+            <span class="card-value">{{ confirmedFin }}/{{ total_fin }}</span>
+            <span class="card-unit">已确认完成/总完成接线数</span>
+          </div>
+          <div class="card-content">
+            <span class="card-value">{{ confirmedValue.toFixed(0) }}/{{ totalValue.toFixed(0) }}</span>
+            <span class="card-unit">已确认/派工总产值</span>
           </div>
         </template>
       </van-card>
@@ -119,9 +124,12 @@ const total_geng = ref(0); // 总放线根数
 const total_pai = ref(0); // 总派工单数量
 const confirmedPai = ref(0); // 已确认派工单数量
 const total_fin = ref(0); // 总完成数目
+const confirmedFin = ref(0); // 已确认完成数
 const treeData = ref([]); // 树形结构数据
 const activeNames = ref([]); // 控制折叠面板的展开状态
 const currentView = ref('fangxian'); // 当前视图：fangxian 或 workOrder
+const confirmedValue = ref(0); // 已确认产值
+const totalValue = ref(0); // 派工总产值
 
 // 返回上一页
 const onClickLeft = () => history.back();
@@ -227,10 +235,40 @@ const fetchFangxianData = async () => {
 const fetchWorkOrderSummary = async () => {
   try {
     const res = await http.post('/api/get_total_pai');
-    const validData = res.data.filter((item) => item.fin_user !== null); // 过滤掉 fin_user 为 null 的数据
-    total_pai.value = res.data.length; // 总派工单数量
-    confirmedPai.value = res.data.filter((item) => item.state === 1).length; // 已确认派工单数量
+
+    // 去重函数：根据 dianlanid 去重
+    const uniqueByDianlanId = (arr) => {
+      return [...new Map(arr.map((item) => [item.dianlanid, item])).values()];
+    };
+
+    // 去重后的数据
+    const uniqueData = uniqueByDianlanId(res.data);
+
+    // 过滤掉 fin_user 为 null 的数据
+    const validData = uniqueData.filter((item) => item.fin_user !== null);
+
+    // 统计总派工单数量和已确认派工单数量
+    total_pai.value = uniqueData.length; // 总派工单数量（去重后）
+    confirmedPai.value = uniqueData.filter((item) => item.state === 1).length; // 已确认派工单数量
     total_fin.value = validData.length; // 总完成数目（fin_user 不为 null 的数据）
+
+    // 计算已确认完成数
+    confirmedFin.value = uniqueData.filter((item) => item.state === 1 && item.fin_user !== null).length;
+
+    // 计算产值
+    totalValue.value = uniqueData.reduce((sum, item) => sum + (item.price || 0), 0); // 派工总产值
+    confirmedValue.value = uniqueData
+      .filter((item) => item.state === 1) // 只统计 state 为 1 的工单
+      .reduce((sum, item) => sum + (item.price || 0), 0); // 已确认产值
+
+    // 打印调试信息
+    console.log('总派工单数量:', total_pai.value);
+    console.log('已确认派工单数量:', confirmedPai.value);
+    console.log('总完成数目:', total_fin.value);
+    console.log('已确认完成数:', confirmedFin.value);
+    console.log('派工总产值:', totalValue.value);
+    console.log('已确认产值:', confirmedValue.value);
+    console.log('state 为 1 的工单:', uniqueData.filter((item) => item.state === 1));
   } catch (error) {
     console.error('Error:', error);
   }
@@ -240,7 +278,19 @@ const fetchWorkOrderSummary = async () => {
 const fetchWorkOrderData = async () => {
   try {
     const res = await http.post('/api/get_total_pai');
-    const validData = res.data.filter((item) => item.fin_user !== null); // 过滤掉 fin_user 为 null 的数据
+
+    // 去重函数：根据 proj_item 和 dianlanid 去重
+    const uniqueByProjItemAndDianlanId = (arr) => {
+      return [...new Map(arr.map((item) => [`${item.proj_item}-${item.dianlanid}`, item])).values()];
+    };
+
+    // 去重后的数据
+    const uniqueData = uniqueByProjItemAndDianlanId(res.data);
+
+    // 过滤掉 fin_user 为 null 且 state 不为 1 的数据
+    const validData = uniqueData.filter((item) => item.fin_user !== null && item.state === 1);
+
+    // 构建树形结构
     treeData.value = buildTreeForWorkOrder(validData);
   } catch (error) {
     console.error('Error:', error);
@@ -279,7 +329,15 @@ onMounted(async () => {
 }
 
 .analytics-card {
-  flex: 1;
+  flex: 0 0 40%; /* 左边卡片宽度为40% */
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  background-color: #fff;
+}
+
+.analytics-card1 {
+  flex: 0 0 60%; /* 右边卡片宽度为60% */
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   padding: 16px;
