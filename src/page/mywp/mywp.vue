@@ -26,7 +26,7 @@
               <van-tag v-if="item.facilities" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities }}</van-tag>
               <van-tag v-if="item.facilities_loca" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
               <van-tag v-if="item.facilities_name" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities_name }}</van-tag>
-              <van-tag v-if="item.fin_user_name"  type="warning" style="margin-right: 0.1rem;">{{ item.fin_user_name }}</van-tag>
+              <van-tag v-if="item.fin_user_name"  type="warning" style="margin-right: 0.1rem;">{{ "接线："+item.fin_user_name }}</van-tag>
               
               <!-- <van-tag>{{ item.formattedWpdate }}</van-tag> -->
             </template>

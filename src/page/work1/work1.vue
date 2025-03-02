@@ -204,8 +204,8 @@
             <van-tag v-if="item.facilities_name && item.facilities_name.trim() !== ''" plain color="#5a73a4" style="margin-right: 0.1rem;">{{ item.facilities_name }}</van-tag>
             
             <van-tag v-if="item.last_fangxian_loca_name && item.last_fangxian_loca_name.trim() !== ''"   color="#8d3f20" style="margin-right: 0.1rem;">{{ "放线区域："+item.last_fangxian_loca_name }}</van-tag>
-            <van-tag v-if="item.last_fangxian_loca_name && item.last_fangxian_loca_name.trim() !== ''"   color="#8d3f20" style="margin-right: 0.1rem;">{{ " 放线人:"+item.fangxianren}}</van-tag>
-            <van-tag v-if="item.fin_user && item.fin_user.trim() !== ''"  type="warning" style="margin-right: 0.1rem;">{{ "接线人："+item.fin_user }}</van-tag>
+            <van-tag v-if="item.fangxianren && item.fangxianren.trim() !== ''"   color="#8d3f20" style="margin-right: 0.1rem;">{{ " 放线:"+item.fangxianren}}</van-tag>
+            <van-tag v-if="item.fin_user && item.fin_user.trim() !== ''"  type="warning" style="margin-right: 0.1rem;">{{ "接线："+item.fin_user }}</van-tag>
           </template>
         <template #footer>
             <!-- <van-button v-if="userStore.userInfo.userRole < 4" :disabled="(item.last_fangxian && item.last_fangxian!=userStore.userInfo.userCode)" size="small" @click="laxian(item)">{{ item.fangxianren || '完成拉线' }}

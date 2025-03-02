@@ -1,12 +1,18 @@
 <template>
   <div class="container">
     <div class="header">
-      <van-cell title="工单日期" :value="date" @click="show = true" style="width:70%"/>
+      <van-cell title="工单日期" :value="date" @click="show = true" style="width:60%" />
+      <div class="price-display">
+        <div class="price-line">
+          <span>已确认：</span>
+          <span>￥{{ totalConfirmedPrice.toFixed(2) }}</span>
+        </div>
+        <div class="price-line">
+          <span>总产值：</span>
+          <span>￥{{ totalCheckedPrice.toFixed(2) }}</span>
+        </div>
+      </div>
       <van-calendar v-model:show="show" :min-date="minDate" :max-date="maxDate" @confirm="onConfirm" />
-      <!-- <div class="button-group">
-        <van-button type="primary" @click="checkAll">全选</van-button>
-        <van-button type="primary" @click="toggleAll">反选</van-button>
-      </div> -->
     </div>
     <van-checkbox-group v-model="checked" ref="checkboxGroup" shape="square" @change="checkChange">
       <van-checkbox 
@@ -27,7 +33,7 @@
             <van-tag v-if="item.facilities && item.facilities.trim() !== ''" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities }}</van-tag>
             <van-tag v-if="item.facilities_loca && item.facilities_loca.trim() !== ''"  color="#ffe1e1" text-color="#ad0000" style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
             <van-tag v-if="item.facilities_name && item.facilities_name.trim() !== ''" plain color="#7232dd" style="margin-right: 0.1rem;">{{ item.facilities_name }}</van-tag>
-            <van-tag v-if="item.fin_user_name" color="#008866" >{{ item.fin_user_name }}</van-tag>
+            <van-tag v-if="item.fin_user_name" color="#008866" >{{ "接线:"+item.fin_user_name }}</van-tag>
         </template>
         
       </van-card>
@@ -55,7 +61,8 @@ const minDate = ref(new Date());
 minDate.value.setDate(maxDate.value.getDate() - 30);
 const show = ref(false);
 const previousCheckedValues = ref([]);
-
+const totalConfirmedPrice = ref(0); // 已确认的合计
+const totalCheckedPrice = ref(0); // 所有勾选的合计
 
 
 const checkChange = async(newCheckedValues) => {
@@ -90,6 +97,15 @@ const checkChange = async(newCheckedValues) => {
 
   // 更新 previousCheckedValues 为新的 checkedValues
   previousCheckedValues.value = [...newCheckedValues];
+  // 计算所有勾选的合计
+  totalCheckedPrice.value = list.value
+    .filter(item => newCheckedValues.includes(item.id + 'Φ' + item.wpid)) // 过滤选中的项
+    .reduce((total, item) => total + (item.baseprice || 0), 0); // 累加 baseprice
+
+  // 计算已确认的合计
+  totalConfirmedPrice.value = list.value
+    .filter(item => newCheckedValues.includes(item.id + 'Φ' + item.wpid) && item.state === 1) // 过滤已确认的选中项
+    .reduce((total, item) => total + (item.baseprice || 0), 0); // 累加 baseprice
 };
 
 // const formatDate = (date) => {
@@ -171,6 +187,23 @@ onMounted(() => {
   line-height: 2; /* 提高复选框内容的高度 */
   font-size: 0.8rem;
 }
+.price-display {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 0.35rem;
+  line-height: 1.2;
+}
 
+.price-line {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.price-line span:first-child {
+  font-weight: bold;
+  margin-right: 5px;
+}
 
 </style>
