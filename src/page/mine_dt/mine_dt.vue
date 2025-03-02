@@ -1,7 +1,12 @@
 <template>
   <div>
     
-    
+    <van-nav-bar
+    title="管理设置"
+    left-text="返回"
+    left-arrow
+    @click-left="onClickLeft"
+  />
 
     <!-- 人员管理 -->
     <van-cell
@@ -80,7 +85,7 @@ const imageSrc = ref(''); // 存储生成的图片 URL
 const username = ref(userStore.userInfo.userName);
 const rolename = ref(userStore.userInfo.userRoleName);
 const roleid = ref(userStore.userInfo.userRole);
-
+const onClickLeft = () => history.back();
 const generateImage = () => {
   const canvas = document.createElement('canvas'); // 或使用 refs 获取 canvas
   const ctx = canvas.getContext('2d');
