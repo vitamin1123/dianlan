@@ -4,7 +4,7 @@ import { useUserStore } from '@/store/userStore';
 // import { useRouter } from "vue-router";
 const http = axios.create({
     baseURL,
-    timeout:3000
+    timeout:20000
 }
 );
 

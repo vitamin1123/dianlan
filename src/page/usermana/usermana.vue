@@ -1,4 +1,10 @@
 <template>
+    <van-nav-bar
+    title="用户查询"
+    left-text="返回"
+    left-arrow
+    @click-left="onClickLeft"
+  />
     <!-- <van-floating-bubble
         v-if = "[1,2].includes(userStore.userInfo.userRole)"
         axis="xy"
@@ -179,6 +185,7 @@ const columns = [
       { text: '班组长', value: '4' },
       { text: '施工员', value: '5' }
     ];
+const onClickLeft = () => history.back();
 const fieldValue = ref('');
 const juese = ref('');
 const showPicker = ref(false);

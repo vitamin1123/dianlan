@@ -94,11 +94,14 @@ const formatDate = (date) => {
 };
 
 const onClickLeft = () => history.back();
+
 const onConfirm = async(value) => {
  
  show.value = false;
  date.value = formatDate(value);
  console.log('选中日期:', date.value, todayDate );
+ list.value = [];
+ page.value = 0;
  await onLoad()
 //  load()
 };

@@ -31,7 +31,7 @@
     <!-- 系列价目表版本设置 -->
     <van-cell
       v-if="[0].includes(roleid)"
-      title="系列价目表版本设置"
+      title="项目价目表版本设置"
       size="large"
       is-link
       to="se-proj"
@@ -59,14 +59,14 @@
     />
 
     <!-- 设备定额 -->
-    <van-cell
+    <!-- <van-cell
       v-if="[0].includes(roleid)"
       title="设备定额"
       size="large"
       is-link
       to="ep_baseprice"
       class="custom-cell"
-    />
+    /> -->
 
     <canvas ref="canvas" width="100" height="100" style="display: none;"></canvas>
   </div>

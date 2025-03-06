@@ -1,4 +1,10 @@
 <template>
+  <van-nav-bar
+    title="项目价目表版本设置"
+    left-text="返回"
+    left-arrow
+    @click-left="onClickLeft"
+  />
     <van-popup v-model:show="showTop" position="top" :style="{ height: '20%' }" >
 
       
@@ -112,7 +118,7 @@
   const oriValue = ref('');
   const modRightItem = ref('')
   const sw_value_add = ref('')
-
+  const onClickLeft = () => history.back();
   const proj_search = async() => {
     // console.log(sw_value_add.value)
     left_filter_proj.value = []

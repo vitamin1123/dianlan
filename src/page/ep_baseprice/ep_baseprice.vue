@@ -1,4 +1,10 @@
 <template>
+  <van-nav-bar
+    title="电缆定额维护"
+    left-text="返回"
+    left-arrow
+    @click-left="onClickLeft"
+  />
     <!-- 磁吸导航 -->
     <van-uploader v-show="false" ref="uploader" accept=".xls, .xlsx" :after-read="onFileRead">
       <van-button icon="plus" type="primary">上传文件</van-button>
@@ -109,6 +115,7 @@
   const modvalue = ref('');
   const modvalue1 = ref('');
   const up_item = ref(null);
+  const onClickLeft = () => history.back();
   const search_sw = async () => {
       page.value = -1
       list.value = []

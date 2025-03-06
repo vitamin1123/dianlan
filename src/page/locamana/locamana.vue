@@ -1,4 +1,10 @@
 <template>
+  <van-nav-bar
+    title="区域查询"
+    left-text="返回"
+    left-arrow
+    @click-left="onClickLeft"
+  />
     <van-popup v-model:show="showTop" position="top" :style="{ height: '20%' }" >
 
       
@@ -75,7 +81,7 @@
     { id: 1, name: '网络不佳' },
   ]);
   const leftFilterList = ref([])
-  
+  const onClickLeft = () => history.back();
   const sw_value1 = ref('');
   const sw_value2 = ref('');
   const selectedLoca = ref(null);

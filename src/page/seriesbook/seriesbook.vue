@@ -1,4 +1,10 @@
 <template>
+  <van-nav-bar
+    title="系列船电缆册维护"
+    left-text="返回"
+    left-arrow
+    @click-left="onClickLeft"
+  />
   <van-popup v-model:show="showTop1" position="top" :style="{ height: '50%' }" > 
         <van-search v-model="search_word" placeholder="请输入" show-action  @search="search"/>
         <van-list>
@@ -6,12 +12,12 @@
         </van-list>
     </van-popup>
   <!-- 磁吸导航 -->
-  <van-uploader v-show="false" ref="uploader" accept=".xls, .xlsx" :after-read="onFileRead">
-    <van-button icon="plus" type="primary">上传文件</van-button>
+  <van-uploader v-show="false" ref="uploader" v-model="fileList" accept=".xls, .xlsx" :after-read="onFileRead">
+    <van-button icon="plus" type="primary">上传文件</van-button> 
   </van-uploader>
   
   <div class="container">
-    <van-button type="primary" plain @click="handleClick">
+    <van-button type="primary" plain @click="handleClick" :loading="isuploading">
         {{ button_text }}
     </van-button>
     <!-- 左侧部分，占70% -->
@@ -31,7 +37,7 @@
       @select="onSelect"
     >
       <template #reference>
-        <van-button type="primary">维护</van-button>
+        <van-button type="primary" :loading="isuploading">维护</van-button>
       </template>
     </van-popover>
   </div>
@@ -115,6 +121,7 @@ import Pinyin from 'pinyin-match';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import http from '@/api/request';
+const isuploading = ref(false)
 const button_text = ref('系列船');
 const list = ref([])
 const ser_list = ref([])
@@ -136,6 +143,8 @@ const modvalue1 = ref('');
 const up_item = ref(null);
 const showTop1 = ref(false);
 const search_word = ref('');
+const fileList = ref([]);
+const onClickLeft = () => history.back();
 const search = async () => {
     try {
       const response = await http.post('/api/search_proj_list',{sw: search_word.value});
@@ -172,6 +181,24 @@ const search_sw = async () => {
 }
 
 const onFileRead = async (file) => {
+  //console.log('读取到的文件:', file);
+  file.status = 'uploading';
+  file.message = '上传中...';
+  isuploading.value = true;
+  // 校验文件类型
+  if (!file.file.name.endsWith('.xlsx') && !file.file.name.endsWith('.xls')) {
+    showToast('只支持上传 .xls 或 .xlsx 文件');
+    isuploading.value = false;
+    return;
+  }
+
+  // 校验文件大小（例如限制为 10MB）
+  const maxSize = 10 * 1024 * 1024; // 10MB
+  if (file.file.size > maxSize) {
+    showToast('文件大小不能超过 10MB');
+    isuploading.value = false;
+    return;
+  }
       const formData = new FormData();
       formData.append('file', file.file);
       formData.append('projname', button_text.value);
@@ -181,10 +208,31 @@ const onFileRead = async (file) => {
             'Content-Type': 'multipart/form-data',
           },
         });
-        console.log('上传成功:', response.data);
-        onRefresh()
+        //console.log('upload: ',response)
+        if (response.success) {
+          file.status = 'done';
+          file.message = '上传成功';
+          showToast('上传成功');
+          
+          onRefresh(); // 刷新数据
+        } else {
+          file.status = 'failed';
+          file.message = response.data.message || '上传失败';
+          showToast(`上传失败: ${response.data.message}`);
+        }
       } catch (error) {
         console.error('上传失败:', error);
+        file.status = 'failed';
+        file.message = '上传失败';
+        let errorMessage = '上传失败: ';
+        if (error.response && error.response.data) {
+          errorMessage += error.response.data.message || '未知错误';
+        } else {
+          errorMessage += error.message || '网络错误';
+        }
+        showToast(errorMessage);
+      }finally {
+        isuploading.value = false;
       }
     };
 
