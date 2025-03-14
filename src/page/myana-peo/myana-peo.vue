@@ -1,129 +1,149 @@
 <template>
-    <van-dropdown-menu>
-        <van-dropdown-item v-model="value1" :options="option1" />
-        <!-- <van-dropdown-item v-model="value2" :options="option2" /> -->
-    </van-dropdown-menu>
-    <div class="echarts-container">
-      <!-- 动态生成多个饼图 -->
-      <div v-if="value1 === 0"
-        v-for="(chart, index) in charts" 
-        :key="index" 
-        class="echarts-box" 
-        :id="'chart-' + index" 
-        :style="{ width: '100%', height: '400px' }">
-      </div>
-    </div>
+  <div>
+    <!-- 日期选择器 -->
+    <van-field
+      v-model="selectedDate"
+      is-link
+      readonly
+      label="选择日期"
+      placeholder="请选择日期"
+      @click="showDatePicker = true"
+    />
+    <van-calendar
+      v-model:show="showDatePicker"
+      @confirm="onDateConfirm"
+    />
 
-    <div >
-
-    </div>
+    <!-- 折叠面板 -->
+    <van-collapse v-model="activeNames" class="tree-list">
+      <van-collapse-item
+        v-for="owner in treeData"
+        :key="owner.wpowner"
+        :title="`${owner.wpownername} (总计：${owner.totalCount} 个，产值：${owner.totalPrice.toFixed(2)} 元)`"
+        :name="owner.wpowner"
+        class="tree-node"
+      >
+        <!-- 第二层：使用 van-cell 代替 van-collapse-item -->
+        <van-cell
+          v-for="user in owner.children"
+          :key="user.fin_user"
+          :title="`${user.fin_user_name} (已确认：${user.confirmedCount} 个，未确认：${user.unconfirmedCount} 个，产值：${user.totalPrice.toFixed(2)} 元)`"
+          class="tree-node-sub"
+        />
+      </van-collapse-item>
+    </van-collapse>
+  </div>
 </template>
-  
-  <script setup>
-  import { onMounted, ref } from 'vue';
-  import * as echarts from "echarts";
 
-  const value1 = ref(0);
-  const value2 = ref('a');
-  const option1 = [
-      { text: '项目统计', value: 0 },
-      { text: '接线统计', value: 1 },
-      { text: '拉线统计', value: 2 },
-      { text: '人员统计', value: 3 },
-  ];
-//   const option2 = [
-//       { text: '默认排序', value: 'a' },
-//       { text: '好评排序', value: 'b' },
-//       { text: '销量排序', value: 'c' }, 
-//   ];
-  
-  // 定义多个图表数据
-  const charts = [
-    {
-      title: 'Chart 1',
-      data: [
-        { value: 1048, name: 'Search Engine' },
-        { value: 735, name: 'Direct' },
-        { value: 580, name: 'Email' },
-        { value: 484, name: 'Union Ads' },
-        { value: 300, name: 'Video Ads' },
-      ],
-    },
-    {
-      title: 'Chart 2',
-      data: [
-        { value: 300, name: 'Facebook' },
-        { value: 450, name: 'Instagram' },
-        { value: 700, name: 'Twitter' },
-        { value: 200, name: 'LinkedIn' },
-        { value: 500, name: 'TikTok' },
-      ],
-    },
-  ];
-  
-  onMounted(() => {
-    // 遍历生成每个图表
-    charts.forEach((chart, index) => {
-      const chartDom = document.getElementById(`chart-${index}`);
-      const myChart = echarts.init(chartDom);
-  
-      const option = {
-        tooltip: {
-          trigger: 'item',
-        },
-        legend: {
-          top: '5%',
-          left: 'center',
-        },
-        series: [
-          {
-            name: chart.title,
-            type: 'pie',
-            radius: ['40%', '70%'],
-            avoidLabelOverlap: false,
-            itemStyle: {
-              borderRadius: 10,
-              borderColor: '#fff',
-              borderWidth: 2,
-            },
-            label: {
-              show: false,
-              position: 'center',
-            },
-            emphasis: {
-              label: {
-                show: true,
-                fontSize: 40,
-                fontWeight: 'bold',
-              },
-            },
-            labelLine: {
-              show: false,
-            },
-            data: chart.data,
-          },
-        ],
+<script setup>
+import { ref, onMounted, watch } from 'vue';
+import http from '@/api/request';
+
+// 状态
+const todayDate = new Date().toLocaleDateString('en-CA').replace(/-/g, '/');
+const selectedDate = ref(todayDate);
+const showDatePicker = ref(false);
+const activeNames = ref([]);
+const rawData = ref([]); // 存储从接口获取的原始数据
+const treeData = ref([]); // 树形结构数据
+
+// 获取数据
+const fetchData = async () => {
+  try {
+    const res = await http.post('/api/get_peo_ana', { qdate: selectedDate.value });
+    rawData.value = res.data; // 假设接口返回的数据在 res.data 中
+    console.log('获取到的数据:', rawData.value); // 调试用，查看数据是否正确
+    buildTreeData(); // 构建树形数据
+  } catch (error) {
+    console.error('获取数据失败:', error);
+  }
+};
+
+// 构建树形数据
+const buildTreeData = () => {
+  if (!rawData.value.length) {
+    treeData.value = [];
+    return;
+  }
+
+  const owners = {};
+
+  rawData.value.forEach(item => {
+    if (!owners[item.wpowner]) {
+      owners[item.wpowner] = {
+        wpowner: item.wpowner,
+        wpownername: item.wpownername,
+        totalCount: 0,
+        totalPrice: 0,
+        children: {},
+        activeNames: [],
       };
-  
-      myChart.setOption(option);
-  
-      // 监听窗口大小变化，调整每个图表大小
-      window.addEventListener('resize', () => {
-        myChart.resize();
-      });
-    });
+    }
+
+    const owner = owners[item.wpowner];
+    owner.totalCount += 1;
+    owner.totalPrice += item.price;
+
+    if (!owner.children[item.fin_user]) {
+      owner.children[item.fin_user] = {
+        fin_user: item.fin_user,
+        fin_user_name: item.fin_user_name,
+        confirmedCount: 0,
+        unconfirmedCount: 0,
+        totalPrice: 0,
+      };
+    }
+
+    const user = owner.children[item.fin_user];
+    if (item.last_comfirmer) {
+      user.confirmedCount += 1;
+    } else {
+      user.unconfirmedCount += 1;
+    }
+    user.totalPrice += item.price;
   });
-  </script>
-  
-  <style scoped>
-  .echarts-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-  }
-  .echarts-box {
-    flex: 1 1 calc(50% - 16px); /* 每个图表占一半宽度，留出间距 */
-    min-width: 300px; /* 最小宽度 */
-  }
-  </style>
-  
+
+  console.log('构建的树形数据:', owners); // 调试用
+
+  treeData.value = Object.values(owners).map(owner => ({
+    ...owner,
+    children: Object.values(owner.children),
+  }));
+};
+
+// 在组件挂载时获取数据
+onMounted(() => {
+  fetchData();
+});
+
+// 监听 selectedDate 变化，重新获取数据
+watch(selectedDate, () => {
+  fetchData();
+});
+
+// 格式化日期
+const formatDate = (date) => {
+  return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+};
+
+// 日期选择确认事件
+const onDateConfirm = (date) => {
+  selectedDate.value = formatDate(date);
+  showDatePicker.value = false;
+  console.log('选中日期:', selectedDate.value);
+};
+</script>
+
+<style scoped>
+.tree-list {
+  margin-top: 20px;
+}
+
+.tree-node {
+  margin-bottom: 10px;
+}
+
+.tree-node-sub {
+  margin-left: 20px;
+}
+</style>

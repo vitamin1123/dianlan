@@ -71,6 +71,14 @@
       />
       <van-cell
         v-if="[0,5].includes(roleid)"
+        title="统计-员工产值"
+        size="large"
+        is-link
+        to="myana-peo"
+        class="custom-cell"
+      />
+      <van-cell
+        v-if="[0,5].includes(roleid)"
         title="管理设置"
         size="large"
         is-link
