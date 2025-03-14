@@ -1,4 +1,10 @@
 <template>
+  <van-nav-bar
+    title="人员产值统计"
+    left-text="返回"
+    left-arrow
+    @click-left="onClickLeft"
+  />
   <div>
     <!-- 日期选择器 -->
     <van-field
@@ -46,7 +52,7 @@ const showDatePicker = ref(false);
 const activeNames = ref([]);
 const rawData = ref([]); // 存储从接口获取的原始数据
 const treeData = ref([]); // 树形结构数据
-
+const onClickLeft = () => history.back();
 // 获取数据
 const fetchData = async () => {
   try {
