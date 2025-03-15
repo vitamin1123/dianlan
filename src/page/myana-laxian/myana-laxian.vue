@@ -87,7 +87,7 @@
         <van-collapse-item
           v-for="proj in treeData"
           :key="proj.proj_item"
-          :title="`${proj.proj_item} (总计：${proj.count} 根，价格：${proj.total_price.toFixed(2)} 元)`"
+          :title="`${proj.proj_item} (总计：${proj.count} 根，价格：${proj.total_price} 元)`"
           :name="proj.proj_item"
           class="tree-node"
         >
@@ -95,7 +95,7 @@
             <van-collapse-item
               v-for="worker in proj.children"
               :key="worker.wpowner_name"
-              :title="`${worker.wpowner_name} (派工数：${worker.count} 根，价格：${worker.total_price.toFixed(2)} 元)`"
+              :title="`${worker.wpowner_name} (派工数：${worker.count} 根，价格：${worker.total_price} 元)`"
               :name="worker.wpowner_name"
               class="tree-node-sub"
             >

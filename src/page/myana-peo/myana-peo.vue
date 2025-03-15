@@ -16,6 +16,8 @@
       @click="showDatePicker = true"
     />
     <van-calendar
+      :min-date="minDate"
+      :max-date="maxDate"
       v-model:show="showDatePicker"
       @confirm="onDateConfirm"
     />
@@ -46,6 +48,8 @@ import { ref, onMounted, watch } from 'vue';
 import http from '@/api/request';
 
 // 状态
+const minDate = ref(new Date(2000, 0, 1)); // 设置最小日期为2000年1月1日
+const maxDate = ref(new Date(2100, 11, 31));
 const todayDate = new Date().toLocaleDateString('en-CA').replace(/-/g, '/');
 const selectedDate = ref(todayDate);
 const showDatePicker = ref(false);
@@ -65,6 +69,18 @@ const fetchData = async () => {
   }
 };
 
+// 去重函数：根据 wpid、dianlanid 和 fin_user 去重
+const uniqueData = (data) => {
+  const uniqueMap = new Map();
+  data.forEach(item => {
+    const key = `${item.wpid}-${item.dianlanid}-${item.fin_user}`;
+    if (!uniqueMap.has(key)) {
+      uniqueMap.set(key, item);
+    }
+  });
+  return Array.from(uniqueMap.values());
+};
+
 // 构建树形数据
 const buildTreeData = () => {
   if (!rawData.value.length) {
@@ -72,9 +88,13 @@ const buildTreeData = () => {
     return;
   }
 
+  // 去重后的数据
+  const uniqueRecords = uniqueData(rawData.value);
+  console.log('去重后的数据:', uniqueRecords); // 调试用
+
   const owners = {};
 
-  rawData.value.forEach(item => {
+  uniqueRecords.forEach(item => {
     if (!owners[item.wpowner]) {
       owners[item.wpowner] = {
         wpowner: item.wpowner,
