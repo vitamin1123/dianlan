@@ -913,7 +913,7 @@ const handlePopupClose = () => {
   };
   
   // 点击 Grid 事件
-  const handleGridClick = (index) => {
+  const handleGridClick = async(index) => {
     
     const selectedItem = gridItems.value[index];
 
@@ -926,6 +926,7 @@ const handlePopupClose = () => {
     // 如果已经选中过，恢复之前的搜索词；否则清空搜索词
     search_word.value = searchWords.value[selectedItem.key] || '';
     console.log('search_word.value: ',searchWords.value);
+    await search()
     showTop.value = true; // 显示搜索弹窗
   };
 
