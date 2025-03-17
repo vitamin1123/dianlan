@@ -13,7 +13,7 @@
         autofocus
         clearable
         @search="search"
-        
+        @clear="search"
       />
       <!-- <van-list>
         <van-cell-group>
