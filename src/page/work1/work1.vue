@@ -535,8 +535,9 @@
     const newItems = show_list.value.filter(item => 
       (!cart.value.some(cartItem => cartItem.id === item.id)) && 
       item.last_fangxian &&
-      !item.paip &&
-      (item.fin_user === null || item.fin_user === '')
+      
+      (item.fin_user === null || item.fin_user === '') 
+      
     );
 
     if (newItems.length === 0) {
