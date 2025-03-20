@@ -36,11 +36,11 @@
           
           <div class="card-content">
             <span class="card-value">{{ confirmedPai }}/{{ total_pai }}</span>
-            <span class="card-unit">已确认/总派工单数</span>
+            <span class="card-unit">已确认完成/总完成接线数</span>
           </div>
           <div class="card-content">
             <span class="card-value">{{ confirmedFin }}/{{ total_fin }}</span>
-            <span class="card-unit">已确认完成/总完成接线数</span>
+            <span class="card-unit">已确认/总派工单数</span>
           </div>
           <div class="card-content">
             <span class="card-value">{{ confirmedValue.toFixed(0) }}/{{ totalValue.toFixed(0) }}</span>
@@ -177,7 +177,9 @@ const buildTreeForFangxian = (data) => {
 // 构建工单数据的树形结构
 const buildTreeForWorkOrder = (data) => {
   const tree = [];
+  
   data.forEach((item) => {
+    // 第一层：按 proj_item 查找或创建节点
     let proj = tree.find((p) => p.proj_item === item.proj_item);
     if (!proj) {
       proj = {
@@ -185,13 +187,14 @@ const buildTreeForWorkOrder = (data) => {
         count: 0,
         total_price: 0,
         children: [],
-        activeNames: [],
       };
       tree.push(proj);
     }
+    // 累加项目层级的数量和价格
     proj.count += 1;
     proj.total_price += item.price;
 
+    // 第二层：按 wpowner_name 查找或创建节点
     let worker = proj.children.find((w) => w.wpowner_name === item.wpowner_name);
     if (!worker) {
       worker = {
@@ -202,9 +205,11 @@ const buildTreeForWorkOrder = (data) => {
       };
       proj.children.push(worker);
     }
+    // 累加负责人层级的数量和价格
     worker.count += 1;
     worker.total_price += item.price;
 
+    // 第三层：按 name 查找或创建节点
     let area = worker.children.find((a) => a.name === item.name);
     if (!area) {
       area = {
@@ -214,11 +219,57 @@ const buildTreeForWorkOrder = (data) => {
       };
       worker.children.push(area);
     }
+    // 累加区域层级的数量和价格
     area.count += 1;
     area.total_price += item.price;
   });
+
   return tree;
 };
+// const buildTreeForWorkOrder = (data) => {
+//   const tree = [];
+//   data.forEach((item) => {
+//     let proj = tree.find((p) => p.proj_item === item.proj_item);
+//     if (!proj) {
+//       proj = {
+//         proj_item: item.proj_item,
+//         count: 0,
+//         total_price: 0,
+//         children: [],
+//         activeNames: [],
+//       };
+//       tree.push(proj);
+//     }
+//     proj.count += 1;
+//     proj.total_price += item.price;
+
+//     let worker = proj.children.find((w) => w.wpowner_name === item.wpowner_name);
+//     if (!worker) {
+//       worker = {
+//         wpowner_name: item.wpowner_name,
+//         count: 0,
+//         total_price: 0,
+//         children: [],
+//       };
+//       proj.children.push(worker);
+//     }
+//     worker.count += 1;
+//     worker.total_price += item.price;
+
+//     let area = worker.children.find((a) => a.name === item.name);
+//     if (!area) {
+//       area = {
+//         name: item.name,
+//         count: 0,
+//         total_price: 0,
+//       };
+//       worker.children.push(area);
+//     }
+//     area.count += 1;
+//     area.total_price += item.price;
+//   });
+//   return tree;
+// };
 
 // 获取放线数据
 const fetchFangxianData = async () => {
@@ -275,27 +326,52 @@ const fetchWorkOrderSummary = async () => {
 };
 
 // 获取工单详细数据
+// 获取工单详细数据（修复版）
 const fetchWorkOrderData = async () => {
   try {
     const res = await http.post('/api/get_total_pai');
 
-    // 去重函数：根据 proj_item 和 dianlanid 去重
-    const uniqueByProjItemAndDianlanId = (arr) => {
-      return [...new Map(arr.map((item) => [`${item.proj_item}-${item.dianlanid}`, item])).values()];
-    };
-
-    // 去重后的数据
-    const uniqueData = uniqueByProjItemAndDianlanId(res.data);
-
-    // 过滤掉 fin_user 为 null 且 state 不为 1 的数据
-    const validData = uniqueData.filter((item) => item.fin_user !== null && item.state === 1);
-
-    // 构建树形结构
+    // 步骤1：过滤有效数据（fin_user不为null + state=1 + dianlanstate=1）
+    const validData = res.data.filter(
+      (item) => 
+        item.fin_user !== null && 
+        item.state === 1 && 
+        item.dianlanstate === 1
+    );
+    console.log('有效数据:', validData);
+    // const uniqueByDianlanId = Array.from(
+    //   new Map(validData.map(item => [item.dianlanid, item])).values()
+    // );
+    // console.log('去重后的数据:', uniqueByDianlanId);
+    // 步骤2：直接使用有效数据构建树形结构（无需去重）
     treeData.value = buildTreeForWorkOrder(validData);
+
+    console.log('有效数据数量:', validData.length); // 验证数据量
   } catch (error) {
     console.error('Error:', error);
   }
 };
+// const fetchWorkOrderData = async () => {
+//   try {
+//     const res = await http.post('/api/get_total_pai');
+
+//     // 去重函数：根据 proj_item 和 dianlanid 去重
+//     const uniqueByProjItemAndDianlanId = (arr) => {
+//       return [...new Map(arr.map((item) => [`${item.proj_item}-${item.dianlanid}`, item])).values()];
+//     };
+
+//     // 去重后的数据
+//     const uniqueData = uniqueByProjItemAndDianlanId(res.data);
+
+//     // 过滤掉 fin_user 为 null 且 state 不为 1 的数据
+//     const validData = uniqueData.filter((item) => item.fin_user !== null && item.state === 1);
+
+//     // 构建树形结构
+//     treeData.value = buildTreeForWorkOrder(validData);
+//   } catch (error) {
+//     console.error('Error:', error);
+//   }
+// };
 
 // 切换至放线数据
 const showFangxianData = async () => {
