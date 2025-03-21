@@ -862,7 +862,7 @@ const handlePopupClose = () => {
 
   const search = async () => {
     console.log('search',search_word.value,sw.value);
-    search_word.value = search_word.value.trim().toUpperCase(); // 去除首尾空格
+    search_word.value = search_word.value.toString().trim().toUpperCase(); // 去除首尾空格
     const sd = {
       'sw': sw.value,
       'company': sw.value=='公司'?search_word.value:searchWords.value['公司'],
