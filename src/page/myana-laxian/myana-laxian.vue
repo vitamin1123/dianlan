@@ -35,11 +35,11 @@
         <template #desc>
           
           <div class="card-content">
-            <span class="card-value">{{ confirmedPai }}/{{ total_pai }}</span>
+            <span class="card-value">{{ confirmedFin }}/{{ total_fin }}</span>
             <span class="card-unit">已确认完成/总完成接线数</span>
           </div>
           <div class="card-content">
-            <span class="card-value">{{ confirmedFin }}/{{ total_fin }}</span>
+            <span class="card-value">{{ confirmedPai }}/{{ total_pai }}</span>
             <span class="card-unit">已确认/总派工单数</span>
           </div>
           <div class="card-content">
@@ -83,33 +83,38 @@
       </template>
 
       <template v-else-if="currentView === 'workOrder'">
-        <!-- 工单数据的树形结构 -->
+  <!-- 外层折叠面板（非手风琴模式） -->
+  <van-collapse v-model="activeProject">
+    <van-collapse-item
+      v-for="project in treeData"
+      :key="project.proj_item"
+      :title="`${project.proj_item} (电缆数：${project.count}，产值：${project.total_price}元)`"
+      :name="project.proj_item"
+      class="tree-node"
+    >
+      <!-- 内层折叠面板（手风琴模式） -->
+      <van-collapse v-model="activeWorker" accordion>
         <van-collapse-item
-          v-for="proj in treeData"
-          :key="proj.proj_item"
-          :title="`${proj.proj_item} (总计：${proj.count} 根，价格：${proj.total_price} 元)`"
-          :name="proj.proj_item"
-          class="tree-node"
+          v-for="worker in project.children"
+          :key="worker.wpowner_name"
+          :title="`${worker.wpowner_name} (电缆数：${worker.count}，产值：${worker.total_price}元)`"
+          :name="worker.wpowner_name"
+          class="tree-node-sub"
         >
-          <van-collapse v-model="proj.activeNames">
-            <van-collapse-item
-              v-for="worker in proj.children"
-              :key="worker.wpowner_name"
-              :title="`${worker.wpowner_name} (派工数：${worker.count} 根，价格：${worker.total_price} 元)`"
-              :name="worker.wpowner_name"
-              class="tree-node-sub"
-            >
-              <van-cell
-                v-for="area in worker.children"
-                :key="area.name"
-                :title="area.name"
-                :label="`区域数：${area.count} 根，价格：${area.total_price.toFixed(2)} 元`"
-                class="tree-node-item"
-              />
-            </van-collapse-item>
-          </van-collapse>
+          <div class="area-list">
+            <van-cell
+              v-for="area in worker.children"
+              :key="area.name"
+              :title="area.name"
+              :label="`电缆数：${area.count}，产值：${area.total_price}元`"
+              class="tree-node-item"
+            />
+          </div>
         </van-collapse-item>
-      </template>
+      </van-collapse>
+    </van-collapse-item>
+  </van-collapse>
+</template>
     </van-collapse>
   </div>
 </template>
@@ -130,7 +135,8 @@ const activeNames = ref([]); // 控制折叠面板的展开状态
 const currentView = ref('fangxian'); // 当前视图：fangxian 或 workOrder
 const confirmedValue = ref(0); // 已确认产值
 const totalValue = ref(0); // 派工总产值
-
+const activeProject = ref([]);
+const activeWorker = ref('');
 // 返回上一页
 const onClickLeft = () => history.back();
 
@@ -176,55 +182,85 @@ const buildTreeForFangxian = (data) => {
 
 // 构建工单数据的树形结构
 const buildTreeForWorkOrder = (data) => {
-  const tree = [];
-  
-  data.forEach((item) => {
-    // 第一层：按 proj_item 查找或创建节点
-    let proj = tree.find((p) => p.proj_item === item.proj_item);
-    if (!proj) {
-      proj = {
+  // 创建三层的聚合Map结构
+  const projectMap = new Map(); // 第一层：项目维度
+
+  // 使用对象记录已处理的dianlanid
+  const processedDianlan = new Set();
+
+  data.forEach(item => {
+    // 确保每个dianlanid只处理一次
+    if (processedDianlan.has(item.dianlanid)) return;
+    processedDianlan.add(item.dianlanid);
+
+    // --- 项目层级处理 ---
+    let project = projectMap.get(item.proj_item);
+    if (!project) {
+      project = {
         proj_item: item.proj_item,
         count: 0,
         total_price: 0,
-        children: [],
+        children: new Map(), // 使用Map提高查找效率
+        dianlanSet: new Set()
       };
-      tree.push(proj);
+      projectMap.set(item.proj_item, project);
     }
-    // 累加项目层级的数量和价格
-    proj.count += 1;
-    proj.total_price += item.price;
+    
+    // 更新项目统计（仅首次添加时）
+    if (!project.dianlanSet.has(item.dianlanid)) {
+      project.count++;
+      project.total_price += item.price || 0;
+      project.dianlanSet.add(item.dianlanid);
+    }
 
-    // 第二层：按 wpowner_name 查找或创建节点
-    let worker = proj.children.find((w) => w.wpowner_name === item.wpowner_name);
+    // --- 负责人层级处理 ---
+    let worker = project.children.get(item.wpowner_name);
     if (!worker) {
       worker = {
         wpowner_name: item.wpowner_name,
         count: 0,
         total_price: 0,
-        children: [],
+        children: new Map(),
+        dianlanSet: new Set()
       };
-      proj.children.push(worker);
+      project.children.set(item.wpowner_name, worker);
     }
-    // 累加负责人层级的数量和价格
-    worker.count += 1;
-    worker.total_price += item.price;
+    
+    // 更新负责人统计
+    if (!worker.dianlanSet.has(item.dianlanid)) {
+      worker.count++;
+      worker.total_price += item.price || 0;
+      worker.dianlanSet.add(item.dianlanid);
+    }
 
-    // 第三层：按 name 查找或创建节点
-    let area = worker.children.find((a) => a.name === item.name);
+    // --- 区域层级处理 ---
+    let area = worker.children.get(item.name);
     if (!area) {
       area = {
         name: item.name,
-        count: 0,
-        total_price: 0,
+        count: 1, // 直接计数（因为已经过滤重复）
+        total_price: item.price || 0,
       };
-      worker.children.push(area);
+      worker.children.set(item.name, area);
     }
-    // 累加区域层级的数量和价格
-    area.count += 1;
-    area.total_price += item.price;
   });
 
-  return tree;
+  // 转换Map结构为前端需要的树形格式
+  return Array.from(projectMap.values()).map(project => ({
+    proj_item: project.proj_item,
+    count: project.count,
+    total_price: project.total_price,
+    children: Array.from(project.children.values()).map(worker => ({
+      wpowner_name: worker.wpowner_name,
+      count: worker.count,
+      total_price: worker.total_price,
+      children: Array.from(worker.children.values()).map(area => ({
+        name: area.name,
+        count: area.count,
+        total_price: area.total_price
+      }))
+    }))
+  }));
 };
 // const buildTreeForWorkOrder = (data) => {
 //   const tree = [];
@@ -286,40 +322,54 @@ const fetchFangxianData = async () => {
 const fetchWorkOrderSummary = async () => {
   try {
     const res = await http.post('/api/get_total_pai');
+    const rawData = res.data;
 
-    // 去重函数：根据 dianlanid 去重
-    const uniqueByDianlanId = (arr) => {
-      return [...new Map(arr.map((item) => [item.dianlanid, item])).values()];
+    // 通用去重函数
+    const uniqueByKey = (arr, key) => [...new Map(arr.map(item => [item[key], item])).values()];
+
+    // 基础数据集处理
+    const allUniqueDianlan = uniqueByKey(rawData, 'dianlanid'); // 所有去重dianlanid
+    const allUniqueWpid = uniqueByKey(rawData, 'wpid');         // 所有去重wpid
+
+    // fin_user不为空的数据处理
+    const finUserData = rawData.filter(item => item.fin_user !== null);
+    const finUniqueDianlan = uniqueByKey(finUserData, 'dianlanid');
+
+    // last_comfirmer不为空的数据处理
+    const confirmedData = rawData.filter(item => item.last_comfirmer !== null);
+    const confUniqueWpid = uniqueByKey(confirmedData, 'wpid');
+    
+    // last_comfirmer不为空的dianlanid去重集合
+    const confUniqueDianlan = uniqueByKey(confirmedData, 'dianlanid');
+
+    // 六个统计指标计算
+    const stats = {
+      // 1. fin_user不为空的dianlanid去重数量
+      finUniqueDianlanCount: finUniqueDianlan.length,
+      
+      // 2. dianlanid全部去重数量
+      allDianlanCount: allUniqueDianlan.length,
+      
+      // 3. last_comfirmer不为空的wpid去重数量
+      confUniqueWpidCount: confUniqueWpid.length,
+      
+      // 4. wpid全部去重数量
+      allWpidCount: allUniqueWpid.length,
+      
+      // 5. last_comfirmer不为空的（按dianlanid去重）price合计
+      confDianlanTotal: confUniqueDianlan.reduce((sum, item) => sum + (item.price || 0), 0),
+      
+      // 6. 全部（按dianlanid去重）price合计
+      allDianlanTotal: allUniqueDianlan.reduce((sum, item) => sum + (item.price || 0), 0)
     };
 
-    // 去重后的数据
-    const uniqueData = uniqueByDianlanId(res.data);
-
-    // 过滤掉 fin_user 为 null 的数据
-    const validData = uniqueData.filter((item) => item.fin_user !== null);
-
-    // 统计总派工单数量和已确认派工单数量
-    total_pai.value = uniqueData.length; // 总派工单数量（去重后）
-    confirmedPai.value = uniqueData.filter((item) => item.state === 1).length; // 已确认派工单数量
-    total_fin.value = validData.length; // 总完成数目（fin_user 不为 null 的数据）
-
-    // 计算已确认完成数
-    confirmedFin.value = uniqueData.filter((item) => item.state === 1 && item.fin_user !== null).length;
-
-    // 计算产值
-    totalValue.value = uniqueData.reduce((sum, item) => sum + (item.price || 0), 0); // 派工总产值
-    confirmedValue.value = uniqueData
-      .filter((item) => item.state === 1) // 只统计 state 为 1 的工单
-      .reduce((sum, item) => sum + (item.price || 0), 0); // 已确认产值
-
-    // 打印调试信息
-    console.log('总派工单数量:', total_pai.value);
-    console.log('已确认派工单数量:', confirmedPai.value);
-    console.log('总完成数目:', total_fin.value);
-    console.log('已确认完成数:', confirmedFin.value);
-    console.log('派工总产值:', totalValue.value);
-    console.log('已确认产值:', confirmedValue.value);
-    console.log('state 为 1 的工单:', uniqueData.filter((item) => item.state === 1));
+    // 将统计结果赋值给响应式变量（根据你的实际变量名调整）
+    confirmedPai.value = stats.confUniqueWpidCount;
+    total_pai.value = stats.allWpidCount;
+    confirmedFin.value = stats.finUniqueDianlanCount;
+    total_fin.value = stats.allDianlanCount;
+    confirmedValue.value = stats.confDianlanTotal;
+    totalValue.value = stats.allDianlanTotal;
   } catch (error) {
     console.error('Error:', error);
   }
@@ -330,23 +380,18 @@ const fetchWorkOrderSummary = async () => {
 const fetchWorkOrderData = async () => {
   try {
     const res = await http.post('/api/get_total_pai');
-
-    // 步骤1：过滤有效数据（fin_user不为null + state=1 + dianlanstate=1）
-    const validData = res.data.filter(
-      (item) => 
-        item.fin_user !== null && 
-        item.state === 1 && 
-        item.dianlanstate === 1
+    
+    // 前置过滤（根据需求调整）
+    const validData = res.data.filter(item => 
+      item.fin_user && 
+      item.state === 1 && 
+      item.dianlanstate === 1
     );
-    console.log('有效数据:', validData);
-    // const uniqueByDianlanId = Array.from(
-    //   new Map(validData.map(item => [item.dianlanid, item])).values()
-    // );
-    // console.log('去重后的数据:', uniqueByDianlanId);
-    // 步骤2：直接使用有效数据构建树形结构（无需去重）
-    treeData.value = buildTreeForWorkOrder(validData);
 
-    console.log('有效数据数量:', validData.length); // 验证数据量
+    treeData.value = buildTreeForWorkOrder(validData);
+    
+    // 调试验证
+    console.log('树形结构:', JSON.parse(JSON.stringify(treeData.value)));
   } catch (error) {
     console.error('Error:', error);
   }
