@@ -15,7 +15,7 @@
         @search="search"
         @clear="handleClear"
       />
-      <div v-if="loading" class="loading">加载中...</div>
+      <div v-if="list.length == 0" class="loading">加载中...</div>
       <RecycleScroller
         v-else-if="list.length > 0"
         class="scroller"
@@ -23,9 +23,9 @@
         :item-size="50"
         :page-mode="true"     
         :buffer="2000"        
-        :prerender="500"      
-        key-field="key"
-        v-slot="{ item }"
+        :prerender="100"      
+        key-field="id"
+        v-slot="{ item={} }"
       >
       <template v-if="sw === '电缆代号'">
         <van-checkbox-group v-model="selectedDaihao">
@@ -257,8 +257,8 @@
   import { showConfirmDialog  } from 'vant';
   import { useUserStore } from '@/store/userStore';
   import { v4 as uuidv4 } from 'uuid';
-  import { RecycleScroller } from 'vue3-virtual-scroller'
-  import 'vue3-virtual-scroller/dist/vue3-virtual-scroller.css';
+  import VueVirtualScroller from 'vue-virtual-scroller'
+  import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
   const userStore = useUserStore();
   const cart = ref([]);
   const showTop = ref(false);
@@ -921,33 +921,31 @@ const handlePopupClose = () => {
     for (let i = 0; i < response.data.length; i++) {
       const itemKey = uuidv4(); 
       if (sw.value=='公司'){
-        tmp.push({ key: itemKey, value:response.data[i]['company'],title: response.data[i]['company'] });
-
-
+        tmp.push({ id: i, value:response.data[i]['company'],title: response.data[i]['company'] });
       }else if (sw.value=='船号'){
-        tmp.push({ key: itemKey, value:response.data[i]['proj'],title: response.data[i]['proj'] });
+        tmp.push({ id: i, value:response.data[i]['proj'],title: response.data[i]['proj'] });
       }
       else if (sw.value=='电缆代号'){
-        tmp.push({ key: itemKey, value:response.data[i]['daihao'],title: response.data[i]['daihao'] });
+        tmp.push({ id: i, value:response.data[i]['daihao'],title: response.data[i]['daihao'] });
       }else if (sw.value=='电缆型号'){
-        tmp.push({ key: itemKey, value:response.data[i]['model'],title: response.data[i]['model'] });
+        tmp.push({ id: i, value:response.data[i]['model'],title: response.data[i]['model'] });
       }else if (sw.value=='电缆规格'){
-        tmp.push({ key: itemKey, value:response.data[i]['specification'],title: response.data[i]['specification'] });
+        tmp.push({ id: i, value:response.data[i]['specification'],title: response.data[i]['specification'] });
       }else if (sw.value=='设备'){
-        tmp.push({ key: itemKey, value:response.data[i]['facilities_name'],title: response.data[i]['facilities_name'] });
+        tmp.push({ id: i, value:response.data[i]['facilities_name'],title: response.data[i]['facilities_name'] });
       }else if (sw.value=='设备地点'){
-        tmp.push({ key: itemKey, value:response.data[i]['facilities_loca'],title: response.data[i]['facilities_loca'] });
+        tmp.push({ id: i, value:response.data[i]['facilities_loca'],title: response.data[i]['facilities_loca'] });
       }else if (sw.value=='区域'){
-        tmp.push({ key: itemKey, value:response.data[i]['itemid'],title: response.data[i]['itemname'] });
+        tmp.push({ id: i, value:response.data[i]['itemid'],title: response.data[i]['itemname'] });
       }
       else if (sw.value=='总线长'){
-        tmp.push({ key: itemKey, value:response.data[i]['total_length'],title: response.data[i]['total_length'] });
+        tmp.push({ id: i, value:response.data[i]['total_length'],title: response.data[i]['total_length'] });
       }else if (sw.value=='系统名'){
-        tmp.push({ key: itemKey, value:response.data[i]['sysname'],title: response.data[i]['sysname'] });
+        tmp.push({ id: i, value:response.data[i]['sysname'],title: response.data[i]['sysname'] });
       }
     }
-    list.value = tmp;
-    console.log(list.value);
+    list.value = tmp.filter(item => item && item.id);
+    console.log("看看list",list.value);
   };
   
   // 点击 Grid 事件
