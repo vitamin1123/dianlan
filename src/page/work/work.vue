@@ -15,30 +15,31 @@
         @search="search"
         @clear="handleClear"
       />
-      <div v-if="list.length == 0" class="loading">加载中...</div>
-      <RecycleScroller
-        v-else-if="list.length > 0"
-        class="scroller"
-        :items="list"
-        :item-size="50"
-        :page-mode="true"     
-        :buffer="2000"        
-        :prerender="100"      
-        key-field="id"
-        v-slot="{ item={} }"
-      >
-      <template v-if="sw === '电缆代号'">
-        <van-checkbox-group v-model="selectedDaihao">
-          <van-cell>
-            <van-checkbox :name="item.value">{{ item.title }}</van-checkbox>
-          </van-cell>
-        </van-checkbox-group>
-      </template>
-      <template v-else>
-        <van-cell :title="item.title" @click="select(item)" />
+     
+    <RecycleScroller
+      v-if="list.length > 0"
+      class="scroller"
+      :items="list"
+      :item-size="50"
+      :page-mode="true"
+      :buffer="2000"
+      :prerender="100"
+      key-field="id"
+    >
+      <template #default="{ item }">
+        <template v-if="sw === '电缆代号'">
+          <van-checkbox-group v-model="selectedDaihao">
+            <van-cell>
+              <van-checkbox :name="item.value">{{ item.title }}</van-checkbox>
+            </van-cell>
+          </van-checkbox-group>
+        </template>
+        <template v-else>
+          <van-cell :title="item.title" @click="select(item)" />
+        </template>
       </template>
     </RecycleScroller>
-    <div v-else class="empty">暂无数据</div>
+
     </van-popup>
     <van-popup>
       <van-search />
@@ -192,7 +193,7 @@
         style="--van-card-font-size: 0.4rem;"
         >
         <template #tags>
-          <van-tag v-if="item.proj"  type="primary" style="margin-right: 0.1rem;">{{ 'N'+item.proj.substr(-4) }}</van-tag>
+          <van-tag v-if="item.proj"  type="primary" style="margin-right: 0.1rem;">{{ item.proj }}</van-tag>
             <van-tag v-if="item.facilities && item.facilities.trim() !== ''" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities }}</van-tag>
             <van-tag v-if="item.facilities_loca && item.facilities_loca.trim() !== ''"  color="#5a73a4"  style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
             <van-tag v-if="item.facilities_name && item.facilities_name.trim() !== ''" plain color="#5a73a4" style="margin-right: 0.1rem;">{{ item.facilities_name }}</van-tag>
@@ -257,7 +258,7 @@
   import { showConfirmDialog  } from 'vant';
   import { useUserStore } from '@/store/userStore';
   import { v4 as uuidv4 } from 'uuid';
-  import VueVirtualScroller from 'vue-virtual-scroller'
+  import { RecycleScroller } from 'vue-virtual-scroller';
   import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
   const userStore = useUserStore();
   const cart = ref([]);
@@ -777,7 +778,8 @@ const convertToTree1 = (data, ori_fangxian_loca) => {
   };
 
   const fetchData = async () => {
-    if (searchWords.value['公司'].length == 0) {
+    if (searchWords.value['船号'].length == 0) {
+      console.log('请输入船号');
       return 
     }
     const now = Date.now();
@@ -815,7 +817,7 @@ const convertToTree1 = (data, ori_fangxian_loca) => {
 
   // 选择搜索结果
   const select = async (item) => {
-    console.log('Selected:', item.title);
+    console.log('Selected:', item.value,sw.value);
     const index = gridItems.value.findIndex((item) => item.key === sw.value);
     console.log('index: ',index);   
     if (index !== -1) {
