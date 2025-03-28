@@ -13,19 +13,10 @@
         autofocus
         clearable
         @search="search"
-        @clear="search"
+        @clear="handleClear"
       />
-      <!-- <van-list>
-        <van-cell-group>
-          <van-cell
-            v-for="item in list"
-            :key="item.key"
-            :title="item.title"
-            @click="select(item.title)"
-          />
-        </van-cell-group>
-      </van-list> -->
-      <lazy-component>
+      
+      <!-- <lazy-component>
         <van-cell-group>
           <van-cell
             v-for="item in list"
@@ -34,7 +25,30 @@
             @click="select(item)"
           />
         </van-cell-group>
-      </lazy-component>
+      </lazy-component> -->
+      <RecycleScroller
+      v-if="list.length > 0"
+      class="scroller"
+      :items="list"
+      :item-size="50"
+      :page-mode="true"
+      :buffer="2000"
+      :prerender="100"
+      key-field="id"
+    >
+      <template #default="{ item }">
+        <template v-if="sw === '电缆代号'">
+          <van-checkbox-group v-model="selectedDaihao">
+            <van-cell>
+              <van-checkbox :name="item.value">{{ item.title }}</van-checkbox>
+            </van-cell>
+          </van-checkbox-group>
+        </template>
+        <template v-else>
+          <van-cell :title="item.title" @click="select(item)" />
+        </template>
+      </template>
+    </RecycleScroller>
     </van-popup>
     <van-popup>
       <van-search />
@@ -141,23 +155,7 @@
       </van-swipe-cell>
       
     </van-popup>
-    <!-- <van-collapse v-model="activeNames">
-      <van-collapse-item title="搜索条件" name="1">
-        <van-grid direction="horizontal" :column-num="3" clickable 
-        style="z-index: 10; position: sticky; top: 0; background-color: #fff;">
-        <van-grid-item
-          v-for="(item, index) in gridItems"
-          :key="index"
-          :text="item.text"
-          :style="{
-            '--van-grid-item-text-color': selected[index] ? '#000' : '#ccc',
-          }"
-          @click="handleGridClick(index)"
-        />
-      </van-grid>
-      </van-collapse-item>
-        
-    </van-collapse> -->
+    
     <van-collapse v-model="activeNames">
   <van-collapse-item title="搜索条件" name="1">
     <van-cell-group 
@@ -204,7 +202,7 @@
         style="--van-card-font-size: 0.4rem;"
         >
         <template #tags>
-          <van-tag v-if="item.proj"  type="primary" style="margin-right: 0.1rem;">{{ 'N'+item.proj.substr(-4) }}</van-tag>
+          <van-tag v-if="item.proj"  type="primary" style="margin-right: 0.1rem;">{{ item.proj }}</van-tag>
             <van-tag v-if="item.facilities && item.facilities.trim() !== ''" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities }}</van-tag>
             <van-tag v-if="item.facilities_loca && item.facilities_loca.trim() !== ''"  color="#5a73a4"  style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
             <van-tag v-if="item.facilities_name && item.facilities_name.trim() !== ''" plain color="#5a73a4" style="margin-right: 0.1rem;">{{ item.facilities_name }}</van-tag>
@@ -274,6 +272,9 @@
   import http from '@/api/request';
   import { showConfirmDialog  } from 'vant';
   import { useUserStore } from '@/store/userStore';
+  import { v4 as uuidv4 } from 'uuid';
+  import { RecycleScroller } from 'vue-virtual-scroller';
+  import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
   const userStore = useUserStore();
   const cart = ref([]);
   const showTop = ref(false);
@@ -294,6 +295,7 @@
       { text: '', value: '' },
   ])
   const filteredLeftList = ref([]);
+  const selectedDaihao = ref([]);
   const rightList = ref([]);
   const fieldValue = ref('');
   const showPicker = ref(false);
@@ -324,13 +326,24 @@
     // { text: '系统名', key: '系统名' },
   ]);
 
+  const onClickLeft = () => history.back();
+
   const rmCart = () => {
     cart.value = [];
     totalPrice.value = 0.00;
     showCartPopup.value = false;
   };
-  const onClickLeft = () => history.back();
-
+  const handleClear = () => {
+  // 如果是电缆代号，清空复选框选中
+  if (sw.value === '电缆代号') {
+    selectedDaihao.value = [] // 清空复选框选中值
+    searchWords.value['电缆代号'] = [] // 清空搜索参数
+  }
+  
+  // 执行原有search逻辑
+  search()
+}
+  
 
   const filterUsers = ref('');
 
@@ -535,7 +548,6 @@
     const newItems = show_list.value.filter(item => 
       (!cart.value.some(cartItem => cartItem.id === item.id)) && 
       item.last_fangxian &&
-      
       (item.fin_user === null || item.fin_user === '') 
       
     );
@@ -789,6 +801,10 @@ const convertToTree1 = (data, ori_fangxian_loca) => {
   };
 
   const fetchData = async () => {
+    if (searchWords.value['船号'].length == 0) {
+      console.log('请输入船号');
+      return 
+    }
     const now = Date.now();
     if (now - lastRequestTime < throttleDelay) {
       // loading.value = false;
@@ -801,7 +817,7 @@ const convertToTree1 = (data, ori_fangxian_loca) => {
     const data = {
       company: searchWords.value['公司'],
       proj: searchWords.value['船号'],
-      daihao: searchWords.value['电缆代号'],
+      daihao: selectedDaihao.value,
       model: searchWords.value['电缆型号'],
       spec: searchWords.value['电缆规格'],
       facilities: searchWords.value['设备'],
@@ -849,39 +865,70 @@ const convertToTree1 = (data, ori_fangxian_loca) => {
   };
 
 
-const handlePopupClose = () => {
+  const handlePopupClose = () => {
 
-    list.value = [];
-    if (search_word.value.length == 0) {
-      const currentKey = gridItems.value.find((item) => item.key === sw.value)?.key;
-      console.log('搜索框关闭时候index: ',currentKey);
-      if (currentKey) {
-        searchWords.value[currentKey] = search_word.value;
-        const index = gridItems.value.findIndex((item) => item.key === currentKey);
-        if (index !== -1) {
-            refreshing.value = true;
-            onLoad();
-            // gridItems.value[index].text = currentKey; // 恢复默认的 key 作为 text
-            if (currentKey === '区域') {
-              gridItems.value[index].text = searchWords.value['区域名称'] || currentKey; // 恢复区域的名称
-            } else {
-              gridItems.value[index].text = currentKey; // 恢复默认的 key 作为 text
-            }
-            selected.value[index] = false; // 取消选中状态
+list.value = [];
+if (sw.value === '电缆代号') {
+// 处理复选框选中值
+if (selectedDaihao.value.length > 0) {
+  // 将选中值存入 searchWords
+  searchWords.value[sw.value] = selectedDaihao.value;
+
+// 更新grid显示
+const index = gridItems.value.findIndex(item => item.key === sw.value);
+if (index !== -1) {
+  gridItems.value[index].text = selectedDaihao.value.length > 0 
+    ? `已选 ${selectedDaihao.value.length} 项`
+    : '电缆代号';
+  selected.value[index] = selectedDaihao.value.length > 0;
+}
+
+// 触发数据刷新
+refreshing.value = true;
+onLoad();
+} else if (search_word.value.length === 0) {
+  // 未输入且未选择时恢复默认
+  const index = gridItems.value.findIndex(item => item.key === sw.value);
+  if (index !== -1) {
+    gridItems.value[index].text = '电缆代号';
+    selected.value[index] = false;
+    searchWords.value[sw.value] = '';
+  }
+}
+} else {
+if (search_word.value.length == 0) {
+  const currentKey = gridItems.value.find((item) => item.key === sw.value)?.key;
+  console.log('搜索框关闭时候index: ',currentKey);
+  if (currentKey) {
+    searchWords.value[currentKey] = search_word.value;
+    const index = gridItems.value.findIndex((item) => item.key === currentKey);
+    if (index !== -1) {
+        refreshing.value = true;
+        onLoad();
+        // gridItems.value[index].text = currentKey; // 恢复默认的 key 作为 text
+        if (currentKey === '区域') {
+          gridItems.value[index].text = searchWords.value['区域名称'] || currentKey; // 恢复区域的名称
+        } else {
+          gridItems.value[index].text = currentKey; // 恢复默认的 key 作为 text
         }
-      }
+        selected.value[index] = false; // 取消选中状态
     }
+  }
+}
+
+}
+// showTop.value = false;
 };
   
 
-  const search = async () => {
+const search = async () => {
     console.log('search',search_word.value,sw.value);
     search_word.value = search_word.value.toString().trim().toUpperCase(); // 去除首尾空格
     const sd = {
       'sw': sw.value,
       'company': sw.value=='公司'?search_word.value:searchWords.value['公司'],
       'proj': sw.value=='船号'?search_word.value:searchWords.value['船号'],
-      'daihao': sw.value=='电缆代号'?search_word.value:searchWords.value['电缆代号'],
+      'daihao': sw.value=='电缆代号'?search_word.value:selectedDaihao.value,
       'model': sw.value=='电缆型号'?search_word.value:searchWords.value['电缆型号'],
       'spec': sw.value=='电缆规格'?search_word.value:searchWords.value['电缆规格'],
       'facilities_name': sw.value=='设备'?search_word.value:searchWords.value['设备'],
@@ -896,34 +943,33 @@ const handlePopupClose = () => {
     console.log('返回值：',response.data)
     const tmp = [];
     for (let i = 0; i < response.data.length; i++) {
+      const itemKey = uuidv4(); 
       if (sw.value=='公司'){
-        tmp.push({ key: i, value:response.data[i]['company'],title: response.data[i]['company'] });
-        // 需要去重
-
+        tmp.push({ id: i, value:response.data[i]['company'],title: response.data[i]['company'] });
       }else if (sw.value=='船号'){
-        tmp.push({ key: i, value:response.data[i]['proj'],title: response.data[i]['proj'] });
+        tmp.push({ id: i, value:response.data[i]['proj'],title: response.data[i]['proj'] });
       }
       else if (sw.value=='电缆代号'){
-        tmp.push({ key: i, value:response.data[i]['daihao'],title: response.data[i]['daihao'] });
+        tmp.push({ id: i, value:response.data[i]['daihao'],title: response.data[i]['daihao'] });
       }else if (sw.value=='电缆型号'){
-        tmp.push({ key: i, value:response.data[i]['model'],title: response.data[i]['model'] });
+        tmp.push({ id: i, value:response.data[i]['model'],title: response.data[i]['model'] });
       }else if (sw.value=='电缆规格'){
-        tmp.push({ key: i, value:response.data[i]['specification'],title: response.data[i]['specification'] });
+        tmp.push({ id: i, value:response.data[i]['specification'],title: response.data[i]['specification'] });
       }else if (sw.value=='设备'){
-        tmp.push({ key: i, value:response.data[i]['facilities_name'],title: response.data[i]['facilities_name'] });
+        tmp.push({ id: i, value:response.data[i]['facilities_name'],title: response.data[i]['facilities_name'] });
       }else if (sw.value=='设备地点'){
-        tmp.push({ key: i, value:response.data[i]['facilities_loca'],title: response.data[i]['facilities_loca'] });
+        tmp.push({ id: i, value:response.data[i]['facilities_loca'],title: response.data[i]['facilities_loca'] });
       }else if (sw.value=='区域'){
-        tmp.push({ key: i, value:response.data[i]['itemid'],title: response.data[i]['itemname'] });
+        tmp.push({ id: i, value:response.data[i]['itemid'],title: response.data[i]['itemname'] });
       }
       else if (sw.value=='总线长'){
-        tmp.push({ key: i, value:response.data[i]['total_length'],title: response.data[i]['total_length'] });
+        tmp.push({ id: i, value:response.data[i]['total_length'],title: response.data[i]['total_length'] });
       }else if (sw.value=='系统名'){
-        tmp.push({ key: i, value:response.data[i]['sysname'],title: response.data[i]['sysname'] });
+        tmp.push({ id: i, value:response.data[i]['sysname'],title: response.data[i]['sysname'] });
       }
     }
-    list.value = tmp;
-    //console.log(list.value);
+    list.value = tmp.filter(item => item && item.id);
+    console.log("看看list",list.value);
   };
   
   // 点击 Grid 事件
@@ -944,38 +990,94 @@ const handlePopupClose = () => {
     showTop.value = true; // 显示搜索弹窗
   };
 
-  const loadSearchWords = async() => {
-      const savedSearchWords = localStorage.getItem('searchWords');
+  // const loadSearchWords = async() => {
+  //     const savedSearchWords = localStorage.getItem('searchWords');
       
-      if (savedSearchWords) {
-        searchWords.value = JSON.parse(savedSearchWords);
-        gridItems.value = gridItems.value.map(item => {
-          if (item.key === '区域') {
-            return {
-              ...item,
-              text: searchWords.value['区域名称'] || item.text // 显示区域的名称
-            };
-          }
+  //     if (savedSearchWords) {
+  //       searchWords.value = JSON.parse(savedSearchWords);
+  //       gridItems.value = gridItems.value.map(item => {
+  //         if (item.key === '区域') {
+  //           return {
+  //             ...item,
+  //             text: searchWords.value['区域名称'] || item.text // 显示区域的名称
+  //           };
+  //         }
+  //         return {
+  //           ...item,
+  //           text: searchWords.value[item.key] || item.text
+  //         };
+  //       });
+  //       selected.value = gridItems.value.map(item => {
+  //         return searchWords.value[item.key] ? true : false;
+  //       });
+  //       const responseData = await fetchData();
+  //       console.log('返回电缆值-loadSearchWords：', responseData.totalCount,responseData.data);
+  //       show_list.value = responseData.data;
+  //       if (show_list.value.length >= responseData.totalCount) {
+          
+  //         finished.value = true;
+  //         // console.log('返回电缆值-2：',finished.value)
+  //       }
+
+  //       console.log('parse---savedSearchWords: ',searchWords.value);
+  //     }
+  //   };
+
+  const loadSearchWords = async () => {
+  // 从 localStorage 读取保存的数据（包含 searchWords 和 selectedDaihao）
+  const savedData = localStorage.getItem('searchData'); // 键名改为 searchData
+
+  if (savedData) {
+    try {
+      const parsedData = JSON.parse(savedData);
+
+      // 兼容旧版数据（如果之前只保存了 searchWords）
+      const oldSearchWords = parsedData.searchWords || parsedData; // 兼容旧版
+      const savedSelectedDaihao = parsedData.selectedDaihao || []; // 新增 selectedDaihao
+
+      // 恢复 searchWords
+      searchWords.value = oldSearchWords;
+      
+      // 恢复 selectedDaihao
+      selectedDaihao.value = savedSelectedDaihao;
+
+      // 更新 gridItems 的显示文本
+      gridItems.value = gridItems.value.map(item => {
+        if (item.key === '区域') {
           return {
             ...item,
-            text: searchWords.value[item.key] || item.text
+            text: searchWords.value['区域名称'] || item.text
           };
-        });
-        selected.value = gridItems.value.map(item => {
-          return searchWords.value[item.key] ? true : false;
-        });
-        const responseData = await fetchData();
-        console.log('返回电缆值-loadSearchWords：', responseData.totalCount,responseData.data);
-        show_list.value = responseData.data;
-        if (show_list.value.length >= responseData.totalCount) {
-          
-          finished.value = true;
-          // console.log('返回电缆值-2：',finished.value)
         }
+        return {
+          ...item,
+          text: searchWords.value[item.key] || item.text
+        };
+      });
 
-        console.log('parse---savedSearchWords: ',searchWords.value);
-      }
-    };
+      // 更新选中状态（selected 数组）
+      selected.value = gridItems.value.map(item => {
+        return searchWords.value[item.key] ? true : false;
+      });
+
+      // 获取最新数据
+      const responseData = await fetchData();
+      console.log('加载数据成功:', {
+        totalCount: responseData.totalCount,
+        data: responseData.data
+      });
+
+      // 更新列表
+      show_list.value = responseData.data;
+      finished.value = show_list.value.length >= responseData.totalCount;
+
+    } catch (err) {
+      console.error('加载本地数据失败:', err);
+      // 如果解析失败，清空本地存储
+      localStorage.removeItem('searchData');
+    }
+  }
+};
 
   const loadAllUser = async() => {
       const url = '/api/get_all_user';
@@ -987,14 +1089,21 @@ const handlePopupClose = () => {
   };
 
   const saveSearchWords = () => {
-    localStorage.setItem('searchWords', JSON.stringify(searchWords.value));
-    console.log('searchWords saved: ',localStorage.getItem('searchWords'));
+    const dataToSave = {
+      searchWords: searchWords.value,
+      selectedDaihao: selectedDaihao.value // 新增 selectedDaihao 的保存
+    };
+    localStorage.setItem('searchWords', JSON.stringify(dataToSave));
+    console.log('searchWords saved: ',dataToSave);
   };
 
-  watch(searchWords, () => {
-    console.log('searchWords changed: ',searchWords.value);
-    saveSearchWords();
-  }, { deep: true });
+  watch(
+    [() => searchWords.value, () => selectedDaihao.value],
+    () => {
+      saveSearchWords();
+    },
+    { deep: true }
+  );
 
   onMounted( async() => {
     await loadSearchWords();

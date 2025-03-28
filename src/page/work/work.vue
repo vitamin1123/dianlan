@@ -200,14 +200,13 @@
             
             <van-tag v-if="item.last_fangxian_loca_name && item.last_fangxian_loca_name.trim() !== ''"   color="#8d3f20" >{{ "放线区域："+item.last_fangxian_loca_name }}</van-tag>
             <van-tag v-if="item.fangxianren && item.fangxianren.trim() !== ''" plain  color="#8d3f20" style="margin-right: 0.1rem;">{{ " 放线:"+item.fangxianren}}</van-tag>
-            
             <van-tag v-if="item.fin_user && item.fin_user.trim() !== ''"  type="warning" style="margin-right: 0.1rem;">{{ "接线："+item.fin_user }}</van-tag>
           </template>
         <template #footer>
             <!-- <van-button v-if="userStore.userInfo.userRole < 4" :disabled="(item.last_fangxian && item.last_fangxian!=userStore.userInfo.userCode)" size="small" @click="laxian(item)">{{ item.fangxianren || '完成拉线' }}
 :thumb="dianlanImage"
             </van-button> -->
-             <!-- 1普工 2小组长 3组长 4班组长 5文员 -->
+           
             <van-button
               v-if="[0, 3, 4, 5].includes(userStore.userInfo.userRole)"
               :disabled="(item.last_fangxian && item.last_fangxian !== userStore.userInfo.userCode) || item.paip!= null"
