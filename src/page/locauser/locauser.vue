@@ -1,4 +1,10 @@
 <template>
+  <van-nav-bar
+    title="区域授权"
+    left-text="返回"
+    left-arrow
+    @click-left="onClickLeft"
+  />
     
     <div class="container">
 
@@ -11,10 +17,14 @@
                 <van-swipe-cell v-for="item in leftFilterList"
                 :key="item.id">
                 <van-cell
-                    :title="item.name"          
+                            
                     @click="leftClick(item)"
                     :style="{ color: item.id === selectedLoca.id ? 'red' : 'black' }"
-                />
+                >
+                  <template #title>
+                    <div v-html="formatName(item.locaname, item.itemname)"></div>
+                  </template>
+                </van-cell>
                 
                 </van-swipe-cell>
                 </van-list>
@@ -66,6 +76,14 @@
 
   let isLocaChanged = ref(false);
 
+  const formatName= (locaname, itemname) => {
+    
+    return `${locaname || ''}-\n${itemname || ''}`
+      .replace(/\n/g, '<br>')
+      .replace(/-<br>/g, '-<br>');  // 保留短横线与换行的组合
+  };
+
+  const onClickLeft = () => history.back();
   watch(selectedLoca, (newVal, oldVal) => {
     if (newVal !== oldVal) { 
       isLocaChanged.value = true; // 标记 selectedLoca 发生了变化
@@ -170,7 +188,7 @@ const addRight = async(usercode) => {
     }
     const matches = []
     leftList.value.forEach(item => {
-      let metchRes = Pinyin.match(item.name, value);
+      let metchRes = Pinyin.match(item.locaname+item.name, value);
       if(metchRes)
         matches.push(item)
     });
@@ -208,8 +226,8 @@ const loadRela = async (item) => {
 
 const loadUser = async () => {
   try {
-    const response = await http.get('/api/locauser_list');
-    console.log('请求成功:', response);
+    const response = await http.get('/api/get_all_user');
+    console.log('请求成功get_all_user:', response);
     rightList.value = response.data.map(item => ({
       id: item.id,
       name: item.username,
@@ -229,12 +247,15 @@ const loadUser = async () => {
 
   const load = async () => {
     try {
-      const response = await http.get('/api/area_list');
+      const response = await http.post('/api/search_loca_all');
 
       console.log('请求成功:', response);
       leftList.value = response.data.map(item => ({
-        id: item.id,
-        name: item.locaname,
+        locaid: item.locid,
+        locaname: item.locaname,
+        itemid: item.itemid,
+        itemname: item.itemname,
+        id: item.locaid + '-' + item.itemid
       }));
       leftFilterList.value = leftList.value;
       // 处理返回的数据
@@ -256,14 +277,15 @@ const loadUser = async () => {
   </script>
   
   <style scoped>
-  .container {
-  height: 90vh;
+
+.container {
+  height: 80vh;
   display: flex;
   flex-direction: column;
 }
 
 .list-container {
-  height: calc(90vh); /* 减去按钮区域的高度 */
+  height: calc(93vh); /* 减去按钮区域的高度 */
   display: flex;
   flex-direction: column;
 }
@@ -279,7 +301,7 @@ const loadUser = async () => {
 }
 
 .van-row {
-  height: 100%;
+  height: 80%;
 }
 
 .custom-checkbox-group {
@@ -306,5 +328,20 @@ const loadUser = async () => {
 .van-cell {
   font-size: 0.4rem; /* 确保cell文字大小一致 */
 }
-  </style>
+
+/* 新增样式：固定搜索框 */
+.van-search {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: white; /* 避免内容穿透 */
+  padding: 10px 0; /* 调整间距 */
+}
+
+/* 调整列表内容，避免被搜索框遮挡 */
+.van-list {
+  margin-top: 50px; /* 根据搜索框高度调整 */
+}
+</style>
+
   

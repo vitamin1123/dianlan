@@ -33,7 +33,7 @@
     <!-- 其他单元格 -->
     <div class="cell-container">
       <van-cell
-        v-if="[0,4,5].includes(roleid)"
+        v-if="[0,4,5].includes(roleid) || is_loca_user"
         title="拉线完成"
         size="large"
         is-link
@@ -84,6 +84,14 @@
         class="custom-cell"
       />
       <van-cell
+        v-if="[0,4,5].includes(roleid)"
+        title="区域授权"
+        size="large"
+        is-link
+        to="locauser"
+        class="custom-cell"
+      />
+      <van-cell
         v-if="[0,5].includes(roleid)"
         title="管理设置"
         size="large"
@@ -110,6 +118,7 @@ const imageSrc = ref(''); // 存储生成的图片 URL
 const username = ref(userStore.userInfo.userName);
 const rolename = ref(userStore.userInfo.userRoleName);
 const roleid = ref(userStore.userInfo.userRole);
+const is_loca_user = ref(false)
 const onClickLeft = () => history.back();
 const generateImage = () => {
   const canvas = document.createElement('canvas'); // 或使用 refs 获取 canvas
@@ -142,9 +151,16 @@ const get_wp_todo_cnt = async () => {
   daibanStore.daiban = res.data;
 };
 
+const get_is_locauser = async () => {
+  const res = await http.post('/api/get_is_loca_user', { userCode: userStore.userInfo.userCode });
+  console.log('是否区域 ', res.data[0].bool);
+  is_loca_user.value = res.data[0].bool>0?true:false;
+};
+
 onMounted(async () => {
   generateImage();
   get_wp_todo_cnt();
+  get_is_locauser();
 });
 </script>
 
