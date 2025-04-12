@@ -138,7 +138,7 @@
   <van-button type="primary" @click="rmCart" size="large">
     移除全部
   </van-button> 
-  
+  <div class="cart-container" :style="{ height: scrollerHeight }">
   <!-- 替换为RecycleScroller -->
   <RecycleScroller
     v-if="cart.length > 0"
@@ -146,7 +146,8 @@
     :items="cart"
     :item-size="120" 
     key-field="id" 
-    :page-mode="true"
+    :page-mode="false"
+    :key="'scroller-'+cart.length"
   >
     <template #default="{ item, index }">
       <!-- 保持原有van-swipe-cell和van-card结构 -->
@@ -171,10 +172,10 @@
       </van-swipe-cell>
     </template>
   </RecycleScroller>
-  
+</div>
   <!-- 保持空状态显示 -->
   <div v-if="cart.length === 0" style="text-align: center; padding: 20px;">
-    购物车为空
+    已选为空
   </div>
 </van-popup>
     <!-- <van-popup v-model:show="showCartPopup" destroy-on-close round position="bottom" :style="{ height: '80%' }">
@@ -412,6 +413,10 @@
     // { text: '系统名', key: '系统名' },
   ]);
 
+  const scrollerHeight = computed(() => {
+    return 'calc(100vh - 250px)'; // 根据你的实际布局调整
+  });
+
   const onClickLeft = () => history.back();
 
   const handleSelectAll=(selectAll) => {
@@ -628,10 +633,17 @@
     fieldValue.value = selectedOptions[1].text;
   };
 
+  // const delCart = (index) => {
+  //   cart.value.splice(index, 1);
+  //   totalPrice.value = cart.value.reduce((total, item) => total + item.baseprice*100, 0);
+  //   console.log('车内容：', cart.value);
+  // };
   const delCart = (index) => {
-    cart.value.splice(index, 1);
-    totalPrice.value = cart.value.reduce((total, item) => total + item.baseprice*100, 0);
-    console.log('车内容：', cart.value);
+    const newCart = [...cart.value];
+    newCart.splice(index, 1);
+    cart.value = newCart;
+    
+    totalPrice.value = newCart.reduce((total, item) => total + item.baseprice*100, 0);
   };
 
   const addAll2Cart = () => {
