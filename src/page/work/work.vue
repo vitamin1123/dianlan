@@ -34,12 +34,28 @@
             </van-cell>
           </van-checkbox-group>
         </template>
+        <template v-if="sw === '设备地点'">
+          <van-checkbox-group v-model="selectedFacilitiesLoca">
+            <van-cell>
+              <van-checkbox :name="item.value">{{ item.title }}</van-checkbox>
+            </van-cell>
+          </van-checkbox-group>
+        </template>
         <template v-else>
           <van-cell :title="item.title" @click="select(item)" />
         </template>
       </template>
     </RecycleScroller>
-
+      <div v-if="sw === '电缆代号' || sw === '设备地点'" class="select-all-container">
+        <van-row gutter="10">
+        <van-col span="12">
+          <van-button block type="primary" @click="handleSelectAll(true)">全选</van-button>
+        </van-col>
+        <van-col span="12">
+          <van-button block type="default" @click="handleSelectAll(false)">取消全选</van-button>
+        </van-col>
+      </van-row>
+      </div>
     </van-popup>
     <van-popup>
       <van-search />
@@ -118,7 +134,50 @@
       
     </van-popup>
     <van-popup v-model:show="showCartPopup" destroy-on-close round position="bottom" :style="{ height: '80%' }">
-      
+  <!-- 移除全部按钮保持不变 -->
+  <van-button type="primary" @click="rmCart" size="large">
+    移除全部
+  </van-button> 
+  
+  <!-- 替换为RecycleScroller -->
+  <RecycleScroller
+    v-if="cart.length > 0"
+    class="cart-scroller"
+    :items="cart"
+    :item-size="120" 
+    key-field="id" 
+    :page-mode="true"
+  >
+    <template #default="{ item, index }">
+      <!-- 保持原有van-swipe-cell和van-card结构 -->
+      <van-swipe-cell>
+        <van-card
+          :num="item.num"
+          :price="parseFloat(item.baseprice + item.fa_price).toFixed(2)"
+          :desc="item.model+'  '+ item.specification"
+          :tag="item.proj.substr(-4)"
+          :title="item.daihao"
+          style="--van-card-font-size: 0.4rem;"
+        >
+          <template #tags>
+            <van-tag v-if="item.facilities" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities }}</van-tag>
+            <van-tag v-if="item.facilities_loca" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
+            <van-tag v-if="item.facilities_name" plain type="primary">{{ item.facilities_name }}</van-tag>
+          </template>
+        </van-card>
+        <template #right>
+          <van-button square type="danger" text="删除" @click="delCart(index)" class="delete-button"/>
+        </template>
+      </van-swipe-cell>
+    </template>
+  </RecycleScroller>
+  
+  <!-- 保持空状态显示 -->
+  <div v-if="cart.length === 0" style="text-align: center; padding: 20px;">
+    购物车为空
+  </div>
+</van-popup>
+    <!-- <van-popup v-model:show="showCartPopup" destroy-on-close round position="bottom" :style="{ height: '80%' }">
         <van-button type="primary"  @click="rmCart" size="large">
           移除全部
           </van-button> 
@@ -136,16 +195,12 @@
             <van-tag v-if="item.facilities_loca" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
             <van-tag v-if="item.facilities_name" plain type="primary">{{ item.facilities_name }}</van-tag>
         </template>
-        <!-- <template #footer>
-          <van-tag type="danger">{{ item.baseprice }}</van-tag>
-        </template> -->
       </van-card>
         <template #right>
           <van-button square type="danger" text="删除" @click="delCart(index)" class="delete-button"/>
         </template>
       </van-swipe-cell>
-      
-    </van-popup>
+    </van-popup> -->
     
     <van-collapse v-model="activeNames">
   <van-collapse-item title="搜索条件" name="1">
@@ -174,39 +229,85 @@
     
 <div class="card-container">
   <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
+    <RecycleScroller
+      v-if="show_list.length > 0"
+      class="scroller"
+      :items="show_list"
+      :item-size="180" 
+      :page-mode="true"
+      :buffer="1000"
+      :prerender="10"
+      key-field="id"
+      @load="onLoad" 
+    >
+      <template #default="{ item }">
+        <van-card
+          :num="item.num"
+          :price="item.fa_price ? item.baseprice + ' + ' + (parseFloat(item.fa_price).toFixed(2)): item.baseprice"
+          :desc="item.model+'  '+ item.specification"
+          :title="item.daihao"
+          style="--van-card-font-size: 0.4rem;"
+        >
+          <template #tags>
+            <van-tag v-if="item.facilities && item.facilities.trim() !== ''" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities }}</van-tag>
+            <van-tag v-if="item.facilities_loca && item.facilities_loca.trim() !== ''" color="#5a73a4" style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
+            <van-tag v-if="item.facilities_name && item.facilities_name.trim() !== ''" plain color="#5a73a4" style="margin-right: 0.1rem;">{{ item.facilities_name }}</van-tag>
+            
+            <van-tag v-if="item.last_fangxian_loca_name && item.last_fangxian_loca_name.trim() !== ''" color="#8d3f20">{{ "放线区域："+item.last_fangxian_loca_name }}</van-tag>
+            <van-tag v-if="item.fangxianren && item.fangxianren.trim() !== ''" plain color="#8d3f20" style="margin-right: 0.1rem;">{{ " 放线:"+item.fangxianren}}</van-tag>
+            <van-tag v-if="item.fin_user && item.fin_user.trim() !== ''" type="warning" style="margin-right: 0.1rem;">{{ "接线："+item.fin_user }}</van-tag>
+          </template>
+          <template #footer>
+            <van-button
+              v-if="[0, 3, 4, 5].includes(userStore.userInfo.userRole)"
+              :disabled="(item.last_fangxian && item.last_fangxian !== userStore.userInfo.userCode) || item.paip!= null"
+              :color="(item.last_fangxian )?'#dd9e21' : ''"
+              size="small"
+              @click="laxian(item)"
+            >{{ item.fangxianren || '完成拉线' }}</van-button>
+            <van-button size="small" :disabled="item.last_fangxian != null || (item.paip != null && item.fin_user != null)" @click="addCart(item)">{{ item.paip || '选中' }}</van-button>
+          </template>
+        </van-card>
+      </template>
+      
+      <!-- 加载状态和完成状态提示 -->
+      <template #after>
+        <div v-if="loading" class="loading-text">加载中...</div>
+        <div v-if="finished" class="finished-text">没有更多了</div>
+      </template>
+    </RecycleScroller>
+    
+    <!-- 空状态 -->
+    <div v-if="show_list.length === 0 && !loading" class="empty-state">
+      暂无数据
+    </div>
+  </van-pull-refresh>
+</div>
+<!-- <div class="card-container">
+  <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
     <van-list
       v-model:loading="loading"
       :finished="finished"
       finished-text="没有更多了"
       @load="onLoad"
     >
-    <!-- :origin-price="(parseFloat(item.baseprice)+parseFloat(item.fa_price)).toFixed(2)" -->
     <van-card
         v-for="item in show_list"
         :num="item.num"
         :price="item.fa_price ? item.baseprice + ' + ' + (parseFloat(item.fa_price).toFixed(2)): item.baseprice"
-        
         :desc="item.model+'  '+ item.specification"
-       
         :title="item.daihao"
-        
         style="--van-card-font-size: 0.4rem;"
         >
         <template #tags>
-          <van-tag v-if="item.proj"  type="primary" style="margin-right: 0.1rem;">{{ item.proj }}</van-tag>
-            <van-tag v-if="item.facilities && item.facilities.trim() !== ''" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities }}</van-tag>
+           <van-tag v-if="item.facilities && item.facilities.trim() !== ''" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities }}</van-tag>
             <van-tag v-if="item.facilities_loca && item.facilities_loca.trim() !== ''"  color="#5a73a4"  style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
             <van-tag v-if="item.facilities_name && item.facilities_name.trim() !== ''" plain color="#5a73a4" style="margin-right: 0.1rem;">{{ item.facilities_name }}</van-tag>
-            
             <van-tag v-if="item.last_fangxian_loca_name && item.last_fangxian_loca_name.trim() !== ''"   color="#8d3f20" >{{ "放线区域："+item.last_fangxian_loca_name }}</van-tag>
             <van-tag v-if="item.fangxianren && item.fangxianren.trim() !== ''" plain  color="#8d3f20" style="margin-right: 0.1rem;">{{ " 放线:"+item.fangxianren}}</van-tag>
             <van-tag v-if="item.fin_user && item.fin_user.trim() !== ''"  type="warning" style="margin-right: 0.1rem;">{{ "接线："+item.fin_user }}</van-tag>
           </template>
         <template #footer>
-            <!-- <van-button v-if="userStore.userInfo.userRole < 4" :disabled="(item.last_fangxian && item.last_fangxian!=userStore.userInfo.userCode)" size="small" @click="laxian(item)">{{ item.fangxianren || '完成拉线' }}
-:thumb="dianlanImage"
-            </van-button> -->
-           
             <van-button
               v-if="[0, 3, 4, 5].includes(userStore.userInfo.userRole)"
               :disabled="(item.last_fangxian && item.last_fangxian !== userStore.userInfo.userCode) || item.paip!= null"
@@ -220,7 +321,7 @@
       </van-card>
     </van-list>
   </van-pull-refresh>
-</div>  
+</div>   -->
 
 
 
@@ -280,6 +381,7 @@
   ])
   const filteredLeftList = ref([]);
   const selectedDaihao = ref([]);
+  const selectedFacilitiesLoca = ref([]);
   const rightList = ref([]);
   const fieldValue = ref('');
   const showPicker = ref(false);
@@ -312,21 +414,35 @@
 
   const onClickLeft = () => history.back();
 
+  const handleSelectAll=(selectAll) => {
+    if (!Array.isArray(list.value)) return;
+    if (sw.value === '电缆代号') {
+      // selectedDaihao.value = list.value.map(item => item.value);
+      selectedDaihao.value = selectAll ? list.value.map(item => item.value) : [];
+    } else if (sw.value === '设备地点') {
+      // selectedFacilitiesLoca.value = list.value.map(item => item.value);
+      selectedFacilitiesLoca.value = selectAll ? list.value.map(item => item.value) : [];
+    }
+  };
+
   const rmCart = () => {
     cart.value = [];
     totalPrice.value = 0.00;
     showCartPopup.value = false;
   };
   const handleClear = () => {
-  // 如果是电缆代号，清空复选框选中
-  if (sw.value === '电缆代号') {
-    selectedDaihao.value = [] // 清空复选框选中值
-    searchWords.value['电缆代号'] = [] // 清空搜索参数
+    // 如果是电缆代号，清空复选框选中
+    if (sw.value === '电缆代号') {
+      selectedDaihao.value = [] // 清空复选框选中值
+      searchWords.value['电缆代号'] = [] // 清空搜索参数
+    }
+    if (sw.value === '设备地点') {
+      selectedFacilitiesLoca.value = [] // 清空复选框选中值
+      searchWords.value['设备地点'] = [] // 清空搜索参数
+    }
+    // 执行原有search逻辑
+    search()
   }
-  
-  // 执行原有search逻辑
-  search()
-}
 
 
   const filterUsers = ref('');
@@ -798,7 +914,8 @@ const convertToTree1 = (data, ori_fangxian_loca) => {
       model: searchWords.value['电缆型号'],
       spec: searchWords.value['电缆规格'],
       facilities: searchWords.value['设备'],
-      facilities_loca: searchWords.value['设备地点'],
+      // facilities_loca: searchWords.value['设备地点'],
+      facilities_loca: selectedFacilitiesLoca.value,
       loca_item: searchWords.value['区域'],
       total_length: searchWords.value['总线长'],
       sysname: searchWords.value['系统名'],
@@ -872,6 +989,33 @@ const handlePopupClose = () => {
         searchWords.value[sw.value] = '';
       }
     }
+  }else if (sw.value === '设备地点') {
+    // 处理复选框选中值
+    if (selectedFacilitiesLoca.value.length > 0) {
+      // 将选中值存入 searchWords
+      searchWords.value[sw.value] = selectedFacilitiesLoca.value;
+    
+    // 更新grid显示
+    const index = gridItems.value.findIndex(item => item.key === sw.value);
+    if (index !== -1) {
+      gridItems.value[index].text = selectedFacilitiesLoca.value.length > 0 
+        ? `已选 ${selectedFacilitiesLoca.value.length} 项`
+        : '电缆代号';
+      selected.value[index] = selectedFacilitiesLoca.value.length > 0;
+    }
+    
+    // 触发数据刷新
+    refreshing.value = true;
+    onLoad();
+    } else if (search_word.value.length === 0) {
+      // 未输入且未选择时恢复默认
+      const index = gridItems.value.findIndex(item => item.key === sw.value);
+      if (index !== -1) {
+        gridItems.value[index].text = '电缆代号';
+        selected.value[index] = false;
+        searchWords.value[sw.value] = '';
+      }
+    }
   } else {
     if (search_word.value.length == 0) {
       const currentKey = gridItems.value.find((item) => item.key === sw.value)?.key;
@@ -909,7 +1053,7 @@ const handlePopupClose = () => {
       'model': sw.value=='电缆型号'?search_word.value:searchWords.value['电缆型号'],
       'spec': sw.value=='电缆规格'?search_word.value:searchWords.value['电缆规格'],
       'facilities_name': sw.value=='设备'?search_word.value:searchWords.value['设备'],
-      'facilities_loca': sw.value=='设备地点'?search_word.value:searchWords.value['设备地点'],
+      'facilities_loca': sw.value=='设备地点'?search_word.value:selectedFacilitiesLoca.value,
       'loca_item': sw.value=='区域'?search_word.value:searchWords.value['区域'],
       'total_length': sw.value=='总线长'?search_word.value:searchWords.value['总线长'],
       'sysname': sw.value=='系统名'?search_word.value:searchWords.value['系统名'],
@@ -1010,13 +1154,13 @@ const handlePopupClose = () => {
       // 兼容旧版数据（如果之前只保存了 searchWords）
       const oldSearchWords = parsedData.searchWords || parsedData; // 兼容旧版
       const savedSelectedDaihao = parsedData.selectedDaihao || []; // 新增 selectedDaihao
-
+      const savedSelectedFacilitiesLoca = parsedData.selectedFacilitiesLoca || []; // 新增 selectedFacilitiesLoca
       // 恢复 searchWords
       searchWords.value = oldSearchWords;
       
       // 恢复 selectedDaihao
       selectedDaihao.value = savedSelectedDaihao;
-
+      selectedFacilitiesLoca.value = savedSelectedFacilitiesLoca;
       // 更新 gridItems 的显示文本
       gridItems.value = gridItems.value.map(item => {
         if (item.key === '区域') {
@@ -1069,7 +1213,8 @@ const handlePopupClose = () => {
     // console.log('searchWords saved: ',localStorage.getItem('searchWords'));
     const dataToSave = {
       searchWords: searchWords.value,
-      selectedDaihao: selectedDaihao.value // 新增 selectedDaihao 的保存
+      selectedDaihao: selectedDaihao.value, // 新增 selectedDaihao 的保存
+      selectedFacilitiesLoca: selectedFacilitiesLoca.value // 新增 selectedFacilitiesLoca 的保存
     };
     localStorage.setItem('searchData', JSON.stringify(dataToSave));
     console.log('数据已保存:', dataToSave);
@@ -1081,6 +1226,13 @@ const handlePopupClose = () => {
   // }, { deep: true });
   watch(
     [() => searchWords.value, () => selectedDaihao.value],
+    () => {
+      saveSearchWords();
+    },
+    { deep: true }
+  );
+  watch(
+    [() => searchWords.value, () => selectedFacilitiesLoca.value],
     () => {
       saveSearchWords();
     },
@@ -1126,5 +1278,22 @@ const handlePopupClose = () => {
   .delete-button {
     height: 100%;
   }
+
+  .select-all-container {
+  position: sticky;
+  bottom: 0;
+  padding: 10px;
+  background-color: white;
+  border-top: 1px solid #eee;
+}
+
+/* 可选：调整按钮间距 */
+.van-row {
+  margin: -5px; /* 抵消 gutter 的外边距 */
+}
+.van-col {
+  padding: 0 5px; /* 调整列间距 */
+}
+
   </style>
   
