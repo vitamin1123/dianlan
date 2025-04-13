@@ -1071,10 +1071,10 @@ const search = async () => {
 
     sw.value = selectedItem.key; // 设置当前类型
     console.log('点击grid： ',sw.value);
-    if (!['船号'].includes(sw.value) && (searchWords.value['船号'] == '')) {
-      showToast('请先选择船号');
-      return;
-    }
+    //if (!['船号'].includes(sw.value) && (searchWords.value['船号'] == '')) {
+    //  showToast('请先选择船号');
+    //  return;
+    //}
     // 如果已经选中过，恢复之前的搜索词；否则清空搜索词
     search_word.value = searchWords.value[selectedItem.key] || '';
     console.log('search_word.value: ',searchWords.value);
