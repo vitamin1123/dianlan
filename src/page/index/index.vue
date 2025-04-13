@@ -499,8 +499,27 @@ const load = async () => {
     const defaultChecked = res.data.filter(item => item.dianlanstate === 1).map(item => item.id+'Φ'+item.wpid);
     checked.value = defaultChecked;
     previousCheckedValues.value = defaultChecked;
+    
+    // 计算总产值和已确认价格
+    totalCheckedPrice.value = res.data
+      .filter(item => defaultChecked.includes(item.id + 'Φ' + item.wpid))
+      .reduce((total, item) => total + (item.baseprice || 0), 0);
+
+    totalConfirmedPrice.value = res.data
+      .filter(item => defaultChecked.includes(item.id + 'Φ' + item.wpid) && item.state === 1)
+      .reduce((total, item) => total + (item.baseprice || 0), 0);
   }
 };
+
+// const load = async () => {
+//   const res = await http.post('/api/get_my_wp_list', { userCode: userStore.userInfo.userCode, qdate: date.value });
+//   list.value = res.data;
+//   if (res.data) {
+//     const defaultChecked = res.data.filter(item => item.dianlanstate === 1).map(item => item.id+'Φ'+item.wpid);
+//     checked.value = defaultChecked;
+//     previousCheckedValues.value = defaultChecked;
+//   }
+// };
 
 onMounted(() => {
   load();

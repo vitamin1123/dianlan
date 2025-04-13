@@ -5,6 +5,17 @@
     left-arrow
     @click-left="onClickLeft"
   />
+  <van-notice-bar 
+    v-for="(notice, index) in notices" 
+    :key="index"
+    mode="closeable" 
+    color="#ff0000" 
+    scrollable
+    @close="() => handleCloseNotice(notice.id)"
+  >
+    {{ notice.content }} <!-- 假设公告内容字段为 content，根据实际字段调整 -->
+  </van-notice-bar>
+
   <div>
     <div v-if="imageSrc">
       <!-- <img :src="imageSrc" alt="汉字图片" /> -->
@@ -110,7 +121,9 @@ import { ref, onMounted } from 'vue';
 import http from '@/api/request';
 import { useUserStore } from '@/store/userStore';
 import { useDaibanStore } from '@/store/daibanStore';
+import { showToast, showConfirmDialog } from 'vant'
 
+const notices = ref([]);
 const userStore = useUserStore();
 const daibanStore = useDaibanStore();
 const text = ref(userStore.userInfo.userName[0]); // 存储输入的汉字
@@ -145,6 +158,23 @@ const generateImage = () => {
   imageSrc.value = canvas.toDataURL('image/png');
 };
 
+const handleCloseNotice = async (noticeId) => {
+  console.log('关闭的公告ID:', noticeId);
+  // 可选：从 notices 数组中移除已关闭的公告
+  const res = await http.post('/api/del_notice', { userCode: userStore.userInfo.userCode, id: noticeId });
+  console.log('res: ', res.data);
+  if (res.data.affectedRows === 0){
+    showToast('删除公告失败');
+    return;
+  }else if (res.data.affectedRows === 1){
+    notices.value = notices.value.filter(notice => notice.id !== noticeId);
+    showToast('公告已读');
+    return;
+  }
+  
+  
+};
+
 const get_wp_todo_cnt = async () => {
   const res = await http.post('/api/get_paip_wp_todo_cnt', { userCode: userStore.userInfo.userCode });
   console.log('代办数量： ', res.data);
@@ -157,10 +187,17 @@ const get_is_locauser = async () => {
   is_loca_user.value = res.data[0].bool>0?true:false;
 };
 
+const get_notice = async() => {
+  const res = await http.post('/api/get_notice', { userCode: userStore.userInfo.userCode });
+  console.log('公告: ',res.data)
+  notices.value = res.data;
+};
+
 onMounted(async () => {
   generateImage();
   get_wp_todo_cnt();
   get_is_locauser();
+  get_notice();
 });
 </script>
 
@@ -208,4 +245,9 @@ onMounted(async () => {
 .custom-cell:hover {
   background-color: #f7f8fa; /* 鼠标悬停时的背景色 */
 }
+
+.notice-swipe {
+    height: 40px;
+    line-height: 40px;
+  }
 </style>
