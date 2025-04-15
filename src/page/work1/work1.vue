@@ -417,6 +417,7 @@
       ope: userStore.userInfo.userCode,
       dianlan: cart.value.map(item => item.id),
       user: rightList.value.map(item => item.usercode),
+      proj: searchWords.value['船号']
     });
     console.log(res.data)
     if (res.code === 0) {
