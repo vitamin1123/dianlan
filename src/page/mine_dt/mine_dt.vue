@@ -59,14 +59,14 @@
     />
 
     <!-- 设备定额 -->
-    <!-- <van-cell
+    <van-cell
       v-if="[0].includes(roleid)"
       title="设备定额"
       size="large"
       is-link
       to="ep_baseprice"
       class="custom-cell"
-    /> -->
+    />
 
     <canvas ref="canvas" width="100" height="100" style="display: none;"></canvas>
   </div>

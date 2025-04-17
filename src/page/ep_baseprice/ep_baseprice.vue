@@ -1,16 +1,25 @@
 <template>
   <van-nav-bar
-    title="电缆定额维护"
+    title="电器价格维护"
     left-text="返回"
     left-arrow
     @click-left="onClickLeft"
   />
+  <van-popup v-model:show="showTop1" position="top" :style="{ height: '50%' }" > 
+        <van-search v-model="search_word" placeholder="请输入" show-action  @search="search"/>
+        <van-list>
+            <van-cell v-for="item in ser_list" :key="item.id" :title="item.name" @click="select(item)"/>
+        </van-list>
+    </van-popup>
     <!-- 磁吸导航 -->
     <van-uploader v-show="false" ref="uploader" accept=".xls, .xlsx" :after-read="onFileRead">
       <van-button icon="plus" type="primary">上传文件</van-button>
     </van-uploader>
     
     <div class="container">
+      <van-button type="primary" plain @click="handleClick" :loading="isuploading">
+        {{ button_text }}
+    </van-button>
       <!-- 左侧部分，占70% -->
       <van-search 
         v-model="sw" 
@@ -98,7 +107,10 @@
   import * as XLSX from 'xlsx';
   import { saveAs } from 'file-saver';
   import http from '@/api/request';
+  const isuploading = ref(false)
+  const button_text = ref('系列船');
   const list = ref([])
+  const ser_list = ref([])
   const page = ref(-1)
   const loading = ref(false)
   const finished = ref(false)
@@ -115,7 +127,37 @@
   const modvalue = ref('');
   const modvalue1 = ref('');
   const up_item = ref(null);
+  const showTop1 = ref(false);
+  const search_word = ref('');
+  const fileList = ref([]);
   const onClickLeft = () => history.back();
+  const search = async () => {
+    try {
+      const response = await http.post('/api/search_proj_list',{sw: search_word.value});
+
+      console.log('请求成功:', response);
+      button_text.value = response.data[0].projname;
+      ser_list.value = response.data.map(item => ({
+        id: item.id,
+        name: item.projname,
+      }));
+      
+
+      
+    } catch (error) {
+      console.error('请求失败:', error);
+      // 处理错误
+    }
+};
+const select = async(item) => {
+  console.log('select: ',item)
+    button_text.value = item.name;
+    onRefresh()
+    showTop1.value = false;
+};
+const handleClick = () => {
+    showTop1.value = true;
+};
   const search_sw = async () => {
       page.value = -1
       list.value = []
@@ -267,7 +309,9 @@
     };
   
   const onLoad = async () => {
-          
+        if(button_text.value == '系列船') {
+          await search();
+        }
           page.value++; // 增加页码 
           
           if (refreshing.value) {
@@ -308,7 +352,7 @@
   
   onMounted( async() => {
       
-      await onLoad();
+      // await onLoad();
       console.log("首页加载啦; ");
    
     })
@@ -328,7 +372,7 @@
   }
   
   .container > :first-child {
-    flex: 80%; /* 左侧占70% */
+    flex: 25%; /* 左侧占70% */
   }
   
   .container > :last-child {
