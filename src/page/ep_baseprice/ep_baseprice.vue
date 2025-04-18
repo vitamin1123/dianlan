@@ -1,10 +1,17 @@
 <template>
+  <van-overlay :show="isProcessing" z-index="1000">
+    <div class="loading-wrapper">
+      <van-loading size="24px" type="spinner" color="#1989fa">解析中...</van-loading>
+    </div>
+  </van-overlay>
   <van-nav-bar
     title="电器价格维护"
     left-text="返回"
     left-arrow
     @click-left="onClickLeft"
+    :class="{ 'nav-bar-disabled': isProcessing }"
   />
+  
   <van-popup v-model:show="showTop1" position="top" :style="{ height: '50%' }" > 
         <van-search v-model="search_word" placeholder="请输入" show-action  @search="search"/>
         <van-list>
@@ -15,6 +22,40 @@
     <van-uploader v-show="false" ref="uploader" accept=".xls, .xlsx" :after-read="onFileRead">
       <van-button icon="plus" type="primary">上传文件</van-button>
     </van-uploader>
+
+    <van-dialog 
+  v-model:show="showUploadConfirm" 
+  title="确认上传数据"
+  :show-confirm-button="false"  
+  :show-cancel-button="false" 
+>
+  <div style="max-height: 60vh; overflow-y: auto;">
+    <!-- 数据列表 -->
+  </div>
+  
+  <template #footer>
+    <div style="display: flex; justify-content: space-between; padding: 10px;">
+      <van-button 
+        size="small" 
+        @click="showUploadConfirm = false"
+        style="flex: 1; margin-right: 8px;"
+      >
+        取消
+      </van-button>
+      <van-button 
+        type="primary" 
+        size="small" 
+        @click="confirmUpload"
+        style="flex: 1; margin-left: 8px;"
+      >
+        上传
+      </van-button>
+    </div>
+    <div style="padding: 10px; text-align: center;">
+      共 {{ parsedData.length }} 条数据
+    </div>
+  </template>
+</van-dialog>
     
     <div class="container">
       <van-button type="primary" plain @click="handleClick" :loading="isuploading">
@@ -102,11 +143,13 @@
   <script setup>
   
   import { ref, onMounted, watch, computed, nextTick } from 'vue';
-  import { showToast, showConfirmDialog } from 'vant'
+  import { showToast, showConfirmDialog, showDialog  } from 'vant'
   import Pinyin from 'pinyin-match';
   import * as XLSX from 'xlsx';
+  
   import { saveAs } from 'file-saver';
   import http from '@/api/request';
+  const isProcessing = ref(false);
   const isuploading = ref(false)
   const button_text = ref('系列船');
   const list = ref([])
@@ -130,6 +173,8 @@
   const showTop1 = ref(false);
   const search_word = ref('');
   const fileList = ref([]);
+  const showUploadConfirm = ref(false);
+  const parsedData = ref([]);
   const onClickLeft = () => history.back();
   const search = async () => {
     try {
@@ -141,9 +186,6 @@
         id: item.id,
         name: item.projname,
       }));
-      
-
-      
     } catch (error) {
       console.error('请求失败:', error);
       // 处理错误
@@ -166,20 +208,108 @@ const handleClick = () => {
   }
   
   const onFileRead = async (file) => {
-        const formData = new FormData();
-        formData.append('file', file.file);
-  
+      isProcessing.value = true;
+      try {
+        // 读取Excel文件
+        const data = await readExcelFile(file.file);
+        
+        // 检查列头
+        if (!validateHeaders(data[0])) {
+          showToast('Excel文件必须包含"设备代号"和"总价"列');
+          return;
+        }
+        parsedData.value = processExcelData(data);
+        showUploadConfirm.value = true;
+        console.log('解析excel:',parsedData.value)
+      } catch (error) {
+        console.error('文件解析失败:', error);
+        showToast('文件解析失败，请检查文件格式');
+      } finally {
+        isProcessing.value = false; // 处理完成，隐藏遮罩
+      }
+  };
+
+  const readExcelFile = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
         try {
-          const response = await http.post('/api/upload-epprice', formData, {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          });
-          console.log('上传成功:', response.data);
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+          resolve(jsonData);
         } catch (error) {
-          console.error('上传失败:', error);
+          reject(error);
         }
       };
+      
+      reader.onerror = (error) => reject(error);
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  const validateHeaders = (firstRow) => {
+    const headers = Object.keys(firstRow || {});
+    return headers.includes('设备代号') && headers.includes('总价');
+  };
+
+  const processExcelData = (data) => {
+    const resultMap = new Map();
+    
+    // 跳过第一行(标题行)，遍历所有数据行
+    data.slice(1).forEach(row => {
+      const model = row['设备代号'];
+      const price = parseFloat(row['总价']) || 0;
+      
+      if (!model) return; // 跳过设备代号为空的行
+      
+      if (resultMap.has(model)) {
+        // 如果已有相同设备代号，累加价格
+        resultMap.set(model, resultMap.get(model) + price);
+      } else {
+        // 新设备代号，添加到map
+        resultMap.set(model, price);
+      }
+    });
+    
+    // 转换为数组格式
+    return Array.from(resultMap.entries()).map(([model, price]) => ({
+        model,
+        price
+      }));
+  };
+
+  const confirmUpload = async () => {
+    isProcessing.value = true; // 开始上传，显示遮罩
+    showUploadConfirm.value = false;
+    try {
+      if (parsedData.value.length === 0) {
+        showToast('没有有效数据可上传');
+        return;
+      }
+      
+      showToast('正在上传...');
+      
+      const response = await http.post('/api/upload-epprice', {
+        epdata: parsedData.value,
+        series: button_text.value
+      });
+      
+      console.log('上传成功:', response.data);
+      showToast('上传成功');
+      onRefresh(); // 刷新列表
+      
+    } catch (error) {
+      console.error('上传失败:', error);
+      showToast('上传失败');
+    } finally {
+      isProcessing.value = false; 
+      showUploadConfirm.value = false;
+      parsedData.value = [];
+    }
+  };
   
   const click_mod = (item) => {
     console.log('click_mod: ',item)
@@ -381,4 +511,35 @@ const handleClick = () => {
     margin-right: 0.3rem;
     justify-content: flex-end; /* 按钮在右对齐 */
   }
+
+  .loading-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.loading-wrapper .van-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 禁用状态样式 */
+.nav-bar-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.custom-dialog {
+  .van-dialog__footer {
+    display: flex !important;  
+  }
+  
+  .van-dialog__confirm,
+  .van-dialog__cancel {
+    display: block !important; 
+  }
+}
   </style>
