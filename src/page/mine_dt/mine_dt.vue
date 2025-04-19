@@ -10,7 +10,7 @@
 
     <!-- 人员管理 -->
     <van-cell
-      v-if="[0,5].includes(roleid)"
+      v-if="[0,4,5].includes(roleid)"
       title="人员管理"
       size="large"
       is-link
@@ -20,7 +20,7 @@
 
     <!-- 区域设置 -->
     <van-cell
-      v-if="[0,5].includes(roleid)"
+      v-if="[0,4,5].includes(roleid)"
       title="区域设置"
       size="large"
       is-link
@@ -30,7 +30,7 @@
 
     <!-- 系列价目表版本设置 -->
     <van-cell
-      v-if="[0].includes(roleid)"
+      v-if="[0,4,5].includes(roleid)"
       title="项目价目表版本设置"
       size="large"
       is-link
@@ -40,7 +40,7 @@
 
     <!-- 系列船电缆册 -->
     <van-cell
-      v-if="[0].includes(roleid)"
+      v-if="[0,4,5].includes(roleid)"
       title="系列船电缆册"
       size="large"
       is-link
@@ -50,7 +50,7 @@
 
     <!-- 电缆定额 -->
     <van-cell
-      v-if="[0].includes(roleid)"
+      v-if="[0,4,5].includes(roleid)"
       title="电缆定额"
       size="large"
       is-link
@@ -60,7 +60,7 @@
 
     <!-- 设备定额 -->
     <van-cell
-      v-if="[0].includes(roleid)"
+      v-if="[0,4,5].includes(roleid)"
       title="设备定额"
       size="large"
       is-link

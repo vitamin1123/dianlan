@@ -234,9 +234,10 @@
       @load="onLoad" 
     >
     <template #default="{ item }">
+      <!-- :price="item.fa_price ? item.baseprice + ' + ' + (parseFloat(item.fa_price).toFixed(2)): item.baseprice" -->
     <van-card
         :num="item.num"
-        :price="item.fa_price ? item.baseprice + ' + ' + (parseFloat(item.fa_price).toFixed(2)): item.baseprice"
+        :price="item.baseprice"
         :desc="item.model+'  '+ item.specification"
         :title="item.daihao"
         style="--van-card-font-size: 0.4rem;"
@@ -623,7 +624,7 @@
     } else {
       // 将未在购物车中的商品加入购物车
       cart.value.push(...newItems);
-      totalPrice.value += newItems.reduce((total, item) => total + item.baseprice*100 + item.fa_price*100, 0);
+      totalPrice.value += newItems.reduce((total, item) => total + item.baseprice*100, 0);
       console.log('车内容：', cart.value);
 
       // 触发放大缩小动画

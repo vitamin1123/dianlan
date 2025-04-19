@@ -20,10 +20,11 @@
       v-if="list.length > 0"
       class="scroller"
       :items="list"
-      :item-size="50"
-      :page-mode="true"
+      :item-size="40"
+      :page-mode="false"
       :buffer="2000"
       :prerender="100"
+      :key="list.length"
       key-field="id"
     >
       <template #default="{ item }">
@@ -241,10 +242,11 @@
       key-field="id"
       @load="onLoad" 
     >
+    <!-- :price="item.fa_price ? item.baseprice + ' + ' + (parseFloat(item.fa_price).toFixed(2)): item.baseprice" -->
       <template #default="{ item }">
         <van-card
           :num="item.num"
-          :price="item.fa_price ? item.baseprice + ' + ' + (parseFloat(item.fa_price).toFixed(2)): item.baseprice"
+          :price="item.baseprice"
           :desc="item.model+'  '+ item.specification"
           :title="item.daihao"
           style="--van-card-font-size: 0.4rem;"
@@ -1102,7 +1104,7 @@ const handlePopupClose = () => {
         tmp.push({ id: i, value:response.data[i]['sysname'],title: response.data[i]['sysname'] });
       }
     }
-    list.value = tmp.filter(item => item && item.id);
+    list.value = tmp;
     console.log("看看list",list.value);
   };
   
@@ -1308,5 +1310,13 @@ const handlePopupClose = () => {
   padding: 0 5px; /* 调整列间距 */
 }
 
+.scroller {
+  min-height: 500px; /* 根据实际需求调整 */
+}
+
+
+.van-popup--top {
+  top: 50px !important; /* 确保第一条数据不被遮挡 */
+}
   </style>
   

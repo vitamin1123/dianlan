@@ -103,7 +103,7 @@
         class="custom-cell"
       />
       <van-cell
-        v-if="[0,5].includes(roleid)"
+        v-if="[0,4,5].includes(roleid)"
         title="管理设置"
         size="large"
         is-link

@@ -49,7 +49,7 @@ router.beforeEach(async (to, from, next) => {
 
 app.use(Overlay);
 app.use(Loading);
-app.use(showConfirmDialog);
+
 app.use(VanImage);
 app.use(Lazyload, {
     lazyComponent: true,
