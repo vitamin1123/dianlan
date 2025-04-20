@@ -624,7 +624,9 @@
     } else {
       // 将未在购物车中的商品加入购物车
       cart.value.push(...newItems);
-      totalPrice.value += newItems.reduce((total, item) => total + item.baseprice*100, 0);
+      // totalPrice.value += newItems.reduce((total, item) => total + item.baseprice*100, 0);
+      const newItemsTotalPrice = newItems.reduce((total, item) => total + item.baseprice * 100, 0);
+      totalPrice.value += newItemsTotalPrice;
       console.log('车内容：', cart.value);
 
       // 触发放大缩小动画
@@ -650,7 +652,7 @@
       // 添加到购物车
       cart.value.push(item);
       console.log('车内容：', cart.value);
-      totalPrice.value += item.baseprice*100+item.fa_price*100;
+      totalPrice.value += item.baseprice*100;
       // 触发放大缩小动画
       isScaling.value = true;
 

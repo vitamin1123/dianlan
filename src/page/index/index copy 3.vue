@@ -38,25 +38,19 @@
                 <van-collapse-item 
                   v-for="location in getLocationsByProj(proj.key)" 
                   :key="location.key" 
-                  
+                  :title="getLocationTitle(proj.key, location.key)" 
                   :name="'location-'+location.key"
                   class="no-indent"
-                  
                 >
-                <template #title>
-                    <span v-html="getLocationTitle(proj.key, location.key)"></span>
-                </template>
                   <!-- 设备位置分组 -->
                   <van-collapse v-model="activeFacilityLocaCollapse" accordion>
                     <van-collapse-item 
                       v-for="facilityLoca in getFacilityLocasByLocation(proj.key, location.key)" 
                       :key="facilityLoca.key" 
+                      :title="getFacilityLocaTitle(proj.key, location.key, facilityLoca.key)" 
                       :name="'facilityLoca-'+facilityLoca.key"
                       class="no-indent"
                     >
-                    <template #title>
-                      <span v-html="getFacilityLocaTitle(proj.key, location.key, facilityLoca.key)"></span>
-                    </template>
                       <!-- TreeSelect 组件 -->
                       <van-tree-select
                         v-model:main-active-index="activeIndex"
@@ -66,25 +60,9 @@
                         @click-nav="onNavClick"
                         @click-item="onItemClick"
                       >
-                      
                         <template #content>
                           <div v-if="activeFacility">
-                            <div style="padding: 8px 12px; border-bottom: 1px solid #f5f5f5;">
-                            <van-button 
-                              size="mini" 
-                              type="primary" 
-                              @click="toggleSelectAll(proj.key, location.key, facilityLoca.key)"
-                            >
-                              {{ isAllSelected(proj.key, location.key, facilityLoca.key) ? '取消全选' : '全选' }}
-                            </van-button>
-                          </div>
-                            <van-checkbox-group 
-                            v-model="checked" 
-                            ref="checkboxGroup" 
-                            shape="square" 
-                            @change="checkChange"
-                            :disabled="isBatchOperating"
-                            >
+                            <van-checkbox-group v-model="checked" ref="checkboxGroup" shape="square" @change="checkChange">
                               <van-checkbox 
                                 v-for="item in getActiveFacilityChildren(proj.key, location.key, facilityLoca.key)"
                                 :key="item.dianlanid"
@@ -255,7 +233,6 @@ const previousCheckedValues = ref([]);
 const totalConfirmedPrice = ref(0);
 const totalCheckedPrice = ref(0);
 const activeTab = ref(0);
-const isBatchOperating = ref(false);
 
 // Collapse 相关状态
 const activeCollapse = ref('');
@@ -289,109 +266,6 @@ watch(cart, (newVal, oldVal) => {
   }
 });
 
-const isAllSelected = (projKey, locationKey, facilityLocaKey) => {
-  const items = getActiveFacilityChildren(projKey, locationKey, facilityLocaKey);
-  if (!items.length) return false;
-  
-  return items.every(item => 
-    checked.value.includes(item.id + 'Φ' + item.wpid)
-  );
-};
-
-// 切换全选状态
-const toggleSelectAll = async (projKey, locationKey, facilityLocaKey) => {
-  isBatchOperating.value = true;
-  
-  try {
-    const items = getActiveFacilityChildren(projKey, locationKey, facilityLocaKey);
-    const allSelected = isAllSelected(projKey, locationKey, facilityLocaKey);
-    
-    // 临时禁用change监听
-    const originalHandler = checkboxGroup.value?.onChange;
-    if (checkboxGroup.value) {
-      checkboxGroup.value.onChange = () => {};
-    }
-    console.log('allSelected:',allSelected)
-    if (allSelected) {
-      // 取消全选
-      const itemsToRemove = items.map(item => ({
-        id: item.id,
-        wpid: item.wpid
-      }));
-      
-      const res = await http.post('/api/del_my_work_batch', {
-        code: userStore.userInfo.userCode,
-        items: itemsToRemove
-      });
-      console.log('res:',res.success)
-      if (res.success) {
-        // 直接更新checked数组，不触发响应式更新
-        const newChecked = checked.value.filter(
-          id => !items.some(item => id === item.id + 'Φ' + item.wpid)
-        );
-        checked.value = newChecked;
-        previousCheckedValues.value = [...newChecked];
-        load();
-      }
-      else {
-        showToast('操作失败');
-      }
-      
-      
-    } else {
-      // 全选
-      const itemsToAdd = items
-        .filter(item => 
-          !(item.fin_user != null && item.fin_user != userStore.userInfo.userCode) && 
-          date.value === todayDate && 
-          item.state !== 1
-        )
-        .map(item => ({
-          id: item.id,
-          wpid: item.wpid
-        }));
-      
-      const res = await http.post('/api/add_my_work_batch', {
-        code: userStore.userInfo.userCode,
-        items: itemsToAdd
-      });
-      
-      if (res.success) {
-        const newChecked = [...checked.value];
-        itemsToAdd.forEach(item => {
-          newChecked.push(item.id + 'Φ' + item.wpid);
-        });
-        checked.value = newChecked;
-        previousCheckedValues.value = [...newChecked];
-        load(); // 重新加载数据
-      } else {
-        showToast('操作失败');
-      }
-    }
-    
-    updatePrices();
-    
-  } catch (error) {
-    console.error('批量操作失败:', error);
-    showToast('操作失败');
-  } finally {
-    // 恢复change监听
-    if (checkboxGroup.value) {
-      checkboxGroup.value.onChange = checkChange;
-    }
-    isBatchOperating.value = false;
-  }
-};
-
-const updatePrices = () => {
-  totalCheckedPrice.value = list.value
-    .filter(item => checked.value.includes(item.id + 'Φ' + item.wpid))
-    .reduce((total, item) => total + (item.baseprice || 0), 0);
-
-  totalConfirmedPrice.value = list.value
-    .filter(item => checked.value.includes(item.id + 'Φ' + item.wpid) && item.state === 1)
-    .reduce((total, item) => total + (item.baseprice || 0), 0);
-};
 // 移除选中的接线包项目
 const removeSelectedItems = () => {
   checked.value = checked.value.filter(item => !cartChecked.value.includes(item));
@@ -535,7 +409,7 @@ const getLocationTitle = (projKey, locationKey) => {
     checked.value.includes(item.id + 'Φ' + item.wpid)
   ).length;
   
-  return `<span style="display:inline-block;width:1em;">•</span> ${locationKey} (${count})`;
+  return `- ${locationKey} (${count})`;
 };
 
 // 获取设备位置标题（带选中统计和层级标识）
@@ -547,7 +421,7 @@ const getFacilityLocaTitle = (projKey, locationKey, facilityLocaKey) => {
     checked.value.includes(item.id + 'Φ' + item.wpid)
   ).length;
   
-  return `<span style="display:inline-block;width:1em;">•</span><span style="display:inline-block;width:1em;">•</span> ${facilityLocaKey} (${count})`;
+  return `- - ${facilityLocaKey} (${count})`;
 };
 
 // 当前选中的设备
@@ -579,114 +453,34 @@ const onItemClick = ({ id }) => {
   }
 };
 
-
 const checkChange = async(newCheckedValues) => {
-  console.log('checkChange:',isBatchOperating.value)
-  if (isBatchOperating.value) return;
-  
-  // 检查是否是全选操作导致的变化
-  // const currentItems = getActiveFacilityChildren(
-  //   activeCollapse.value.replace('proj-', ''),
-  //   activeLocationCollapse.value.replace('location-', ''),
-  //   activeFacilityLocaCollapse.value.replace('facilityLoca-', '')
-  // );
-  
-  // const allSelected = currentItems.every(item => 
-  //   newCheckedValues.includes(item.id + 'Φ' + item.wpid)
-  // );
-  
-  // const noneSelected = currentItems.every(item => 
-  //   !newCheckedValues.includes(item.id + 'Φ' + item.wpid)
-  // );
-  // console.log('allSelected:',allSelected,noneSelected)
-  // if (allSelected || noneSelected) {
-  //   // 如果是全选或全不选操作导致的变化，则不处理
-  //   previousCheckedValues.value = [...newCheckedValues];
-  //   return;
-  // }
-  
   const added = newCheckedValues.filter(value => !previousCheckedValues.value.includes(value));
   const removed = previousCheckedValues.value.filter(value => !newCheckedValues.includes(value));
-  console.log('新增:', added);
-  console.log('移除:', removed);
-  isBatchOperating.value = true;
   
-  try {
-    if (added.length > 0) {
-      const itemsToAdd = added.map(item => {
-        const [id, wpid] = item.split('Φ');
-        return { id, wpid };
-      });
-      
-      const res = await http.post('/api/add_my_work_batch', {
-        code: userStore.userInfo.userCode,
-        items: itemsToAdd
-      });
-      if (res.success) {
-        load(); // 重新加载数据
-      } else {
-        showToast('添加失败');
-      }
+  if (added.length > 0) {
+    try {
+      const res = await http.post('/api/add_my_work', {'code': userStore.userInfo.userCode, 'id': added[0].split('Φ')[0],'wpid': added[0].split('Φ')[1] });
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      load();
     }
-    
-    if (removed.length > 0) {
-      const itemsToRemove = removed.map(item => {
-        const [id, wpid] = item.split('Φ');
-        return { id, wpid };
-      });
-      
-      const res = await http.post('/api/del_my_work_batch', {
-        code: userStore.userInfo.userCode,
-        items: itemsToRemove
-      });
-      if(res.success) {
-        load(); // 重新加载数据
-      } else {
-        showToast('添加失败');
-      }
-    }
-    
-    updatePrices();
-    
-  } catch (error) {
-    console.error('批量操作失败:', error);
-    showToast('操作失败');
-  } finally {
-    isBatchOperating.value = false;
-    previousCheckedValues.value = [...newCheckedValues];
   }
+
+  if (removed.length > 0) {
+    const res = await http.post('/api/del_my_work', {'code': userStore.userInfo.userCode, 'id': removed[0].split('Φ')[0],'wpid': removed[0].split('Φ')[1] });
+    load();
+  }
+
+  previousCheckedValues.value = [...newCheckedValues];
+  totalCheckedPrice.value = list.value
+    .filter(item => newCheckedValues.includes(item.id + 'Φ' + item.wpid))
+    .reduce((total, item) => total + (item.baseprice || 0), 0);
+
+  totalConfirmedPrice.value = list.value
+    .filter(item => newCheckedValues.includes(item.id + 'Φ' + item.wpid) && item.state === 1)
+    .reduce((total, item) => total + (item.baseprice || 0), 0);
 };
-// const checkChange = async(newCheckedValues) => {
-//   if (isBatchOperating.value) return; // 避免在批量操作时触发
-//   const added = newCheckedValues.filter(value => !previousCheckedValues.value.includes(value));
-//   const removed = previousCheckedValues.value.filter(value => !newCheckedValues.includes(value));
-  
-//   if (added.length > 0) {
-//     try {
-//       const res = await http.post('/api/add_my_work', 
-//       {'code': userStore.userInfo.userCode, 'id': added[0].split('Φ')[0],'wpid': added[0].split('Φ')[1] });
-//     } catch (error) {
-//       console.error('Error:', error);
-//     } finally {
-//       load();
-//     }
-//   }
-
-//   if (removed.length > 0) {
-//     const res = await http.post('/api/del_my_work', 
-//     {'code': userStore.userInfo.userCode, 'id': removed[0].split('Φ')[0],'wpid': removed[0].split('Φ')[1] });
-//     load();
-//   }
-
-//   previousCheckedValues.value = [...newCheckedValues];
-//   totalCheckedPrice.value = list.value
-//     .filter(item => newCheckedValues.includes(item.id + 'Φ' + item.wpid))
-//     .reduce((total, item) => total + (item.baseprice || 0), 0);
-
-//   totalConfirmedPrice.value = list.value
-//     .filter(item => newCheckedValues.includes(item.id + 'Φ' + item.wpid) && item.state === 1)
-//     .reduce((total, item) => total + (item.baseprice || 0), 0);
-// };
 
 const formatDate = (date) => {
   return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
@@ -795,16 +589,12 @@ onMounted(() => {
 }
 
 /* 折叠面板标题样式 */
-/* :deep(.van-collapse-item__title) {
+:deep(.van-collapse-item__title) {
   font-size: 0.4rem;
 
   padding: 12px 16px;
-} */
-:deep(.van-collapse-item__title) span {
-
-  font-size: 0.4rem;
-  color: #000;
 }
+
 /* 折叠面板之间的分割线 */
 :deep(.van-collapse-item::after) {
   border-bottom: 1px solid #f5f5f5;
