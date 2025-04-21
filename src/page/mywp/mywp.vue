@@ -17,45 +17,60 @@
         finished-text="没有更多了"
         @load="onLoad"
       >
-        <!-- 每个接线员的卡片 -->
-        <div v-for="(group, index) in groupedByFinUser" :key="index" class="user-card">
-          <div class="user-header">
-            <span class="user-name">{{ group.fin_user_name }}</span>
-            <span class="cable-count">{{ group.items.length }}条电缆</span>
-          </div>
-          
-          <!-- 电缆列表 -->
-          <div v-for="(item, idx) in group.items" :key="idx" class="cable-item">
-            <div class="cable-info">
-              <span class="cable-title">{{ item.daihao }}</span>
-              <span class="cable-desc">{{ item.model }} {{ item.specification }}</span>
-              <span class="cable-facilities">{{ item.facilities_name }}</span>
+        <!-- 按 user 分组 -->
+        <van-collapse v-model="activeNames">
+          <van-collapse-item
+            v-for="(userGroup, userIndex) in groupedData"
+            :key="userGroup.user"
+            :name="'user-' + userGroup.user"
+          >
+          <template #title>
+            <div class="user-header">
+              <span class="user-name">{{ userGroup.fin_user_name }}</span>
+              <span class="cable-count">
+                {{ userGroup.totalCount }} / {{ userGroup.completedCount }} 条
+              </span>
             </div>
-            <div class="cable-tags">
-              <van-tag v-if="item.facilities" plain type="primary" size="small">{{ item.facilities }}</van-tag>
-              <van-tag v-if="item.last_fangxian_loca_name" color="#b27f3d" size="small">{{ item.last_fangxian_loca_name }}</van-tag>
+          </template>
+
+            <!-- 按 last_fangxian_loca_name 分组 -->
+            <div v-for="(locationGroup, locIndex) in userGroup.locations" :key="locIndex">
+              <div class="location-title">{{ locationGroup.location || '未指定位置' }}</div>
+
+              <!-- 按 facilities_name 分组 -->
+              <div v-for="(facilityGroup, facIndex) in locationGroup.facilities" :key="facIndex">
+                <div class="facility-title">{{ facilityGroup.facility || '未指定设施' }}</div>
+
+                <!-- 电缆列表 -->
+                <div v-for="(item, itemIndex) in facilityGroup.items" :key="itemIndex" class="cable-item">
+                  <div class="cable-info">
+                    <span class="cable-title">{{ item.daihao }}</span>
+                    <span class="cable-desc">{{ item.model }} {{ item.specification }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-          
-          <!-- 操作按钮 -->
-          <div class="action-buttons">
-            <van-button 
-              type="danger" 
-              size="small" 
-              @click="handleReject(group.fin_user)"
-              style="margin-right: 8px;"
-            >
-              驳回
-            </van-button>
-            <van-button 
-              type="success" 
-              size="small" 
-              @click="handleConfirm(group.fin_user)"
-            >
-              确认
-            </van-button>
-          </div>
-        </div>
+
+            <!-- 操作按钮（针对整个用户） -->
+            <div class="action-buttons">
+              <van-button 
+                type="danger" 
+                size="small" 
+                @click.stop="handleReject(userGroup.fin_user)"
+                style="margin-right: 8px;"
+              >
+                驳回
+              </van-button>
+              <van-button 
+                type="success" 
+                size="small" 
+                @click.stop="handleConfirm(userGroup.fin_user)"
+              >
+                确认
+              </van-button>
+            </div>
+          </van-collapse-item>
+        </van-collapse>
       </van-list>
     </van-pull-refresh>
   </div>
@@ -94,49 +109,77 @@ const onConfirm = async(value) => {
   await onLoad();
 };
 
-// 按照fin_user分组
-const groupedByFinUser = computed(() => {
-  const groups = {};
-  
-  list.value.forEach(item => {
-    if (!item.fin_user) return; // 跳过没有fin_user的
-    
-    if (!groups[item.fin_user]) {
-      groups[item.fin_user] = {
-        fin_user: item.fin_user,
-        fin_user_name: item.fin_user_name,
-        items: []
-      };
-    }
-    groups[item.fin_user].items.push(item);
-  });
-  
-  return Object.values(groups);
-});
+// 按 user → last_fangxian_loca_name → facilities_name 分组
 
-// 驳回操作
+
+// 驳回操作（针对整个用户）
 const handleReject = (fin_user) => {
   showConfirmDialog({
     title: '确认驳回',
-    message: `确定要驳回${fin_user}的所有工单吗？`,
+    message: `确定要驳回 ${fin_user} 的所有工单吗？`,
   }).then(() => {
-    // 这里调用驳回API
-    console.log('驳回接线员:', fin_user);
-    showNotify({ type: 'success', message: '已全部驳回' });
+    console.log('驳回用户:', fin_user);
+    showNotify({ type: 'success', message: '已驳回' });
   }).catch(() => {
     showNotify({ type: 'info', message: '已取消' });
   });
 };
-
-// 确认操作
+const groupedData = computed(() => {
+  const userGroups = {};
+  
+  list.value.forEach(item => {
+    if (!item.user) return; // 确保 user 字段存在
+    
+    // 初始化用户组（以 user 作为分组依据）
+    if (!userGroups[item.user]) {
+      userGroups[item.user] = {
+        user: item.user,          // 用户ID（分组依据）
+        fin_user_name: item.fin_user_name, // 显示用用户名
+        totalCount: 0,       // 该 user 下的所有电缆数
+        completedCount: 0,   // fin_user_name = user 的电缆数
+        locations: {}
+      };
+    }
+    
+    const userGroup = userGroups[item.user];
+    userGroup.totalCount++; // 总电缆数 +1
+    
+    // 如果 fin_user_name 等于当前分组 user，则计入 completedCount
+    if (item.fin_user_name === item.user) {
+      userGroup.completedCount++;
+    }
+    
+    // 剩余分组逻辑（按位置 → 设施 → 电缆）
+    const locationKey = item.last_fangxian_loca_name || '未指定位置';
+    if (!userGroup.locations[locationKey]) {
+      userGroup.locations[locationKey] = {
+        location: locationKey,
+        facilities: {}
+      };
+    }
+    
+    const locationGroup = userGroup.locations[locationKey];
+    const facilityKey = item.facilities_name || '未指定设施';
+    if (!locationGroup.facilities[facilityKey]) {
+      locationGroup.facilities[facilityKey] = {
+        facility: facilityKey,
+        items: []
+      };
+    }
+    
+    locationGroup.facilities[facilityKey].items.push(item);
+  });
+  
+  return Object.values(userGroups);
+});
+// 确认操作（针对整个用户）
 const handleConfirm = (fin_user) => {
   showConfirmDialog({
     title: '确认工单',
-    message: `确定要确认${fin_user}的所有工单吗？`,
+    message: `确定要确认 ${fin_user} 的所有工单吗？`,
   }).then(() => {
-    // 这里调用确认API
-    console.log('确认接线员:', fin_user);
-    showNotify({ type: 'success', message: '已全部确认' });
+    console.log('确认用户:', fin_user);
+    showNotify({ type: 'success', message: '已确认' });
   }).catch(() => {
     showNotify({ type: 'info', message: '已取消' });
   });
@@ -205,70 +248,77 @@ const get_wp_todo_cnt = async () => {
 </script>
 
 <style scoped>
-.user-card {
-  margin-bottom: 16px;
-  background-color: #fff;
-  border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
 .user-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #f0f0f0;
+  align-items: center;
+  width: 100%;
+  padding-right: 16px;
 }
 
 .user-name {
   font-weight: bold;
-  font-size: 22px;
+  font-size: 16px;
 }
 
 .cable-count {
   color: #666;
-  font-size: 16px;
+  font-size: 14px;
+}
+
+.cable-count::before {
+  content: "总计/完成：";
+  color: #999;
+  font-size: 12px;
+}
+
+.location-title {
+  font-weight: bold;
+  padding: 8px 16px;
+  background-color: #f5f5f5;
+  margin-top: 8px;
+}
+
+.facility-title {
+  padding: 6px 16px;
+  background-color: #f9f9f9;
+  color: #666;
+  font-size: 14px;
 }
 
 .cable-item {
-  margin-bottom: 8px;
+  margin: 4px 16px;
   padding: 8px;
-  background-color: #f9f9f9;
+  background-color: #fff;
   border-radius: 4px;
+  border: 1px solid #eee;
 }
 
 .cable-info {
   display: flex;
   flex-direction: column;
-  margin-bottom: 4px;
 }
 
 .cable-title {
   font-weight: bold;
-  font-size: 18px;
+  font-size: 14px;
 }
 
 .cable-desc {
-  font-size: 18px;
+  font-size: 12px;
   color: #666;
   margin: 2px 0;
-}
-
-.cable-facilities {
-  font-size: 18px;
-  color: #888;
-}
-
-.cable-tags {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
 }
 
 .action-buttons {
   display: flex;
   justify-content: flex-end;
   margin-top: 12px;
+  padding: 8px 16px;
+}
+
+/* 调整折叠面板样式 */
+:deep(.van-collapse-item__content) {
+  padding: 0;
 }
 </style>

@@ -99,8 +99,8 @@
                                   style="--van-card-font-size: 0.4rem;--van-card-padding: 0.1rem 0.1rem"
                                 >
                                   <template #tags>
-                                    <van-tag v-if="item.proj" type="primary" style="margin-right: 0.1rem;">{{ 'N'+item.proj.substr(-4) }}</van-tag>
-                                    <van-tag v-if="item.facilities_loca && item.facilities_loca.trim() !== ''" color="#ffe1e1" text-color="#ad0000" style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
+                                    <van-tag v-if="item.facilities" type="primary" style="margin-right: 0.1rem;">{{ item.facilities }}</van-tag>
+                                    <!-- <van-tag v-if="item.facilities_name && item.facilities_name.trim() !== ''" color="#ffe1e1" text-color="#ad0000" style="margin-right: 0.1rem;">{{ item.facilities_name }}</van-tag> -->
                                     <van-tag v-if="item.fin_user_name" color="#008866">{{ "接线:"+item.fin_user_name }}</van-tag>
                                   </template>
                                 </van-card>
@@ -136,7 +136,7 @@
               style="--van-card-font-size: 0.4rem;--van-card-padding: 0.1rem 0.1rem"
             >
               <template #tags>
-                <van-tag v-if="item.proj" type="primary" style="margin-right: 0.1rem;">{{ 'N'+item.proj.substr(-4) }}</van-tag>
+                
                 <van-tag v-if="item.facilities && item.facilities.trim() !== ''" plain type="primary" style="margin-right: 0.1rem;">{{ item.facilities }}</van-tag>
                 <van-tag v-if="item.facilities_loca && item.facilities_loca.trim() !== ''" color="#ffe1e1" text-color="#ad0000" style="margin-right: 0.1rem;">{{ item.facilities_loca }}</van-tag>
                 <van-tag v-if="item.facilities_name && item.facilities_name.trim() !== ''" plain color="#7232dd" style="margin-right: 0.1rem;">{{ item.facilities_name }}</van-tag>
@@ -207,9 +207,14 @@
                       <div class="item-title">{{ item.daihao }}</div>
                       <div class="item-desc">{{ item.model }} {{ item.specification }}</div>
                       <div class="item-info">
-                        <van-tag v-if="item.proj" type="primary" size="small">{{ 'N'+item.proj.substr(-4) }}</van-tag>
+                        <van-tag v-if="item.facilities" type="primary" size="small">{{ item.facilities }}</van-tag>
                         <van-tag v-if="item.facilities_name" plain color="#7232dd" size="small">{{ item.facilities_name }}</van-tag>
-                        <span class="item-price">￥{{ item.baseprice?.toFixed(2) || '0.00' }}</span>
+                        <span class="item-price">
+                          <span v-if="item.baseprice !== item.ori_price" class="original-price">
+                            ￥{{ item.ori_price?.toFixed(2) || '0.00' }}
+                          </span>
+                          ￥{{ item.baseprice?.toFixed(2) || '0.00' }}
+                        </span>
                       </div>
                     </div>
                   </van-checkbox>

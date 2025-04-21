@@ -1317,8 +1317,6 @@ const handlePopupClose = () => {
 }
 
 
-.van-popup--top {
-  top: 50px !important; /* 确保第一条数据不被遮挡 */
-}
+
   </style>
   
