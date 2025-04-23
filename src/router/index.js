@@ -122,6 +122,12 @@ const routes = [
         name: 'login',
         component: () => import("@/page/login/login.vue"),
 
+    },
+    {
+        path:"/paied",
+        name: 'paied',
+        component: () => import("@/page/paied/paied.vue"),
+
     }
 ];
 

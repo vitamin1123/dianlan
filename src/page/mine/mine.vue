@@ -96,6 +96,14 @@
       />
       <van-cell
         v-if="[0,4,5].includes(roleid)"
+        title="今日派工单"
+        size="large"
+        is-link
+        to="paied"
+        class="custom-cell"
+      />
+      <van-cell
+        v-if="[0,4,5].includes(roleid)"
         title="区域授权"
         size="large"
         is-link
