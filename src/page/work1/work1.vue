@@ -163,7 +163,7 @@
       <van-swipe-cell>
         <van-card
           :num="item.num"
-          :price="parseFloat(item.baseprice + item.fa_price).toFixed(2)"
+          :price="parseFloat(item.baseprice ).toFixed(2)"
           :desc="item.model+'  '+ item.specification"
           :tag="item.proj.substr(-4)"
           :title="item.daihao"
@@ -263,7 +263,8 @@
             <van-button 
               size="small" 
               :color="(item.fin_user )?'#ffc107' : ''"
-              :disabled="((item.paip != null && item.fin_user != null) || item.last_fangxian== null)" 
+              
+              :disabled="shouldDisable(item)"
               @click="addCart(item)">
               {{ item.paip || '选中' }}
           </van-button>
@@ -355,6 +356,19 @@
   // 如果 cart 为空，或者有任意一个 last_fangxian 为空，则禁用按钮
   return cart.value.length === 0 || cart.value.some(item => !item.last_fangxian || item.last_fangxian.trim() === '');
 });
+
+const shouldDisable = (item) => {
+  // 原有的禁用条件
+  const originalCondition = (item.paip !== null && item.fin_user !== null) || item.last_fangxian === null;
+  //:disabled="((item.paip != null && item.fin_user != null) || item.last_fangxian== null)" 
+  // 检查 max_wpdate 是否是今天
+  const today = new Date().toISOString().split('T')[0];
+  const wpdate = new Date(item.max_wpdate).toISOString().split('T')[0];
+  const isToday = wpdate === today;
+  console.log("shouldDisable:",isToday,originalCondition)
+  // 合并条件
+  return originalCondition || isToday;
+};
   // Grid 项数据
   const gridItems = ref([
     // { text: '公司', key: '公司' },
@@ -609,13 +623,21 @@
 
   const addAll2Cart = () => {
     console.log('尝试添加所有到车：', show_list.value);
-
+    // 获取今天的日期
+    const today = new Date().toISOString().split('T')[0];
     // 筛选出未在购物车中的商品
+    // const newItems = show_list.value.filter(item => 
+    //   (!cart.value.some(cartItem => cartItem.id === item.id)) && 
+    //   item.last_fangxian &&
+    //   (item.fin_user === null || item.fin_user === '') 
+      
+    // );
+    // 筛选出未在购物车中的商品，且 last_fangxian 存在，fin_user 为空或 null，并且 max_wpdate 不是今天
     const newItems = show_list.value.filter(item => 
       (!cart.value.some(cartItem => cartItem.id === item.id)) && 
       item.last_fangxian &&
-      (item.fin_user === null || item.fin_user === '') 
-      
+      (item.fin_user === null || item.fin_user === '') &&
+      (new Date(item.max_wpdate).toISOString().split('T')[0]!== today)
     );
 
     if (newItems.length === 0) {
