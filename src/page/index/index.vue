@@ -154,12 +154,21 @@
       button-text="提交确认"
       :loading="isSubmitting"
     >
+    
       <template #button>
+        <van-action-bar-button 
+          type="warning" 
+          text="上传照片" 
+          @click="showUploadDialog" 
+          color="#FFA500"
+          style="border-bottom-left-radius: 0.5rem; border-top-left-radius: 0.5rem; "
+        />
         <van-action-bar-button 
           type="warning" 
           text="确认" 
           @click="onSubmitLaxian" 
-          style="border-radius: 0.5rem; border-bottom-left-radius: 0.5rem;"
+          color="#FF8C00"
+          style="border-bottom-right-radius: 0.5rem; border-top-right-radius: 0.5rem;"
         />
       </template>  
       <template #default>
@@ -174,6 +183,60 @@
         </div>
       </template>
     </van-submit-bar>
+  <!-- 照片上传弹窗 -->
+  <van-dialog
+  v-model:show="showUploadDialogVisible"
+  title="上传工作照片"
+  :show-confirm-button="false"
+  :show-cancel-button="false"
+  :style="{ maxHeight: '80vh' }"
+>
+<div style="padding: 16px; max-height: calc(80vh - 120px); overflow-y: auto;">
+    <van-uploader
+      v-model="fileList"
+      multiple
+      :max-count="50"
+      :before-read="beforeRead"
+      :after-read="afterRead"
+      :max-size="5 * 1024 * 1024"
+      @oversize="onOversize"
+      preview-image
+      deletable
+      capture="environment"
+      accept="image/*"
+    >
+      <template #upload-text>
+        <div style="padding: 16px 0; text-align: center;">
+          <div>点击上传工作照片</div>
+          <div style="font-size: 12px; color: #969799;">
+            (最少2张，最多50张)
+          </div>
+        </div>
+      </template>
+    </van-uploader>
+    <div v-if="fileList.length > 0" style="margin-top: 12px; text-align: center; color: #969799;">
+      已上传 {{ fileList.length }} 张照片
+    </div>
+    <div style="padding: 16px; display: flex; justify-content: space-between; border-top: 1px solid #eee;">
+    <van-button 
+      size="large" 
+      style="width: 48%;" 
+      @click="showUploadDialogVisible = false"
+    >
+      取消
+    </van-button>
+    <van-button 
+      type="primary" 
+      size="large" 
+      style="width: 48%;" 
+      @click="onUploadDialogConfirm"
+      :disabled="fileList.length < 2"
+    >
+      确认({{ fileList.length }})
+    </van-button>
+  </div>
+  </div>
+</van-dialog>
 
     <!-- 接线包弹窗 -->
     <van-popup
@@ -275,7 +338,69 @@ const showCartPopup = ref(false);
 const cartChecked = ref([]);
 const isScaling = ref(false);
 
+// 照片上传相关状态
+const showUploadDialogVisible = ref(false);
+const fileList = ref([]);
+const isUploading = ref(false);
+
 const onClickLeft = () => history.back();
+
+
+// 显示上传对话框
+const showUploadDialog = () => {
+  if (checked.value.length === 0) {
+    showToast('请先选择要确认的项目');
+    return;
+  }
+  fileList.value = [];
+  showUploadDialogVisible.value = true;
+};
+
+// 上传对话框关闭前检查
+const beforeUploadDialogClose = (action) => {
+  if (action === 'confirm' && fileList.value.length < 2) {
+    showToast('请至少上传2张照片');
+    return false;
+  }
+  return true;
+};
+
+// 文件读取前的处理
+const beforeRead = (file) => {
+  if (!file.type.startsWith('image/')) {
+    showToast('请上传图片文件');
+    return false;
+  }
+  return true;
+};
+
+// 文件大小超过限制
+const onOversize = () => {
+  showToast('文件大小不能超过10MB');
+};
+
+// 文件读取后的压缩处理
+const afterRead = (file) => {
+  return new Promise((resolve) => {
+    // 压缩图片
+    new Compressor(file.file, {
+      quality: 0.7,
+      maxWidth: 1920,
+      maxHeight: 1920,
+      convertSize: 500000, // 大于500KB才压缩
+      success(result) {
+        const compressedFile = new File([result], file.file.name, {
+          type: result.type,
+        });
+        resolve(compressedFile);
+      },
+      error(err) {
+        console.error('图片压缩失败:', err);
+        resolve(file.file); // 压缩失败时使用原文件
+      },
+    });
+  });
+};
 
 // 计算接线包内容
 const cart = computed(() => {
@@ -589,26 +714,6 @@ const checkChange = async(newCheckedValues) => {
   console.log('checkChange:',isBatchOperating.value)
   if (isBatchOperating.value) return;
   
-  // 检查是否是全选操作导致的变化
-  // const currentItems = getActiveFacilityChildren(
-  //   activeCollapse.value.replace('proj-', ''),
-  //   activeLocationCollapse.value.replace('location-', ''),
-  //   activeFacilityLocaCollapse.value.replace('facilityLoca-', '')
-  // );
-  
-  // const allSelected = currentItems.every(item => 
-  //   newCheckedValues.includes(item.id + 'Φ' + item.wpid)
-  // );
-  
-  // const noneSelected = currentItems.every(item => 
-  //   !newCheckedValues.includes(item.id + 'Φ' + item.wpid)
-  // );
-  // console.log('allSelected:',allSelected,noneSelected)
-  // if (allSelected || noneSelected) {
-  //   // 如果是全选或全不选操作导致的变化，则不处理
-  //   previousCheckedValues.value = [...newCheckedValues];
-  //   return;
-  // }
   
   const added = newCheckedValues.filter(value => !previousCheckedValues.value.includes(value));
   const removed = previousCheckedValues.value.filter(value => !newCheckedValues.includes(value));
@@ -661,37 +766,7 @@ const checkChange = async(newCheckedValues) => {
     previousCheckedValues.value = [...newCheckedValues];
   }
 };
-// const checkChange = async(newCheckedValues) => {
-//   if (isBatchOperating.value) return; // 避免在批量操作时触发
-//   const added = newCheckedValues.filter(value => !previousCheckedValues.value.includes(value));
-//   const removed = previousCheckedValues.value.filter(value => !newCheckedValues.includes(value));
-  
-//   if (added.length > 0) {
-//     try {
-//       const res = await http.post('/api/add_my_work', 
-//       {'code': userStore.userInfo.userCode, 'id': added[0].split('Φ')[0],'wpid': added[0].split('Φ')[1] });
-//     } catch (error) {
-//       console.error('Error:', error);
-//     } finally {
-//       load();
-//     }
-//   }
 
-//   if (removed.length > 0) {
-//     const res = await http.post('/api/del_my_work', 
-//     {'code': userStore.userInfo.userCode, 'id': removed[0].split('Φ')[0],'wpid': removed[0].split('Φ')[1] });
-//     load();
-//   }
-
-//   previousCheckedValues.value = [...newCheckedValues];
-//   totalCheckedPrice.value = list.value
-//     .filter(item => newCheckedValues.includes(item.id + 'Φ' + item.wpid))
-//     .reduce((total, item) => total + (item.baseprice || 0), 0);
-
-//   totalConfirmedPrice.value = list.value
-//     .filter(item => newCheckedValues.includes(item.id + 'Φ' + item.wpid) && item.state === 1)
-//     .reduce((total, item) => total + (item.baseprice || 0), 0);
-// };
 
 const formatDate = (date) => {
   return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
@@ -722,15 +797,6 @@ const load = async () => {
   }
 };
 
-// const load = async () => {
-//   const res = await http.post('/api/get_my_wp_list', { userCode: userStore.userInfo.userCode, qdate: date.value });
-//   list.value = res.data;
-//   if (res.data) {
-//     const defaultChecked = res.data.filter(item => item.dianlanstate === 1).map(item => item.id+'Φ'+item.wpid);
-//     checked.value = defaultChecked;
-//     previousCheckedValues.value = defaultChecked;
-//   }
-// };
 
 onMounted(() => {
   load();
@@ -799,12 +865,7 @@ onMounted(() => {
   padding: 0;
 }
 
-/* 折叠面板标题样式 */
-/* :deep(.van-collapse-item__title) {
-  font-size: 0.4rem;
 
-  padding: 12px 16px;
-} */
 :deep(.van-collapse-item__title) span {
 
   font-size: 0.4rem;
