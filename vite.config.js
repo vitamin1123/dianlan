@@ -9,6 +9,10 @@ const pathResolve = (dir) => {
 
 export default defineConfig({
   plugins: [vue(), removeConsole()], // 添加插件
+  worker: {
+    format: 'es', // 必须使用ES模块
+    plugins: []
+  },
   server: {
     host: '0.0.0.0',
     port: 8080,

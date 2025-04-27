@@ -206,7 +206,11 @@
       accept="image/*"
     >
       <template #upload-text>
-        <div style="padding: 16px 0; text-align: center;">
+        <div v-if="isCompressing" style="padding: 16px 0; text-align: center;">
+          <van-loading type="spinner" size="24px" />
+          <div>正在压缩图片...</div>
+        </div>
+        <div v-else style="padding: 16px 0; text-align: center;">
           <div>点击上传工作照片</div>
           <div style="font-size: 12px; color: #969799;">
             (最少2张，最多50张)
@@ -302,12 +306,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, computed, watch, onUnmounted  } from 'vue';
 import { useUserStore } from '@/store/userStore';
 import { useDaibanStore } from '@/store/daibanStore'
 import { showToast, showConfirmDialog } from 'vant';
-import http from '@/api/request';
 
+import http from '@/api/request';
+import Compressor from 'compressorjs';
+const isCompressing = ref(false);
 const userStore = useUserStore();
 const daibanStore = useDaibanStore();
 const checked = ref([]);
@@ -346,6 +352,47 @@ const isUploading = ref(false);
 const onClickLeft = () => history.back();
 
 
+const onUploadDialogConfirm = async () => {
+  if (fileList.value.length < 2) {
+    showToast('请至少上传2张照片');
+    return;
+  }
+
+  try {
+    isUploading.value = true;
+    
+    const formData = new FormData();
+    fileList.value.forEach((file) => {
+      if (file.file) {
+        formData.append('files', file.file);
+      }
+    });
+    
+    // 添加关联的工作项信息
+    formData.append('userCode', userStore.userInfo.userCode);
+    
+    
+    const response = await http.post('/api/submit_post_imgs', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    if (response.success) {
+      showToast('上传成功');
+      showUploadDialogVisible.value = false;
+      // 可以在这里触发数据刷新或其他操作
+    } else {
+      showToast(response.message || '上传失败');
+    }
+  } catch (error) {
+    console.error('上传失败:', error);
+    showToast('上传失败');
+  } finally {
+    isUploading.value = false;
+  }
+};
+
 // 显示上传对话框
 const showUploadDialog = () => {
   if (checked.value.length === 0) {
@@ -376,30 +423,42 @@ const beforeRead = (file) => {
 
 // 文件大小超过限制
 const onOversize = () => {
-  showToast('文件大小不能超过10MB');
+  showToast('文件大小不能超过5MB');
 };
 
 // 文件读取后的压缩处理
-const afterRead = (file) => {
-  return new Promise((resolve) => {
-    // 压缩图片
-    new Compressor(file.file, {
-      quality: 0.7,
-      maxWidth: 1920,
-      maxHeight: 1920,
-      convertSize: 500000, // 大于500KB才压缩
-      success(result) {
-        const compressedFile = new File([result], file.file.name, {
-          type: result.type,
-        });
-        resolve(compressedFile);
-      },
-      error(err) {
-        console.error('图片压缩失败:', err);
-        resolve(file.file); // 压缩失败时使用原文件
-      },
+const afterRead = async (fileItem) => {
+  // 小文件不压缩（小于500KB）
+  if (fileItem.file.size < 500 * 1024) {
+    return;
+  }
+
+  try {
+    // 标记压缩状态
+    fileItem.isCompressing = true;
+    isCompressing.value = true;
+    
+    // 使用Compressor.js压缩
+    fileItem.file = await new Promise((resolve) => {
+      new Compressor(fileItem.file, {
+        quality: 0.5,
+        maxWidth: 1920,
+        maxHeight: 1920,
+        success(result) {
+          resolve(result);
+        },
+        error(err) {
+          console.warn('压缩失败，使用原文件:', err);
+          resolve(fileItem.file); // 失败时返回原文件
+        }
+      });
     });
-  });
+  } catch (error) {
+    console.error('压缩异常:', error);
+  } finally {
+    fileItem.isCompressing = false;
+    isCompressing.value = false;
+  }
 };
 
 // 计算接线包内容
@@ -925,6 +984,24 @@ onMounted(() => {
 /* 购物车图标动画 */
 .scale-animation {
   animation: scale 0.5s;
+}
+
+.custom-file-item {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* 压缩状态图标 */
+.compress-icon {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  color: #ff976a;
+  font-size: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  padding: 3px;
 }
 
 @keyframes scale {

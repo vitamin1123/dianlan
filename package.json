@@ -12,6 +12,7 @@
     "amfe-flexible": "^2.2.1",
     "axios": "^1.7.9",
     "base-64": "^1.0.0",
+    "compressorjs": "^1.2.1",
     "echarts": "^5.5.1",
     "file-saver": "^2.0.5",
     "path-browserify": "^1.0.1",
@@ -23,6 +24,7 @@
     "vue": "^3.5.13",
     "vue-router": "^4.5.0",
     "vue-virtual-scroller": "^2.0.0-beta.8",
+    "worker-loader": "^3.0.8",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
