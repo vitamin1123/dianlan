@@ -74,6 +74,7 @@
                               size="mini" 
                               type="primary" 
                               @click="toggleSelectAll(proj.key, location.key, facilityLoca.key)"
+                              :disabled = "date != todayDate"
                             >
                               {{ isAllSelected(proj.key, location.key, facilityLoca.key) ? '取消全选' : '全选' }}
                             </van-button>
@@ -463,8 +464,12 @@ const afterRead = async (fileItem) => {
 
 // 计算接线包内容
 const cart = computed(() => {
+  // return list.value.filter(item => 
+  //   checked.value.includes(item.id + 'Φ' + item.wpid)
+  // );
   return list.value.filter(item => 
-    checked.value.includes(item.id + 'Φ' + item.wpid)
+    checked.value.includes(item.id + 'Φ' + item.wpid) &&
+    (item.fin_user === null || item.fin_user === userStore.userInfo.userCode)
   );
 });
 
@@ -503,10 +508,16 @@ const toggleSelectAll = async (projKey, locationKey, facilityLocaKey) => {
     console.log('allSelected:',allSelected)
     if (allSelected) {
       // 取消全选
-      const itemsToRemove = items.map(item => ({
-        id: item.id,
-        wpid: item.wpid
-      }));
+      const itemsToRemove = items
+        .filter(item => 
+          !(item.fin_user != null && item.fin_user != userStore.userInfo.userCode) && 
+          item.dianlanstate == 1 && 
+          item.state !== 1
+        )
+        .map(item => ({
+          id: item.id,
+          wpid: item.wpid
+        }));
       
       const res = await http.post('/api/del_my_work_batch', {
         code: userStore.userInfo.userCode,
@@ -528,10 +539,10 @@ const toggleSelectAll = async (projKey, locationKey, facilityLocaKey) => {
       
       
     } else {
-      // 全选
+      // 全选 没有加dianlanstate，会更新所有
       const itemsToAdd = items
         .filter(item => 
-          !(item.fin_user != null && item.fin_user != userStore.userInfo.userCode) && 
+          item.fin_user != userStore.userInfo.userCode && 
           date.value === todayDate && 
           item.state !== 1
         )
@@ -573,12 +584,26 @@ const toggleSelectAll = async (projKey, locationKey, facilityLocaKey) => {
 };
 
 const updatePrices = () => {
+  // totalCheckedPrice.value = list.value
+  //   .filter(item => checked.value.includes(item.id + 'Φ' + item.wpid))
+  //   .reduce((total, item) => total + (item.baseprice || 0), 0);
+
+  // totalConfirmedPrice.value = list.value
+  //   .filter(item => checked.value.includes(item.id + 'Φ' + item.wpid) && item.state === 1)
+  //   .reduce((total, item) => total + (item.baseprice || 0), 0);
   totalCheckedPrice.value = list.value
-    .filter(item => checked.value.includes(item.id + 'Φ' + item.wpid))
+    .filter(item => 
+      checked.value.includes(item.id + 'Φ' + item.wpid) &&
+      (item.fin_user === null || item.fin_user === userStore.userInfo.userCode)
+    )
     .reduce((total, item) => total + (item.baseprice || 0), 0);
 
   totalConfirmedPrice.value = list.value
-    .filter(item => checked.value.includes(item.id + 'Φ' + item.wpid) && item.state === 1)
+    .filter(item => 
+      checked.value.includes(item.id + 'Φ' + item.wpid) && 
+      item.state === 1 &&
+      (item.fin_user === null || item.fin_user === userStore.userInfo.userCode)
+    )
     .reduce((total, item) => total + (item.baseprice || 0), 0);
 };
 // 移除选中的接线包项目
@@ -683,8 +708,15 @@ const getTreeItems = (projKey, locationKey, facilityLocaKey) => {
   });
   
   return Object.values(facilitiesMap).map(facility => {
+    // const checkedCount = facility.children.filter(child => 
+    //   checked.value.includes(child.id)
+    // ).length;
     const checkedCount = facility.children.filter(child => 
-      checked.value.includes(child.id)
+      checked.value.includes(child.id) &&
+      filteredList.some(item => 
+        item.id + 'Φ' + item.wpid === child.id &&
+        (item.fin_user === null || item.fin_user === userStore.userInfo.userCode)
+      )
     ).length;
     
     return {
@@ -708,9 +740,14 @@ const getActiveFacilityChildren = (projKey, locationKey, facilityLocaKey) => {
 
 // 获取项目标题（带选中统计）
 const getProjTitle = (projKey) => {
+  // const count = list.value.filter(item => 
+  //   item.proj_item === projKey && 
+  //   checked.value.includes(item.id + 'Φ' + item.wpid)
+  // ).length;
   const count = list.value.filter(item => 
     item.proj_item === projKey && 
-    checked.value.includes(item.id + 'Φ' + item.wpid)
+    checked.value.includes(item.id + 'Φ' + item.wpid) &&
+    (item.fin_user === null || item.fin_user === userStore.userInfo.userCode)
   ).length;
   
   return `${projKey} (${count})`;
@@ -721,7 +758,8 @@ const getLocationTitle = (projKey, locationKey) => {
   const count = list.value.filter(item => 
     item.proj_item === projKey && 
     item.last_fangxian_loca_name === locationKey && 
-    checked.value.includes(item.id + 'Φ' + item.wpid)
+    checked.value.includes(item.id + 'Φ' + item.wpid) &&
+    (item.fin_user === null || item.fin_user === userStore.userInfo.userCode)
   ).length;
   
   return `<span style="display:inline-block;width:1em;">•</span> ${locationKey} (${count})`;
@@ -729,11 +767,18 @@ const getLocationTitle = (projKey, locationKey) => {
 
 // 获取设备位置标题（带选中统计和层级标识）
 const getFacilityLocaTitle = (projKey, locationKey, facilityLocaKey) => {
+  // const count = list.value.filter(item => 
+  //   item.proj_item === projKey && 
+  //   item.last_fangxian_loca_name === locationKey && 
+  //   item.facilities_loca === facilityLocaKey && 
+  //   checked.value.includes(item.id + 'Φ' + item.wpid)
+  // ).length;
   const count = list.value.filter(item => 
     item.proj_item === projKey && 
     item.last_fangxian_loca_name === locationKey && 
     item.facilities_loca === facilityLocaKey && 
-    checked.value.includes(item.id + 'Φ' + item.wpid)
+    checked.value.includes(item.id + 'Φ' + item.wpid) &&
+    (item.fin_user === null || item.fin_user === userStore.userInfo.userCode)
   ).length;
   
   return `<span style="display:inline-block;width:1em;">•</span><span style="display:inline-block;width:1em;">•</span> ${facilityLocaKey} (${count})`;
@@ -837,23 +882,59 @@ const onConfirm = (value) => {
   load();
 };
 
-const load = async () => {
-  const res = await http.post('/api/get_my_wp_list', { userCode: userStore.userInfo.userCode, qdate: date.value });
-  list.value = res.data;
-  if (res.data) {
-    const defaultChecked = res.data.filter(item => item.dianlanstate === 1).map(item => item.id+'Φ'+item.wpid);
-    checked.value = defaultChecked;
-    previousCheckedValues.value = defaultChecked;
+// const load = async () => {
+//   const res = await http.post('/api/get_my_wp_list', { userCode: userStore.userInfo.userCode, qdate: date.value });
+//   list.value = res.data;
+//   if (res.data) {
+//     const defaultChecked = res.data.filter(item => item.dianlanstate === 1).map(item => item.id+'Φ'+item.wpid);
+//     checked.value = defaultChecked;
+//     previousCheckedValues.value = defaultChecked;
     
-    // 计算总产值和已确认价格
-    totalCheckedPrice.value = res.data
-      .filter(item => defaultChecked.includes(item.id + 'Φ' + item.wpid))
-      .reduce((total, item) => total + (item.baseprice || 0), 0);
+//     // 计算总产值和已确认价格
+//     totalCheckedPrice.value = res.data
+//       .filter(item => defaultChecked.includes(item.id + 'Φ' + item.wpid))
+//       .reduce((total, item) => total + (item.baseprice || 0), 0);
 
-    totalConfirmedPrice.value = res.data
-      .filter(item => defaultChecked.includes(item.id + 'Φ' + item.wpid) && item.state === 1)
-      .reduce((total, item) => total + (item.baseprice || 0), 0);
-  }
+//     totalConfirmedPrice.value = res.data
+//       .filter(item => defaultChecked.includes(item.id + 'Φ' + item.wpid) && item.state === 1)
+//       .reduce((total, item) => total + (item.baseprice || 0), 0);
+//   }
+// };
+const load = async () => {
+  const res = await http.post('/api/get_my_wp_list', { 
+    userCode: userStore.userInfo.userCode, 
+    qdate: date.value 
+  });
+  
+  list.value = res.data || [];
+  
+  // 默认选中当前用户可操作且 dianlanstate === 1 的项目
+  const defaultChecked = res.data
+    .filter(item => 
+      item.dianlanstate === 1 && 
+      (item.fin_user === null || item.fin_user === userStore.userInfo.userCode)
+    )
+    .map(item => item.id + 'Φ' + item.wpid);
+  
+  checked.value = defaultChecked;
+  previousCheckedValues.value = defaultChecked;
+  
+  // 计算总产值（只包含当前用户可操作的项目）
+  totalCheckedPrice.value = res.data
+    .filter(item => 
+      defaultChecked.includes(item.id + 'Φ' + item.wpid) &&
+      (item.fin_user === null || item.fin_user === userStore.userInfo.userCode)
+    )
+    .reduce((total, item) => total + (item.baseprice || 0), 0);
+
+  // 计算已确认价格（只包含当前用户可操作且已确认的项目）
+  totalConfirmedPrice.value = res.data
+    .filter(item => 
+      defaultChecked.includes(item.id + 'Φ' + item.wpid) && 
+      item.state === 1 &&
+      (item.fin_user === null || item.fin_user === userStore.userInfo.userCode)
+    )
+    .reduce((total, item) => total + (item.baseprice || 0), 0);
 };
 
 
