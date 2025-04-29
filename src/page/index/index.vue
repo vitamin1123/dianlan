@@ -169,6 +169,7 @@
           text="确认" 
           @click="onSubmitLaxian" 
           color="#FF8C00"
+          :disabled="!hasTodayUploadRecord"
           style="border-bottom-right-radius: 0.5rem; border-top-right-radius: 0.5rem;"
         />
       </template>  
@@ -311,7 +312,7 @@ import { ref, onMounted, computed, watch, onUnmounted  } from 'vue';
 import { useUserStore } from '@/store/userStore';
 import { useDaibanStore } from '@/store/daibanStore'
 import { showToast, showConfirmDialog } from 'vant';
-
+import { baseURL } from "@/api/my-account";
 import http from '@/api/request';
 import Compressor from 'compressorjs';
 const isCompressing = ref(false);
@@ -344,14 +345,13 @@ const isSubmitting = ref(false);
 const showCartPopup = ref(false);
 const cartChecked = ref([]);
 const isScaling = ref(false);
-
+const hasTodayUploadRecord = ref(false); 
 // 照片上传相关状态
 const showUploadDialogVisible = ref(false);
 const fileList = ref([]);
 const isUploading = ref(false);
 
 const onClickLeft = () => history.back();
-
 
 const onUploadDialogConfirm = async () => {
   if (fileList.value.length < 2) {
@@ -363,15 +363,25 @@ const onUploadDialogConfirm = async () => {
     isUploading.value = true;
     
     const formData = new FormData();
+    
+    // 1. 添加新上传的文件
     fileList.value.forEach((file) => {
       if (file.file) {
         formData.append('files', file.file);
       }
     });
     
-    // 添加关联的工作项信息
-    formData.append('userCode', userStore.userInfo.userCode);
+    // 2. 添加保留的原始图片URL
+    const originalFiles = fileList.value
+      .filter(file => file.url && !file.file && !file.deleted)
+      .map(file => file.url);
     
+    if (originalFiles.length > 0) {
+      formData.append('originalFiles', JSON.stringify(originalFiles));
+    }
+    
+    // 3. 添加用户信息
+    formData.append('userCode', userStore.userInfo.userCode);
     
     const response = await http.post('/api/submit_post_imgs', formData, {
       headers: {
@@ -381,8 +391,11 @@ const onUploadDialogConfirm = async () => {
 
     if (response.success) {
       showToast('上传成功');
+      hasTodayUploadRecord.value = true; // 更新状态
       showUploadDialogVisible.value = false;
-      // 可以在这里触发数据刷新或其他操作
+      // 刷新图片列表
+      fileList.value = [];
+      await showUploadDialog(); // 重新加载已上传图片
     } else {
       showToast(response.message || '上传失败');
     }
@@ -393,15 +406,80 @@ const onUploadDialogConfirm = async () => {
     isUploading.value = false;
   }
 };
+// const onUploadDialogConfirm = async () => {
+//   if (fileList.value.length < 2) {
+//     showToast('请至少上传2张照片');
+//     return;
+//   }
+
+//   try {
+//     isUploading.value = true;
+    
+//     const formData = new FormData();
+//     fileList.value.forEach((file) => {
+//       if (file.file) {
+//         formData.append('files', file.file);
+//       }
+//     });
+    
+//     // 添加关联的工作项信息
+//     formData.append('userCode', userStore.userInfo.userCode);
+    
+    
+//     const response = await http.post('/api/submit_post_imgs', formData, {
+//       headers: {
+//         'Content-Type': 'multipart/form-data',
+//       },
+//     });
+
+//     if (response.success) {
+//       showToast('上传成功');
+//       showUploadDialogVisible.value = false;
+//       // 可以在这里触发数据刷新或其他操作
+//     } else {
+//       showToast(response.message || '上传失败');
+//     }
+//   } catch (error) {
+//     console.error('上传失败:', error);
+//     showToast('上传失败');
+//   } finally {
+//     isUploading.value = false;
+//   }
+// };
 
 // 显示上传对话框
-const showUploadDialog = () => {
+const showUploadDialog = async() => {
   if (checked.value.length === 0) {
     showToast('请先选择要确认的项目');
     return;
   }
+  
+  // 先清空文件列表
   fileList.value = [];
-  showUploadDialogVisible.value = true;
+  
+  try {
+    // 请求后台获取今天已上传的照片
+    const res = await http.post('/api/get_today_uploaded', { 
+      userCode: userStore.userInfo.userCode 
+    });
+    
+    if (res.data && res.data.length > 0) {
+      const imagePaths = res.data[0].image_paths.split(',');
+      
+      // 将图片路径转换为 uploader 需要的格式
+      fileList.value = imagePaths.map(path => ({
+        // url
+        url: baseURL+`/public/img/${path.trim()}`, // 假设图片通过 /api/img/ 路径访问
+        status: 'done', // 标记为已上传
+        message: '已上传' // 可选状态信息
+      }));
+    }
+    
+    showUploadDialogVisible.value = true;
+  } catch (error) {
+    console.error('获取已上传图片失败:', error);
+    showToast('获取已上传图片失败');
+  }
 };
 
 // 上传对话框关闭前检查
@@ -937,9 +1015,22 @@ const load = async () => {
     .reduce((total, item) => total + (item.baseprice || 0), 0);
 };
 
+const checkTodayUploadRecord = async () => {
+  try {
+    const res = await http.post('/api/check_today_upload', { 
+      userCode: userStore.userInfo.userCode 
+    });
+    hasTodayUploadRecord.value = res.data?.hasRecord || false;
+  } catch (error) {
+    console.error('检查上传记录失败:', error);
+    hasTodayUploadRecord.value = false;
+  }
+};
 
-onMounted(() => {
+
+onMounted(async() => {
   load();
+  await checkTodayUploadRecord(); // 新增检查方法
 });
 </script>
 

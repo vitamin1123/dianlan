@@ -21,12 +21,12 @@
         <van-collapse v-model="activeNames">
           <van-collapse-item
             v-for="(userGroup, userIndex) in groupedData"
-            :key="userGroup.user"
-            :name="'user-' + userGroup.user"
+            :key="userGroup.usercode"
+            :name="'user-' + userGroup.usercode"
           >
           <template #title>
             <div class="user-header">
-              <span class="user-name">{{ userGroup.fin_user_name }}</span>
+              <span class="user-name">{{ userGroup.user_name  }}</span>
               <span class="cable-count">
                 {{ userGroup.totalCount }} / {{ userGroup.completedCount }} 条
               </span>
@@ -34,18 +34,21 @@
           </template>
 
             <!-- 按 last_fangxian_loca_name 分组 -->
-            <div v-for="(locationGroup, locIndex) in userGroup.locations" :key="locIndex">
-              <div class="location-title">{{ locationGroup.location || '未指定位置' }}</div>
+            <div v-for="(completedItem, itemIndex) in userGroup.completedItems" :key="itemIndex">
+              <!-- 按位置分组 -->
+              <div v-for="(locationGroup, locIndex) in completedItem.locations" :key="locIndex">
+                <div class="location-title">{{ locationGroup.location || '未指定位置' }}</div>
 
-              <!-- 按 facilities_name 分组 -->
-              <div v-for="(facilityGroup, facIndex) in locationGroup.facilities" :key="facIndex">
-                <div class="facility-title">{{ facilityGroup.facility || '未指定设施' }}</div>
+                <!-- 按设施分组 -->
+                <div v-for="(facilityGroup, facIndex) in locationGroup.facilities" :key="facIndex">
+                  <div class="facility-title">{{ facilityGroup.facility || '未指定设施' }}</div>
 
-                <!-- 电缆列表 -->
-                <div v-for="(item, itemIndex) in facilityGroup.items" :key="itemIndex" class="cable-item">
-                  <div class="cable-info">
-                    <span class="cable-title">{{ item.daihao }}</span>
-                    <span class="cable-desc">{{ item.model }} {{ item.specification }}</span>
+                  <!-- 电缆列表 -->
+                  <div v-for="(item, cableIndex) in facilityGroup.items" :key="cableIndex" class="cable-item">
+                    <div class="cable-info">
+                      <span class="cable-title">{{ item.daihao }}</span>
+                      <span class="cable-desc">{{ item.model }} {{ item.specification }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -54,9 +57,17 @@
             <!-- 操作按钮（针对整个用户） -->
             <div class="action-buttons">
               <van-button 
+                type="primary" 
+                size="small" 
+                @click.stop="handleViewImages(userGroup.usercode)"
+                style="margin-right: 8px;"
+              >
+                查看图片
+              </van-button>
+              <van-button 
                 type="danger" 
                 size="small" 
-                @click.stop="handleReject(userGroup.fin_user)"
+                @click.stop="handleReject(userGroup.usercode)"
                 style="margin-right: 8px;"
               >
                 驳回
@@ -64,7 +75,7 @@
               <van-button 
                 type="success" 
                 size="small" 
-                @click.stop="handleConfirm(userGroup.fin_user)"
+                @click.stop="handleConfirm(userGroup.usercode)"
               >
                 确认
               </van-button>
@@ -74,6 +85,62 @@
       </van-list>
     </van-pull-refresh>
   </div>
+  <van-popup
+    v-model:show="showImagePreview"
+    position="bottom"
+    round
+    :style="{ height: '80%' }"
+  >
+    <van-nav-bar
+      title="工作照片"
+      left-text="关闭"
+      left-arrow
+      @click-left="showImagePreview = false"
+    />
+    
+    <div class="image-preview-container">
+      <van-checkbox-group v-model="selectedImages">
+        <van-grid :border="false" :column-num="3">
+          <van-grid-item 
+            v-for="(image, index) in userImages" 
+            :key="index"
+            @click="previewSingleImage(index)"
+          >
+            <van-checkbox 
+              :name="image" 
+              shape="square" 
+              @click.stop
+              class="image-checkbox"
+            />
+            <van-image
+              :src="image"
+              fit="cover"
+              height="100"
+              lazy-load
+            />
+          </van-grid-item>
+        </van-grid>
+      </van-checkbox-group>
+    </div>
+    
+    <div class="image-actions">
+      <van-button 
+        type="primary" 
+        block 
+        @click="shareToWechat"
+        :disabled="selectedImages.length === 0"
+      >
+        分享选中图片 ({{ selectedImages.length }})
+      </van-button>
+    </div>
+  </van-popup>
+  
+  <!-- 单张图片预览 -->
+  <van-image-preview
+    v-model:show="showSinglePreview"
+    :images="userImages"
+    :start-position="singlePreviewIndex"
+  />
 </template>
 
 <script setup>
@@ -82,6 +149,13 @@ import http from '@/api/request';
 import { showNotify, showConfirmDialog } from 'vant';
 import { useUserStore } from '@/store/userStore';
 import { useDaibanStore } from '@/store/daibanStore';
+import { baseURL } from "@/api/my-account";
+const showImagePreview = ref(false);
+const userImages = ref([]);
+const selectedImages = ref([]);
+const showSinglePreview = ref(false);
+const singlePreviewIndex = ref(0);
+
 
 const userStore = useUserStore();
 const daibanStore = useDaibanStore();
@@ -109,6 +183,51 @@ const onConfirm = async(value) => {
   await onLoad();
 };
 
+// 查看图片方法
+const handleViewImages = async (fin_user) => {
+  try {
+    const res = await http.post('/api/get_today_uploaded', { 
+      userCode: fin_user 
+    });
+    
+    if (res.data && res.data.length > 0) {
+      // 假设返回的图片路径是相对路径，需要拼接完整URL
+      userImages.value = res.data[0].image_paths.split(',').map(path => {
+        return `${baseURL}/public/img/${path.trim()}`;
+      });
+      selectedImages.value = [];
+      showImagePreview.value = true;
+    } else {
+      showNotify({ type: 'warning', message: '该用户今日未上传图片' });
+    }
+  } catch (error) {
+    console.error('获取图片失败:', error);
+    showNotify({ type: 'danger', message: '获取图片失败' });
+  }
+};
+
+// 预览单张图片
+const previewSingleImage = (index) => {
+  singlePreviewIndex.value = index;
+  showSinglePreview.value = true;
+};
+
+// 分享到微信
+const shareToWechat = () => {
+  // 这里需要根据实际微信SDK或分享API实现
+  // 示例代码，实际实现可能需要调用微信JS-SDK
+  console.log('分享图片:', selectedImages.value);
+  showNotify({ type: 'success', message: '准备分享到微信' });
+  
+  // 实际项目中可能需要这样：
+  // wx.ready(() => {
+  //   wx.previewImage({
+  //     current: selectedImages.value[0],
+  //     urls: selectedImages.value
+  //   });
+  // });
+};
+
 // 按 user → last_fangxian_loca_name → facilities_name 分组
 
 
@@ -128,48 +247,57 @@ const groupedData = computed(() => {
   const userGroups = {};
   
   list.value.forEach(item => {
-    if (!item.user) return; // 确保 user 字段存在
+    if (!item.usercode) return; // 确保usercode字段存在
     
-    // 初始化用户组（以 user 作为分组依据）
-    if (!userGroups[item.user]) {
-      userGroups[item.user] = {
-        user: item.user,          // 用户ID（分组依据）
-        fin_user_name: item.fin_user_name, // 显示用用户名
-        totalCount: 0,       // 该 user 下的所有电缆数
-        completedCount: 0,   // fin_user_name = user 的电缆数
-        locations: {}
+    // 初始化用户组（按usercode分组）
+    if (!userGroups[item.usercode]) {
+      userGroups[item.usercode] = {
+        usercode: item.usercode,
+        user_name: item.user_name || item.user || item.usercode, // 显示名称，优先使用user_name
+        totalCount: 0,       // 该用户下的所有电缆数
+        completedCount: 0,   // fin_user不为null的电缆数
+        completedItems: []   // 存储已完成条目
       };
     }
     
-    const userGroup = userGroups[item.user];
+    const userGroup = userGroups[item.usercode];
     userGroup.totalCount++; // 总电缆数 +1
     
-    // 如果 fin_user_name 等于当前分组 user，则计入 completedCount
-    if (item.fin_user_name === item.user) {
+    // 如果fin_user不为null，则计入completedCount并添加到completedItems
+    if (item.fin_user) {
       userGroup.completedCount++;
+      
+      // 按位置 → 设施分组已完成条目
+      const locationKey = item.last_fangxian_loca_name || '未指定位置';
+      const facilityKey = item.facilities_name || '未指定设施';
+      
+      // 查找或创建位置分组
+      let locationGroup = userGroup.completedItems.find(g => g.location === locationKey);
+      if (!locationGroup) {
+        locationGroup = {
+          location: locationKey,
+          facilities: {}
+        };
+        userGroup.completedItems.push(locationGroup);
+      }
+      
+      // 查找或创建设施分组
+      if (!locationGroup.facilities[facilityKey]) {
+        locationGroup.facilities[facilityKey] = {
+          facility: facilityKey,
+          items: []
+        };
+      }
+      
+      locationGroup.facilities[facilityKey].items.push(item);
     }
-    
-    // 剩余分组逻辑（按位置 → 设施 → 电缆）
-    const locationKey = item.last_fangxian_loca_name || '未指定位置';
-    if (!userGroup.locations[locationKey]) {
-      userGroup.locations[locationKey] = {
-        location: locationKey,
-        facilities: {}
-      };
-    }
-    
-    const locationGroup = userGroup.locations[locationKey];
-    const facilityKey = item.facilities_name || '未指定设施';
-    if (!locationGroup.facilities[facilityKey]) {
-      locationGroup.facilities[facilityKey] = {
-        facility: facilityKey,
-        items: []
-      };
-    }
-    
-    locationGroup.facilities[facilityKey].items.push(item);
   });
   
+  // 调试输出
+  console.log('原始数据:', list.value);
+  console.log('分组结果:', Object.values(userGroups));
+  
+  // 返回所有用户组，即使completedCount为0也要显示（但模板中已过滤）
   return Object.values(userGroups);
 });
 // 确认操作（针对整个用户）
@@ -248,6 +376,11 @@ const get_wp_todo_cnt = async () => {
 </script>
 
 <style scoped>
+/* 新增折叠面板标题样式 */
+:deep(.van-collapse-item__title) {
+  font-size: 18px;  /* 增大标题字体 */
+}
+
 .user-header {
   display: flex;
   justify-content: space-between;
@@ -258,18 +391,18 @@ const get_wp_todo_cnt = async () => {
 
 .user-name {
   font-weight: bold;
-  font-size: 16px;
+  font-size: 0.3rem;  /* 增大用户名字体 */
 }
 
 .cable-count {
   color: #666;
-  font-size: 14px;
+  font-size: 24px;
 }
 
 .cable-count::before {
   content: "总计/完成：";
   color: #999;
-  font-size: 12px;
+  font-size: 20px;
 }
 
 .location-title {
@@ -283,7 +416,7 @@ const get_wp_todo_cnt = async () => {
   padding: 6px 16px;
   background-color: #f9f9f9;
   color: #666;
-  font-size: 14px;
+  font-size: 24px;
 }
 
 .cable-item {
@@ -301,7 +434,7 @@ const get_wp_todo_cnt = async () => {
 
 .cable-title {
   font-weight: bold;
-  font-size: 14px;
+  font-size: 20px;
 }
 
 .cable-desc {
@@ -320,5 +453,43 @@ const get_wp_todo_cnt = async () => {
 /* 调整折叠面板样式 */
 :deep(.van-collapse-item__content) {
   padding: 0;
+}
+
+/* 图片预览容器 */
+.image-preview-container {
+  height: calc(100% - 100px);
+  overflow-y: auto;
+  padding: 10px;
+}
+
+/* 图片复选框 */
+.image-checkbox {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  z-index: 2;
+}
+
+/* 图片操作区域 */
+.image-actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 10px;
+  background: white;
+  border-top: 1px solid #eee;
+}
+
+/* 调整图片网格项 */
+:deep(.van-grid-item__content) {
+  padding: 5px;
+  position: relative;
+}
+
+/* 调整图片样式 */
+:deep(.van-image) {
+  border-radius: 4px;
+  overflow: hidden;
 }
 </style>
