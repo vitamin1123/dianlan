@@ -17,6 +17,9 @@
         finished-text="没有更多了"
         @load="onLoad"
       >
+      <!-- <pre style="font-size: 12px; background: #f5f5f5; padding: 10px; margin: 10px;">
+        {{ JSON.stringify(groupedData, null, 2) }}
+      </pre> -->
         <!-- 按 user 分组 -->
         <van-collapse v-model="activeNames">
           <van-collapse-item
@@ -35,20 +38,18 @@
 
             <!-- 按 last_fangxian_loca_name 分组 -->
             <div v-for="(completedItem, itemIndex) in userGroup.completedItems" :key="itemIndex">
-              <!-- 按位置分组 -->
-              <div v-for="(locationGroup, locIndex) in completedItem.locations" :key="locIndex">
-                <div class="location-title">{{ locationGroup.location || '未指定位置' }}</div>
-
-                <!-- 按设施分组 -->
-                <div v-for="(facilityGroup, facIndex) in locationGroup.facilities" :key="facIndex">
-                  <div class="facility-title">{{ facilityGroup.facility || '未指定设施' }}</div>
-
-                  <!-- 电缆列表 -->
-                  <div v-for="(item, cableIndex) in facilityGroup.items" :key="cableIndex" class="cable-item">
-                    <div class="cable-info">
-                      <span class="cable-title">{{ item.daihao }}</span>
-                      <span class="cable-desc">{{ item.model }} {{ item.specification }}</span>
-                    </div>
+              <!-- 位置名称 -->
+              <div class="location-title">{{ completedItem.location || '未指定位置' }}</div>
+              
+              <!-- 遍历设施（使用 Object.values 转换对象为数组） -->
+              <div v-for="(facilityGroup, facIndex) in Object.values(completedItem.facilities)" :key="facIndex">
+                <div class="facility-title">{{ facilityGroup.facility || '未指定设施' }}</div>
+                
+                <!-- 电缆列表 -->
+                <div v-for="(item, cableIndex) in facilityGroup.items" :key="cableIndex" class="cable-item">
+                  <div class="cable-info">
+                    <span class="cable-title">{{ item.daihao }}</span>
+                    <span class="cable-desc">{{ item.model }} {{ item.specification }}</span>
                   </div>
                 </div>
               </div>
@@ -243,44 +244,41 @@ const handleReject = (fin_user) => {
     showNotify({ type: 'info', message: '已取消' });
   });
 };
+
 const groupedData = computed(() => {
   const userGroups = {};
   
   list.value.forEach(item => {
-    if (!item.usercode) return; // 确保usercode字段存在
-    
-    // 初始化用户组（按usercode分组）
+    if (!item.usercode) return;
+
+    // 初始化用户组
     if (!userGroups[item.usercode]) {
       userGroups[item.usercode] = {
         usercode: item.usercode,
-        user_name: item.user_name || item.user || item.usercode, // 显示名称，优先使用user_name
-        totalCount: 0,       // 该用户下的所有电缆数
-        completedCount: 0,   // fin_user不为null的电缆数
-        completedItems: []   // 存储已完成条目
+        user_name: item.user_name || item.user || item.usercode,
+        totalCount: 0,
+        completedCount: 0,
+        completedItems: []
       };
     }
-    
+
     const userGroup = userGroups[item.usercode];
-    userGroup.totalCount++; // 总电缆数 +1
-    
-    // 如果fin_user不为null，则计入completedCount并添加到completedItems
-    if (item.fin_user) {
+    userGroup.totalCount++;
+
+    // 关键点：检查 fin_user 是否等于当前 usercode
+    if (item.fin_user === item.usercode) {
       userGroup.completedCount++;
-      
-      // 按位置 → 设施分组已完成条目
+
       const locationKey = item.last_fangxian_loca_name || '未指定位置';
       const facilityKey = item.facilities_name || '未指定设施';
-      
+
       // 查找或创建位置分组
       let locationGroup = userGroup.completedItems.find(g => g.location === locationKey);
       if (!locationGroup) {
-        locationGroup = {
-          location: locationKey,
-          facilities: {}
-        };
+        locationGroup = { location: locationKey, facilities: {} };
         userGroup.completedItems.push(locationGroup);
       }
-      
+
       // 查找或创建设施分组
       if (!locationGroup.facilities[facilityKey]) {
         locationGroup.facilities[facilityKey] = {
@@ -288,18 +286,14 @@ const groupedData = computed(() => {
           items: []
         };
       }
-      
+
       locationGroup.facilities[facilityKey].items.push(item);
     }
   });
-  
-  // 调试输出
-  console.log('原始数据:', list.value);
-  console.log('分组结果:', Object.values(userGroups));
-  
-  // 返回所有用户组，即使completedCount为0也要显示（但模板中已过滤）
+
   return Object.values(userGroups);
 });
+
 // 确认操作（针对整个用户）
 const handleConfirm = (fin_user) => {
   showConfirmDialog({

@@ -4,7 +4,7 @@ import App from './App.vue'
 import { createPinia } from 'pinia'
 import router from './router/index.js'
 import 'amfe-flexible'
-import { Button,Field, Cell, Popover,Uploader,Overlay,Loading,showConfirmDialog ,TreeSelect,Tab, NoticeBar , Tabs  ,NavBar , Collapse, CollapseItem,Progress ,Lazyload ,DropdownMenu,Notify , DropdownItem , Calendar,CellGroup,Form, Tabbar,Col,Row, TabbarItem, Tag, Checkbox,CheckboxGroup,Grid, GridItem, Popup, Search, List, Toast, SubmitBar, Card, PullRefresh,Dialog, SwipeCell, ActionBar, ActionBarIcon, ActionBarButton,FloatingBubble   ,Picker  } from 'vant'
+import { Button,Field, Cell, Popover,Uploader,Overlay,Loading,showConfirmDialog,ImagePreview  ,TreeSelect,Tab, NoticeBar , Tabs  ,NavBar , Collapse, CollapseItem,Progress ,Lazyload ,DropdownMenu,Notify , DropdownItem , Calendar,CellGroup,Form, Tabbar,Col,Row, TabbarItem, Tag, Checkbox,CheckboxGroup,Grid, GridItem, Popup, Search, List, Toast, SubmitBar, Card, PullRefresh,Dialog, SwipeCell, ActionBar, ActionBarIcon, ActionBarButton,FloatingBubble   ,Picker  } from 'vant'
 import { Image as VanImage } from 'vant';
 import 'vant/lib/index.css'
 import { useUserStore } from '@/store/userStore';
@@ -49,7 +49,7 @@ router.beforeEach(async (to, from, next) => {
 
 app.use(Overlay);
 app.use(Loading);
-
+app.use(ImagePreview)
 app.use(VanImage);
 app.use(Lazyload, {
     lazyComponent: true,
