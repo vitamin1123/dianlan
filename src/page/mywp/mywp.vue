@@ -128,10 +128,10 @@
       <van-button 
         type="primary" 
         block 
-        @click="shareToWechat"
+        @click="saveToLocal"
         :disabled="selectedImages.length === 0"
       >
-        分享选中图片 ({{ selectedImages.length }})
+        保存到本地 ({{ selectedImages.length }})
       </van-button>
     </div>
   </van-popup>
@@ -366,6 +366,32 @@ onMounted(() => {
 const get_wp_todo_cnt = async () => {
   const res = await http.post('/api/get_paip_wp_todo_cnt', { userCode: userStore.userInfo.userCode });
   daibanStore.daiban = res.data;
+};
+const saveToLocal = async () => {
+  if (selectedImages.value.length === 0) {
+    showNotify({ type: 'warning', message: '请先选择要保存的图片' });
+    return;
+  }
+
+  try {
+    showNotify({ type: 'loading', message: '正在保存...', duration: 0 });
+    
+    // 使用动态创建a标签方式下载
+    selectedImages.value.forEach((imgUrl, index) => {
+      const link = document.createElement('a');
+      link.href = imgUrl;
+      link.download = `工作照片_${new Date().toISOString().slice(0,10)}_${index+1}.jpg`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+    
+    showNotify({ type: 'success', message: '保存成功' });
+  } catch (error) {
+    console.error('保存失败:', error);
+    showNotify({ type: 'danger', message: '保存失败' });
+  }
 };
 </script>
 
