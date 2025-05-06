@@ -56,7 +56,7 @@
             </div>
 
             <!-- 操作按钮（针对整个用户） -->
-            <div class="action-buttons">
+            <div class="action-buttons" v-if="userGroup.totalCount > 0">
               <van-button 
                 type="primary" 
                 size="small" 
@@ -70,6 +70,7 @@
                 size="small" 
                 @click.stop="handleReject(userGroup.usercode)"
                 style="margin-right: 8px;"
+                v-if="userGroup.completedCount > 0"
               >
                 驳回
               </van-button>
@@ -77,6 +78,7 @@
                 type="success" 
                 size="small" 
                 @click.stop="handleConfirm(userGroup.usercode)"
+                v-if="userGroup.completedCount > 0"
               >
                 确认
               </van-button>
@@ -233,16 +235,57 @@ const shareToWechat = () => {
 
 
 // 驳回操作（针对整个用户）
-const handleReject = (fin_user) => {
-  showConfirmDialog({
-    title: '确认驳回',
-    message: `确定要驳回 ${fin_user} 的所有工单吗？`,
-  }).then(() => {
-    console.log('驳回用户:', fin_user);
-    showNotify({ type: 'success', message: '已驳回' });
-  }).catch(() => {
-    showNotify({ type: 'info', message: '已取消' });
-  });
+const handleReject = async (fin_user) => {
+  try {
+    await showConfirmDialog({
+      title: '确认驳回',
+      message: `确定要驳回 ${fin_user} 的所有工单吗？`,
+    });
+    
+    // 获取该用户下所有已完成的项目
+    const userGroup = groupedData.value.find(group => group.usercode === fin_user);
+    if (!userGroup) {
+      showNotify({ type: 'warning', message: '未找到用户数据' });
+      return;
+    }
+    
+    // 收集所有需要驳回的项目的wpid和ori_dianlanid
+    const itemsToReject = [];
+    userGroup.completedItems.forEach(locationGroup => {
+      Object.values(locationGroup.facilities).forEach(facilityGroup => {
+        facilityGroup.items.forEach(item => {
+          itemsToReject.push({
+            id: item.ori_dianlanid,
+            wpid: item.wpid
+          });
+        });
+      });
+    });
+    
+    if (itemsToReject.length === 0) {
+      showNotify({ type: 'warning', message: '没有可驳回的工单' });
+      return;
+    }
+    
+    showNotify({ type: 'loading', message: '正在驳回...', duration: 0 });
+    
+    // 调用驳回API
+    const res = await http.post('/api/reject', {
+      items: itemsToReject,
+      userCode: userStore.userInfo.userCode
+    });
+    
+    showNotify({ type: 'success', message: `成功驳回${itemsToReject.length}条工单` });
+    
+    // 刷新数据
+    await onRefresh();
+    
+  } catch (error) {
+    if (error !== 'cancel') { // 过滤掉用户取消的情况
+      console.error('驳回失败:', error);
+      showNotify({ type: 'danger', message: '驳回失败: ' + (error.response?.data?.message || error.message) });
+    }
+  }
 };
 
 const groupedData = computed(() => {
@@ -295,16 +338,57 @@ const groupedData = computed(() => {
 });
 
 // 确认操作（针对整个用户）
-const handleConfirm = (fin_user) => {
-  showConfirmDialog({
-    title: '确认工单',
-    message: `确定要确认 ${fin_user} 的所有工单吗？`,
-  }).then(() => {
-    console.log('确认用户:', fin_user);
-    showNotify({ type: 'success', message: '已确认' });
-  }).catch(() => {
-    showNotify({ type: 'info', message: '已取消' });
-  });
+const handleConfirm = async (fin_user) => {
+  try {
+    await showConfirmDialog({
+      title: '确认工单',
+      message: `确定要确认 ${fin_user} 的所有工单吗？`,
+    });
+    
+    // 获取该用户下所有已完成的项目
+    const userGroup = groupedData.value.find(group => group.usercode === fin_user);
+    if (!userGroup) {
+      showNotify({ type: 'warning', message: '未找到用户数据' });
+      return;
+    }
+    
+    // 收集所有需要确认的项目的wpid和ori_dianlanid
+    const itemsToConfirm = [];
+    userGroup.completedItems.forEach(locationGroup => {
+      Object.values(locationGroup.facilities).forEach(facilityGroup => {
+        facilityGroup.items.forEach(item => {
+          itemsToConfirm.push({
+            id: item.ori_dianlanid,
+            wpid: item.wpid
+          });
+        });
+      });
+    });
+    
+    if (itemsToConfirm.length === 0) {
+      showNotify({ type: 'warning', message: '没有可确认的工单' });
+      return;
+    }
+    
+    showNotify({ type: 'loading', message: '正在确认...', duration: 0 });
+    
+    // 调用确认API
+    const res = await http.post('/api/audit', {
+      items: itemsToConfirm,
+      userCode: userStore.userInfo.userCode
+    });
+    
+    showNotify({ type: 'success', message: `成功确认${itemsToConfirm.length}条工单` });
+    
+    // 刷新数据
+    await onRefresh();
+    
+  } catch (error) {
+    if (error !== 'cancel') { // 过滤掉用户取消的情况
+      console.error('确认失败:', error);
+      showNotify({ type: 'danger', message: '确认失败: ' + (error.response?.data?.message || error.message) });
+    }
+  }
 };
 
 const page = ref(0);
