@@ -169,7 +169,7 @@
           text="确认" 
           @click="onSubmitLaxian" 
           color="#FF8C00"
-          :disabled="!hasTodayUploadRecord"
+          :disabled="!hasTodayUploadRecord || cart.length > 0 && cart.every(item => item.state !== 0)"
           style="border-bottom-right-radius: 0.5rem; border-top-right-radius: 0.5rem;"
         />
       </template>  

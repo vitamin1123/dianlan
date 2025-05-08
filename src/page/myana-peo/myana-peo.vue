@@ -35,7 +35,7 @@
         <van-cell
           v-for="user in owner.children"
           :key="user.fin_user"
-          :title="`${user.fin_user_name} (已确认：${user.confirmedCount} 个，未确认：${user.unconfirmedCount} 个，产值：${user.totalPrice.toFixed(2)} 元)`"
+          :title="`${user.fin_user_name} (已审核：${user.confirmedCount} 个，未审核：${user.unconfirmedCount} 个，产值：${user.totalPrice.toFixed(2)} 元)`"
           class="tree-node-sub"
         />
       </van-collapse-item>
@@ -121,7 +121,7 @@ const buildTreeData = () => {
     }
 
     const user = owner.children[item.fin_user];
-    if (item.last_comfirmer) {
+    if (item.state === 2) {  // 修改为根据state判断
       user.confirmedCount += 1;
     } else {
       user.unconfirmedCount += 1;

@@ -79,6 +79,7 @@
                 size="small" 
                 @click.stop="handleConfirm(userGroup.usercode)"
                 v-if="userGroup.completedCount > 0"
+                :disabled="userGroup.allStatesAre2"
               >
                 确认
               </van-button>
@@ -292,7 +293,8 @@ const groupedData = computed(() => {
   const userGroups = {};
   
   list.value.forEach(item => {
-    if (!item.usercode) return;
+    // 跳过state=0的项目
+    if (!item.usercode || item.state === 0) return;
 
     // 初始化用户组
     if (!userGroups[item.usercode]) {
@@ -301,7 +303,8 @@ const groupedData = computed(() => {
         user_name: item.user_name || item.user || item.usercode,
         totalCount: 0,
         completedCount: 0,
-        completedItems: []
+        completedItems: [],
+        allStatesAre2: true
       };
     }
 
@@ -311,6 +314,11 @@ const groupedData = computed(() => {
     // 关键点：检查 fin_user 是否等于当前 usercode
     if (item.fin_user === item.usercode) {
       userGroup.completedCount++;
+
+      // 检查state是否为2，如果不是则标记allStatesAre2为false
+      if (item.state !== 2) {
+        userGroup.allStatesAre2 = false;
+      }
 
       const locationKey = item.last_fangxian_loca_name || '未指定位置';
       const facilityKey = item.facilities_name || '未指定设施';
