@@ -1,9 +1,9 @@
 var app = {
     host: "172.27.0.17",
-    user: "root",
-    password: "lx217102xx",
+    user: "",
+    password: "",
     port: "3306",
-    database: "yzjlx_erp",
+    database: "",
     waitForConnections: true,  
     connectionLimit: 10,  
     queueLimit: 0,

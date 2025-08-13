@@ -27,7 +27,7 @@ const { user } = require('./db/myconfig_127.js');
 
 
 const doc_path = '/home/dev/mp/docs/'
-const JWT_SECRET = 'e2657e6a-7038-45db-91d4-01dbaa47c9aa'
+const JWT_SECRET = '*'
 
 // 使用 connect-history-api-fallback，通过 koa-connect 来包装
 app.use(koaConnect(historyFallback()));
